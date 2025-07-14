@@ -1,0 +1,35 @@
+---
+description: git
+globs: 
+alwaysApply: false
+---
+# 流程
+1. 总结变更，有必要的话更新 requirements.md
+2. 总结 commit message
+3. 提交所有文件到暂存区
+
+# 模板
+<type>(<scope>): <subject>
+空一行后填写详细描述（可选）
+再空一行填写 footer（如关联 issue 或 Breaking Change 信息，可选，多个 -m 完成换行）
+
+# 常用类型(type)：
+feat     ✨  新功能
+fix      🐛  修复 bug
+docs     📝  修改文档
+style    💄  代码格式调整
+refactor ♻️  重构（非新增功能或修复 bug）
+perf     ⚡  性能优化
+test     ✅  添加或修改测试
+chore    🔧  构建工具/依赖更新/脚本变更
+revert   ⏪  回滚提交
+ci       🛠️  CI/CD 配置变更
+build    📦  构建相关变更
+
+# 示例：
+feat(login): 添加用户登录功能
+
+实现手机号+验证码登录功能，新增 UserService、LoginForm 组件。
+
+BREAKING CHANGE: 改动了原有 Auth 模块结构，不兼容旧逻辑。
+Closes #101
