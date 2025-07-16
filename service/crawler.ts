@@ -1,6 +1,86 @@
 import type { BalanceRecord } from '../types/types';
 
-// 添加重试函数
+// ============================================================================
+// 页面解析相关函数
+// ============================================================================
+
+/**
+ * 解析余额页面的最大页数
+ * @param {Document} document - DOM 文档对象
+ * @returns {number} 最大页数，默认为 1
+ */
+function parseBalanceMaxPage(document: Document): number {
+  const input = document.querySelector('input.page_input[type="number"]') as HTMLInputElement;
+  const max = input.getAttribute('max');
+  return max ? parseInt(max) : 1;
+}
+
+/**
+ * 解析页面中的所有余额记录
+ * @param {Document} document - DOM 文档对象  
+ * @returns {string[][]} 原始记录数据的二维数组
+ */
+function parseBalanceRecords(document: Document): string[][] {
+  const table = document.querySelector('table.data') as HTMLTableElement;
+  if (!table) return [];
+  
+  const rows = table.querySelectorAll('tr');
+  const data: string[][] = [];
+  
+  rows.forEach((tr: HTMLTableRowElement, rowIndex: number) => {
+    // 跳过表头行
+    if (rowIndex === 0) return;
+    
+    const cells = tr.querySelectorAll('td');
+    const rowData = Array.from(cells).map((td: HTMLTableCellElement) => td.textContent?.trim() || '');
+    
+    if (rowData.length) {
+      data.push(rowData);
+    }
+  });
+  
+  return data;
+}
+
+/**
+ * 解析单条余额记录
+ * @param {string[]} record - 原始记录数据数组
+ * @returns {BalanceRecord} 解析后的余额记录对象
+ */
+function parseBalanceRecord(record: string[]): BalanceRecord {
+  // 解析日期格式: 2025-07-16 08:44:28 +08:00
+  const dateString = record[0];
+  let timestamp: number;
+
+  // 创建 Date 对象并转换为时间戳
+  const date = new Date(dateString);
+  timestamp = date.getTime();
+
+  // 如果日期解析失败（返回NaN），尝试作为纯数字解析
+  if (isNaN(timestamp)) {
+    timestamp = parseInt(dateString) || 0;
+  }
+
+  return {
+    timestamp,
+    type: record[1],
+    delta: parseFloat(record[2]),
+    balance: parseFloat(record[3])
+  };
+}
+
+// ============================================================================
+// 网络请求和重试相关函数
+// ============================================================================
+
+/**
+ * 带重试机制的异步函数执行器
+ * @param {Function} fn - 要执行的异步函数
+ * @param {number} maxRetries - 最大重试次数，默认 3 次
+ * @param {number} initialDelay - 初始延迟时间，默认 1000ms
+ * @param {number} maxDelay - 最大延迟时间，默认 5000ms
+ * @returns {Promise<T>} 函数执行结果
+ */
 async function withRetry<T>(
   fn: () => Promise<T>,
   maxRetries: number = 3,
@@ -32,68 +112,58 @@ async function withRetry<T>(
   throw new Error(`意外的重试循环结束, maxRetries: ${maxRetries}, lastError: ${lastError}`);
 }
 
-async function startCrawler(maxPage: number, username: string, cb: (page: number, records: BalanceRecord[]) => void) {
-  if (!cb) return;
-
-  for (let page = 1; page <= maxPage; page++) {
-    const rawRecords = await withRetry(() => crawlBalanceRecordsByPage(page));
-    const records = rawRecords.map(parseBalanceRecord);
-    records.forEach(record => {
-      record.username = username;
-    });
-    cb(page, records);
-    await new Promise(resolve => setTimeout(resolve, 500));
-  }
-}
-
-function parseBalanceRecord(record: string[]): BalanceRecord {
-  // 解析日期格式: 2025-07-16 08:44:28 +08:00
-  const dateString = record[0];
-  let timestamp: number;
-
-  // 创建 Date 对象并转换为时间戳
-  const date = new Date(dateString);
-  timestamp = date.getTime();
-
-  // 如果日期解析失败（返回NaN），尝试作为纯数字解析
-  if (isNaN(timestamp)) {
-    timestamp = parseInt(dateString) || 0;
-  }
-
-  return {
-    timestamp,
-    type: record[1],
-    delta: parseFloat(record[2]),
-    balance: parseFloat(record[3])
-  };
-}
-
+/**
+ * 爬取指定页面的余额记录
+ * @param {number} page - 页面编号
+ * @param {DOMParser} parser - DOM 解析器，默认创建新实例
+ * @returns {Promise<string[][]>} 该页面的原始记录数据
+ */
 async function crawlBalanceRecordsByPage(page: number, parser = new DOMParser()): Promise<string[][]> {
   const url = `https://v2ex.com/balance?p=${page}`;
   const response = await fetch(url);
   const html = await response.text();
-  const document = parser.parseFromString(html, 'text/html')
+  const document = parser.parseFromString(html, 'text/html');
+  
   return parseBalanceRecords(document);
 }
 
-function parseBalanceRecords(document: Document): string[][] {
-  const table = document.querySelector('table.data') as HTMLTableElement;
-  if (!table) return [];
-  const rows = table.querySelectorAll('tr');
-  const data: string[][] = [];
-  rows.forEach((tr: HTMLTableRowElement, rowIndex: number) => {
-    if (rowIndex === 0) return;
-    const cells = tr.querySelectorAll('td');
-    const rowData = Array.from(cells).map((td: HTMLTableCellElement) => td.textContent?.trim() || '');
-    if (rowData.length) data.push(rowData);
-  });
-  return data;
+// ============================================================================
+// 爬虫主流程控制函数
+// ============================================================================
+
+/**
+ * 启动爬虫，按页面顺序抓取余额记录
+ * @param {number} maxPage - 最大页数
+ * @param {string} username - 用户名
+ * @param {Function} cb - 回调函数，处理每页数据，返回 false 停止抓取
+ */
+async function startCrawler(
+  maxPage: number, 
+  username: string, 
+  cb: (page: number, records: BalanceRecord[]) => boolean
+): Promise<void> {
+  if (!cb) return;
+
+  for (let page = 1; page <= maxPage; page++) {
+    // 使用重试机制抓取当前页面数据
+    const rawRecords = await withRetry(() => crawlBalanceRecordsByPage(page));
+    
+    // 解析原始数据并添加用户名信息
+    const records = rawRecords.map(parseBalanceRecord);
+    records.forEach(record => {
+      record.username = username;
+    });
+    
+    // 调用回调函数处理数据，如果返回 false 则停止抓取
+    if (!cb(page, records)) break;
+    
+    // 页面间延迟，避免请求过于频繁
+    await new Promise(resolve => setTimeout(resolve, 500));
+  }
 }
 
-function parseBalanceMaxPage(document: Document): number {
-  const input = document.querySelector('input.page_input[type="number"]') as HTMLInputElement;
-  const max = input.getAttribute('max');
-  return max ? parseInt(max) : 1;
-}
+// ============================================================================
+// 导出函数
+// ============================================================================
 
 export { startCrawler, parseBalanceMaxPage, parseBalanceRecord, withRetry };
