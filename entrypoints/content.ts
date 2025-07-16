@@ -1,10 +1,19 @@
+import { parseBalanceMaxPage, startCrawler } from "@/service/crawler";
+
 export default defineContentScript({
   matches: ['*://v2ex.com/*'],
   main() {
     console.log('V2EX Coins Extension: Content script loaded');
     
     // 检测并获取信息
-    detectAndGetInfo();
+    const info = detectAndGetInfo();
+    if(info.isBalancePage) {
+      const maxPage = parseBalanceMaxPage(document);
+      console.log('最大分页:', maxPage);
+      startCrawler(2, (page, records)=>{
+        console.log('抓取结果, 第' + page + '页:', records);
+      });
+    }
   },
 });
 
