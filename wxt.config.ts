@@ -7,4 +7,10 @@ export default defineConfig({
     permissions: ['storage'],
   },
   outDir: 'output',
+  vite: () => ({
+    esbuild: {
+      // 在生产环境只去除 console.log 和 console.debug，保留 warn/error 等
+      pure: process.env.NODE_ENV === 'production' ? ['console.log', 'console.debug'] : [],
+    },
+  }),
 });
