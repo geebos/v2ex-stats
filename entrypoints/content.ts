@@ -21,9 +21,9 @@ export default defineContentScript({
 
       if (!isInited) {
         console.log('开始初始化余额历史数据');
-        await startCrawler(maxPage, (page, records) => {
+        await startCrawler(maxPage, info.username, (page, records) => {
           console.log('抓取结果, 第' + page + '页:', records);
-          sendMessage('appendBalanceRecords', { username: info.username, records }, 'background');
+          sendMessage('appendBalanceRecords', { records }, 'background');
         });
         await sendMessage('setIsInited', { isInited: true }, 'background');
       } else {

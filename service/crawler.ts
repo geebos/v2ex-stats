@@ -32,12 +32,15 @@ async function withRetry<T>(
   throw new Error(`意外的重试循环结束, maxRetries: ${maxRetries}, lastError: ${lastError}`);
 }
 
-async function startCrawler(maxPage: number, cb: (page: number, records: BalanceRecord[]) => void) {
+async function startCrawler(maxPage: number, username: string, cb: (page: number, records: BalanceRecord[]) => void) {
   if (!cb) return;
-  
+
   for (let page = 1; page <= maxPage; page++) {
     const rawRecords = await withRetry(() => crawlBalanceRecordsByPage(page));
     const records = rawRecords.map(parseBalanceRecord);
+    records.forEach(record => {
+      record.username = username;
+    });
     cb(page, records);
     await new Promise(resolve => setTimeout(resolve, 500));
   }
@@ -47,11 +50,11 @@ function parseBalanceRecord(record: string[]): BalanceRecord {
   // 解析日期格式: 2025-07-16 08:44:28 +08:00
   const dateString = record[0];
   let timestamp: number;
-  
+
   // 创建 Date 对象并转换为时间戳
   const date = new Date(dateString);
   timestamp = date.getTime();
-  
+
   // 如果日期解析失败（返回NaN），尝试作为纯数字解析
   if (isNaN(timestamp)) {
     timestamp = parseInt(dateString) || 0;

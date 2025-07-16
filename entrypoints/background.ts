@@ -1,6 +1,7 @@
 import { onMessage } from "webext-bridge/background";
 import { storage } from "@wxt-dev/storage";
 import type { BalanceRecord } from "@/types/types";
+import { appendBalanceRecords, getAllBalanceRecords } from "@/service/query";
 
 export default defineBackground({
   main: async () => {
@@ -17,32 +18,16 @@ export default defineBackground({
       await storage.setItem('local:isInited', isInited);
     });
 
-    onMessage('appendBalanceRecords', async ({ data: { username, records } }) => {
-      console.log('appendBalanceRecords', username, records);
-      const balanceRecords = await storage.getItem<BalanceRecord[]>(`local:balanceRecords:${username}`);
-      const concatRecords = [...(balanceRecords ?? []), ...records];
-      const uniqueRecords = uniqueBalanceRecords(concatRecords);
-      await storage.setItem(`local:balanceRecords:${username}`, uniqueRecords);
+    onMessage('appendBalanceRecords', async ({ data: { records } }) => {
+      console.log('appendBalanceRecords', records);
+      await appendBalanceRecords(records);
     });
 
     onMessage('getBalanceRecords', async ({ data: { username } }) => {
       console.log('getBalanceRecords', username);
-      const balanceRecords = await storage.getItem<BalanceRecord[]>(`local:balanceRecords:${username}`);
+      const balanceRecords = await getAllBalanceRecords(username);
       console.log('getBalanceRecords', balanceRecords);
       return balanceRecords ?? [];
     });
   }
 });
-
-function uniqueBalanceRecords(records: BalanceRecord[]) {
-  const uniqueMap = new Map<string, BalanceRecord>();
-
-  for (const record of records) {
-    const key = `${record.timestamp}${record.balance}`;
-    if (!uniqueMap.has(key)) {
-      uniqueMap.set(key, record);
-    }
-  }
-
-  return Array.from(uniqueMap.values()).sort((a, b) => b.timestamp - a.timestamp);
-}
