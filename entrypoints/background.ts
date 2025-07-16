@@ -1,6 +1,6 @@
 import { onMessage } from "webext-bridge/background";
 import { storage } from "@wxt-dev/storage";
-import { appendBalanceRecords, getAllBalanceRecords } from "@/service/query";
+import { appendBalanceRecords, getAllBalanceRecords, getLatestBalanceRecord } from "@/service/query";
 
 // ============================================================================
 // Background Script 主入口
@@ -59,6 +59,22 @@ export default defineBackground({
       const balanceRecords = await getAllBalanceRecords(username);
       console.log('getBalanceRecords', balanceRecords);
       return balanceRecords ?? [];
+    });
+
+    /**
+     * 获取指定用户的最新余额记录
+     * @param {string} username - 用户名
+     * @returns {BalanceRecord | null} 最新的余额记录，如果不存在则返回 null
+     */
+    onMessage('getLatestBalanceRecord', async ({ data: { username } }) => {
+      console.log('getLatestBalanceRecord', username);
+      
+      // 从存储中获取用户的最新余额记录
+      const latestBalanceRecord = await getLatestBalanceRecord(username);
+      console.log('getLatestBalanceRecord', latestBalanceRecord);
+      
+      // 确保返回值符合接口约定
+      return latestBalanceRecord ?? null;
     });
   }
 });

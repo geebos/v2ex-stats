@@ -107,11 +107,11 @@ async function initBalanceRecords(maxPage: number, username: string): Promise<vo
  */
 async function initNewBalanceRecords(maxPage: number, username: string): Promise<void> {
   // 获取已存储的余额记录
-  const records = await sendMessage('getBalanceRecords', { username: username }, 'background');
-  let latestTimestamp = records.length > 0 ? records[0].timestamp : 0;
+  const latestRecord = await sendMessage('getLatestBalanceRecord', { username: username }, 'background');
+  const latestTimestamp = latestRecord?.timestamp ?? 0;
 
-  console.log('余额历史数据:', latestTimestamp, records);
-  console.log('开始增量抓取余额历史数据');
+  console.log('最新余额记录:', latestRecord);
+  console.log('开始增量抓取余额历史数据, 最新时间戳:', latestTimestamp);
 
   await startCrawler(maxPage, username, (page, records) => {
     console.log('抓取结果, 第' + page + '页:', records);

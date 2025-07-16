@@ -12,7 +12,7 @@ import { storage } from "@wxt-dev/storage";
  */
 function getShardingKey(record: BalanceRecord): string {
   const date = new Date(record.timestamp);
-  return `${date.getUTCFullYear()}|${date.getUTCMonth()}`;
+  return `${date.getUTCFullYear()}|${date.getUTCMonth().toString().padStart(2, '0')}`;
 }
 
 /**
@@ -124,8 +124,38 @@ async function getAllBalanceRecords(username: string): Promise<BalanceRecord[]> 
   return records.sort((a, b) => b.timestamp - a.timestamp);
 }
 
+/**
+ * 获取指定用户的最新余额记录
+ * @param {string} username - 用户名
+ * @returns {Promise<BalanceRecord | null>} 最新的余额记录，如果不存在则返回 null
+ */
+async function getLatestBalanceRecord(username: string): Promise<BalanceRecord | null> {
+  // 构建分片列表的存储键
+  const shardingListKey: StorageItemKey = `local:balanceRecordShardings:${username}`;
+  
+  // 获取所有分片键列表
+  const shardings = await storage.getItem<StorageItemKey[]>(shardingListKey, { fallback: [] });
+  if (shardings.length === 0) return null;
+  
+  // 按字符串降序排序，确保最新的分片在前面
+  shardings.sort((a, b) => b.localeCompare(a));
+  
+  // 遍历分片，查找最新记录
+  for (const shardingKey of shardings) {
+    const records = await storage.getItem<BalanceRecord[]>(shardingKey);
+    
+    // 如果找到记录且不为空，返回第一条（最新的）
+    if (records && records.length > 0) {
+      return records[0];
+    }
+  }
+  
+  // 所有分片都没有记录
+  return null;
+}
+
 // ============================================================================
 // 导出函数
 // ============================================================================
 
-export { appendBalanceRecords, getAllBalanceRecords };
+export { appendBalanceRecords, getAllBalanceRecords, getLatestBalanceRecord };

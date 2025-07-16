@@ -7,5 +7,6 @@ declare module "webext-bridge" {
     setIsInited: ProtocolWithReturn<{ isInited: boolean }, void>;
     appendBalanceRecords: ProtocolWithReturn<{ records: BalanceRecord[] }, void>;
     getBalanceRecords: ProtocolWithReturn<{ username: string }, BalanceRecord[]>;
+    getLatestBalanceRecord: ProtocolWithReturn<{ username: string }, BalanceRecord | null>;
   }
 }
