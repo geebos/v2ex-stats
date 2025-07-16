@@ -1,4 +1,4 @@
-import type { BalanceRecord } from './types';
+import type { BalanceRecord } from '../types/types';
 
 // 添加重试函数
 async function withRetry<T>(
