@@ -70,9 +70,25 @@ const Echarts = styled.div`
 `;
 
 // ==================== 数据转换函数 ====================
-const transformRecordsToChartData = (records: BalanceRecord[]) => {
+const transformRecordsToChartData = (records: BalanceRecord[], granularity: Granularity) => {
   records.reverse();
-  const xAxis = records.map(record => new Date(record.timestamp).toLocaleDateString());
+  const xAxis = records.map(record => {
+    const date = new Date(record.timestamp);
+    
+    // 使用 UTC 时间并根据 granularity 格式化
+    switch (granularity) {
+      case 'year':
+        return date.getUTCFullYear().toString();
+      case 'month':
+        return `${date.getUTCFullYear()}/${String(date.getUTCMonth() + 1).padStart(2, '0')}`;
+      case 'day':
+        return `${date.getUTCFullYear()}/${String(date.getUTCMonth() + 1).padStart(2, '0')}/${String(date.getUTCDate()).padStart(2, '0')}`;
+      case 'hour':
+        return `${String(date.getUTCMonth() + 1).padStart(2, '0')}/${String(date.getUTCDate()).padStart(2, '0')} ${String(date.getUTCHours()).padStart(2, '0')}`;
+      default:
+        return date.toISOString();
+    }
+  });
   const series = records.map(record => record.balance);
   return { xAxis, series };
 };
@@ -191,7 +207,7 @@ function Chart(props: { username: string, isDoingInit: boolean, query: (query: B
     ]);
 
     if (timeRecords) {
-      const { xAxis, series } = transformRecordsToChartData(timeRecords);
+      const { xAxis, series } = transformRecordsToChartData(timeRecords, params.granularity);
       timeChart.current.setOption(getLineChartOption(xAxis, series));
       console.log('更新时间图表', params, timeRecords);
     }
