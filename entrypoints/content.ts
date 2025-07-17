@@ -1,6 +1,10 @@
 import { parseBalanceMaxPage, startCrawler } from "@/service/crawler";
 import { sendMessage } from "webext-bridge/content-script";
 import type { BalanceRecord, PageInfo } from "@/types/types";
+import { createRoot } from "react-dom/client";
+import { createElement } from "react";
+import Chart from "@/components/chart";
+import { BalanceRecordQuery } from "@/types/shim";
 
 // ============================================================================
 // 主要入口点 - Content Script 定义
@@ -32,8 +36,7 @@ export default defineContentScript({
       await initNewBalanceRecords(maxPage, info.username);
     }
 
-    const records = await sendMessage('queryBalanceRecords', { username: info.username, granularity: 'hour', start: Date.now() - 1000 * 60 * 60 * 24 * 1, end: Date.now() }, 'background');
-    console.log('查询到的余额记录:', records);
+    await initChart(info.username);
   },
 });
 
@@ -138,3 +141,25 @@ async function initNewBalanceRecords(maxPage: number, username: string): Promise
 
   console.log('增量抓取余额历史数据完成');
 }
+
+async function initChart(username: string) {
+  const anchor = document.querySelector('div.balance_area');
+  if (!anchor) {
+    console.log('没有找到定位元素');
+    return;
+  }
+  console.log('找到定位元素, 开始初始化图表');
+  const container = document.createElement('div');
+  container.style.width = '100%';
+  container.style.height = 'fit-content';
+  container.style.padding = '0';
+  container.style.margin = '0';
+  anchor.parentElement?.appendChild(container);
+  createRoot(container).render(createElement(Chart, {
+    username,
+    query: async (query: BalanceRecordQuery) => {
+      return await sendMessage('queryBalanceRecords', query, 'background');
+    }
+  }));
+  console.log('图表初始化完成');
+} 

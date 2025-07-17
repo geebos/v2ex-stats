@@ -12,3 +12,5 @@ export interface PageInfo {
   isBalancePage: boolean;
   isV2ex: boolean;
 }
+
+export type Granularity = 'minute' | 'hour' | 'day' | 'month' | 'year';

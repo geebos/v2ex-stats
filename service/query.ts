@@ -1,4 +1,4 @@
-import type { BalanceRecord } from "@/types/types";
+import type { BalanceRecord, Granularity } from "@/types/types";
 import { storage } from "@wxt-dev/storage";
 
 // ============================================================================
@@ -111,7 +111,7 @@ async function appendBalanceRecords(records: BalanceRecord[]): Promise<void> {
  * @param granularity - 聚合粒度
  * @returns 标准化后的时间戳（时间段开始时间）
  */
-function getGroupTimestamp(timestamp: number, granularity: 'minute' | 'hour' | 'day' | 'month' | 'year'): number {
+function getGroupTimestamp(timestamp: number, granularity: Granularity): number {
   const date = new Date(timestamp);
   switch (granularity) {
     case 'minute':
@@ -152,7 +152,7 @@ function getGroupTimestamp(timestamp: number, granularity: 'minute' | 'hour' | '
  * @param granularity - 聚合粒度
  * @returns 下一个时间段的时间戳
  */
-function getNextTimestamp(timestamp: number, granularity: 'minute' | 'hour' | 'day' | 'month' | 'year'): number {
+function getNextTimestamp(timestamp: number, granularity: Granularity): number {
   switch (granularity) {
     case 'minute':
       return timestamp + 60 * 1000;
@@ -189,7 +189,7 @@ function getNextTimestamp(timestamp: number, granularity: 'minute' | 'hour' | 'd
  */
 function fillTimeSeriesGaps(
   aggregatedRecords: BalanceRecord[], 
-  granularity: 'minute' | 'hour' | 'day' | 'month' | 'year',
+  granularity: Granularity,
   start: number,
   end: number
 ): BalanceRecord[] {
@@ -415,7 +415,7 @@ async function getLatestBalanceRecord(username: string): Promise<BalanceRecord |
  */
 function aggregateBalanceRecords(
   records: BalanceRecord[],
-  granularity: 'minute' | 'hour' | 'day' | 'month' | 'year',
+  granularity: Granularity,
 ): BalanceRecord[] {
   // 边界情况：空数组直接返回
   if (records.length === 0) return [];

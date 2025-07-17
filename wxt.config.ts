@@ -5,8 +5,12 @@ export default defineConfig({
   modules: ['@wxt-dev/module-react'],
   manifest: {
     permissions: ['storage'],
+    run_at: 'document_end',
   },
   outDir: 'output',
+  webExt: {
+    disabled: true,
+  },
   vite: () => ({
     esbuild: {
       // 在生产环境只去除 console.log 和 console.debug，保留 warn/error 等
