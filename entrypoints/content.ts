@@ -31,6 +31,9 @@ export default defineContentScript({
     } else {
       await initNewBalanceRecords(maxPage, info.username);
     }
+
+    const records = await sendMessage('queryBalanceRecords', { username: info.username, granularity: 'hour', start: Date.now() - 1000 * 60 * 60 * 24 * 1, end: Date.now() }, 'background');
+    console.log('查询到的余额记录:', records);
   },
 });
 

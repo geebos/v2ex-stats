@@ -8,5 +8,6 @@ declare module "webext-bridge" {
     appendBalanceRecords: ProtocolWithReturn<{ records: BalanceRecord[] }, void>;
     getBalanceRecords: ProtocolWithReturn<{ username: string }, BalanceRecord[]>;
     getLatestBalanceRecord: ProtocolWithReturn<{ username: string }, BalanceRecord | null>;
+    queryBalanceRecords: ProtocolWithReturn<{ username: string, granularity: 'minute' | 'hour' | 'day' | 'month' | 'year', start: number, end: number }, BalanceRecord[]>;
   }
 }
