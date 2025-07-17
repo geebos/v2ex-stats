@@ -5,7 +5,6 @@ export default defineConfig({
   modules: ['@wxt-dev/module-react'],
   manifest: {
     permissions: ['storage'],
-    run_at: 'document_end',
   },
   outDir: 'output',
   webExt: {

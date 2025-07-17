@@ -14,3 +14,5 @@ export interface PageInfo {
 }
 
 export type Granularity = 'minute' | 'hour' | 'day' | 'month' | 'year';
+
+export type AggType = 'agg_time' | 'agg_type';

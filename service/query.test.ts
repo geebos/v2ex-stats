@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { BalanceRecord } from '@/types/types';
-import { aggregateBalanceRecords, fillTimeSeriesGaps } from './query';
+import { aggregateBalanceRecordsByTime, fillTimeSeriesGaps, aggregateBalanceRecordsByType } from './query';
 
 describe('aggregateBalanceRecords', () => {
   // 测试数据工厂函数
@@ -19,13 +19,13 @@ describe('aggregateBalanceRecords', () => {
   });
 
   it('应该返回空数组当输入为空数组时', () => {
-    const result = aggregateBalanceRecords([], 'day');
+    const result = aggregateBalanceRecordsByTime([], 'day');
     expect(result).toEqual([]);
   });
 
   it('应该返回单条记录当输入只有一条记录时', () => {
     const record = createRecord(1609459200000, 100); // 2021-01-01 00:00:00 UTC
-    const result = aggregateBalanceRecords([record], 'day');
+    const result = aggregateBalanceRecordsByTime([record], 'day');
     
     expect(result).toHaveLength(1);
     expect(result[0]).toEqual(record);
@@ -39,7 +39,7 @@ describe('aggregateBalanceRecords', () => {
         createRecord(1609459260000, 150), // 2021-01-01 00:01:00 UTC (下一分钟)
       ];
       
-      const result = aggregateBalanceRecords(records, 'minute');
+      const result = aggregateBalanceRecordsByTime(records, 'minute');
       
       expect(result).toHaveLength(2);
       expect(result[0].timestamp).toBe(1609459260000); // 2021-01-01 00:01:00 UTC (分钟开始时间)
@@ -55,7 +55,7 @@ describe('aggregateBalanceRecords', () => {
         createRecord(1609461600000, 110), // 2021-01-01 00:40:00 UTC (第一小时内)
       ];
       
-      const result = aggregateBalanceRecords(records, 'hour');
+      const result = aggregateBalanceRecordsByTime(records, 'hour');
       
       expect(result).toHaveLength(2);
       expect(result[0].timestamp).toBe(1609462800000); // 2021-01-01 01:00:00 UTC (小时开始时间)
@@ -71,7 +71,7 @@ describe('aggregateBalanceRecords', () => {
         createRecord(1609502400000, 150), // 2021-01-01 12:00:00 UTC (同一天)
       ];
       
-      const result = aggregateBalanceRecords(records, 'day');
+      const result = aggregateBalanceRecordsByTime(records, 'day');
       
       expect(result).toHaveLength(2);
       expect(result[0].timestamp).toBe(1609545600000); // 2021-01-02 00:00:00 UTC (天开始时间)
@@ -87,7 +87,7 @@ describe('aggregateBalanceRecords', () => {
         createRecord(1611532800000, 150), // 2021-01-25 00:00:00 UTC (同一月)
       ];
       
-      const result = aggregateBalanceRecords(records, 'month');
+      const result = aggregateBalanceRecordsByTime(records, 'month');
       
       expect(result).toHaveLength(2);
       expect(result[0].timestamp).toBe(1612137600000); // 2021-02-01 00:00:00 UTC (月开始时间)
@@ -103,7 +103,7 @@ describe('aggregateBalanceRecords', () => {
         createRecord(1625097600000, 150), // 2021-07-01 00:00:00 UTC (同一年)
       ];
       
-      const result = aggregateBalanceRecords(records, 'year');
+      const result = aggregateBalanceRecordsByTime(records, 'year');
       
       expect(result).toHaveLength(2);
       expect(result[0].timestamp).toBe(1640995200000); // 2022-01-01 00:00:00 UTC (年开始时间)
@@ -121,7 +121,7 @@ describe('aggregateBalanceRecords', () => {
         createRecord(1609545660000, 210), // 2021-01-02 00:01:00 UTC
       ];
       
-      const result = aggregateBalanceRecords(records, 'minute');
+      const result = aggregateBalanceRecordsByTime(records, 'minute');
       
       // 按分钟聚合应该有4条记录：
       // 1. 2021-01-01 00:00:XX - 标准化为 00:00:00
@@ -144,7 +144,7 @@ describe('aggregateBalanceRecords', () => {
         createRecord(1609459210000, 110), // 2021-01-01 00:00:10 UTC (同一天，中间)
       ];
       
-      const result = aggregateBalanceRecords(records, 'day');
+      const result = aggregateBalanceRecordsByTime(records, 'day');
       
       expect(result).toHaveLength(1);
       expect(result[0].timestamp).toBe(1609459200000); // 使用标准化的天开始时间
@@ -157,7 +157,7 @@ describe('aggregateBalanceRecords', () => {
         createRecord(1609459230000, 120, 20, '消费', 'user1'),
       ];
       
-      const result = aggregateBalanceRecords(records, 'day');
+      const result = aggregateBalanceRecordsByTime(records, 'day');
       
       expect(result).toHaveLength(1);
       expect(result[0]).toEqual({
@@ -177,7 +177,7 @@ describe('aggregateBalanceRecords', () => {
         createRecord(1609459270000, 140, 50, '充值', 'user1'),
       ];
       
-      const result = aggregateBalanceRecords(records, 'day');
+      const result = aggregateBalanceRecordsByTime(records, 'day');
       
       expect(result).toHaveLength(1);
       expect(result[0].delta).toBe(50); // 10 + 20 + (-30) + 50 = 50
@@ -193,7 +193,7 @@ describe('aggregateBalanceRecords', () => {
         createRecord(1609459320000, 120, 20, '充值', 'user1'), // 2021-01-01 00:02:00 (跳过1分钟)
       ];
       
-      const result = aggregateBalanceRecords(records, 'minute');
+      const result = aggregateBalanceRecordsByTime(records, 'minute');
       
       expect(result).toHaveLength(2);
       expect(result[0].timestamp).toBe(1609459320000); // 00:02:00
@@ -206,7 +206,7 @@ describe('aggregateBalanceRecords', () => {
         createRecord(1609466400000, 150, 50, '充值', 'user1'), // 2021-01-01 02:00:00 (跳过1小时)
       ];
       
-      const result = aggregateBalanceRecords(records, 'hour');
+      const result = aggregateBalanceRecordsByTime(records, 'hour');
       
       expect(result).toHaveLength(2);
       expect(result[0].timestamp).toBe(1609466400000); // 02:00:00
@@ -219,7 +219,7 @@ describe('aggregateBalanceRecords', () => {
         createRecord(1609718400000, 200, 100, '充值', 'user1'), // 2021-01-04 00:00:00 (跳过2天)
       ];
       
-      const result = aggregateBalanceRecords(records, 'day');
+      const result = aggregateBalanceRecordsByTime(records, 'day');
       
       expect(result).toHaveLength(2);
       expect(result[0].timestamp).toBe(1609718400000); // 01-04
@@ -360,4 +360,176 @@ describe('fillTimeSeriesGaps', () => {
     expect(result[0].balance).toBe(150);
     expect(result[2].balance).toBe(150);
   });
-}); 
+});
+
+describe('aggregateBalanceRecordsByType', () => {
+  // 测试数据工厂函数
+  const createRecord = (
+    timestamp: number,
+    balance: number,
+    delta: number = 0,
+    type: string = 'test',
+    username: string = 'testuser'
+  ): BalanceRecord => ({
+    timestamp,
+    balance,
+    delta,
+    type,
+    username
+  });
+
+  it('应该返回空数组当输入为空数组时', () => {
+    const result = aggregateBalanceRecordsByType([]);
+    expect(result).toEqual([]);
+  });
+
+  it('应该返回单条记录当输入只有一条记录时', () => {
+    const record = createRecord(1609459200000, 100, 50, '充值', 'user1');
+    const result = aggregateBalanceRecordsByType([record]);
+    
+    expect(result).toHaveLength(1);
+    expect(result[0]).toEqual({
+      username: 'user1',
+      timestamp: 0,
+      balance: 0,
+      type: '充值',
+      delta: 50,
+    });
+  });
+
+  it('应该将相同类型的记录聚合为一条', () => {
+    const records = [
+      createRecord(1609459200000, 100, 50, '充值', 'user1'),
+      createRecord(1609459260000, 150, 50, '充值', 'user1'),
+      createRecord(1609459320000, 200, 50, '充值', 'user1'),
+    ];
+    
+    const result = aggregateBalanceRecordsByType(records);
+    
+    expect(result).toHaveLength(1);
+    expect(result[0]).toEqual({
+      username: 'user1',
+      timestamp: 0,
+      balance: 0,
+      type: '充值',
+      delta: 150, // 50 + 50 + 50 = 150
+    });
+  });
+
+  it('应该将不同类型的记录分别聚合', () => {
+    const records = [
+      createRecord(1609459200000, 100, 50, '充值', 'user1'),
+      createRecord(1609459260000, 80, -20, '消费', 'user1'),
+      createRecord(1609459320000, 150, 70, '充值', 'user1'),
+      createRecord(1609459380000, 100, -50, '消费', 'user1'),
+    ];
+    
+    const result = aggregateBalanceRecordsByType(records);
+    
+    expect(result).toHaveLength(2);
+    
+    // 找到充值类型的聚合记录
+    const topUpRecord = result.find(record => record.type === '充值');
+    expect(topUpRecord).toBeDefined();
+    expect(topUpRecord!.delta).toBe(120); // 50 + 70 = 120
+    expect(topUpRecord!.username).toBe('user1');
+    expect(topUpRecord!.timestamp).toBe(0);
+    expect(topUpRecord!.balance).toBe(0);
+    
+    // 找到消费类型的聚合记录
+    const consumeRecord = result.find(record => record.type === '消费');
+    expect(consumeRecord).toBeDefined();
+    expect(consumeRecord!.delta).toBe(-70); // -20 + (-50) = -70
+    expect(consumeRecord!.username).toBe('user1');
+    expect(consumeRecord!.timestamp).toBe(0);
+    expect(consumeRecord!.balance).toBe(0);
+  });
+
+  it('应该正确处理多种类型的复杂场景', () => {
+    const records = [
+      createRecord(1609459200000, 100, 100, '签到', 'user1'),
+      createRecord(1609459260000, 80, -20, '消费', 'user1'),
+      createRecord(1609459320000, 130, 50, '充值', 'user1'),
+      createRecord(1609459380000, 140, 10, '签到', 'user1'),
+      createRecord(1609459440000, 90, -50, '消费', 'user1'),
+      createRecord(1609459500000, 190, 100, '充值', 'user1'),
+      createRecord(1609459560000, 195, 5, '奖励', 'user1'),
+    ];
+    
+    const result = aggregateBalanceRecordsByType(records);
+    
+    expect(result).toHaveLength(4);
+    
+    // 验证签到类型
+    const signInRecord = result.find(record => record.type === '签到');
+    expect(signInRecord!.delta).toBe(110); // 100 + 10 = 110
+    
+    // 验证消费类型
+    const consumeRecord = result.find(record => record.type === '消费');
+    expect(consumeRecord!.delta).toBe(-70); // -20 + (-50) = -70
+    
+    // 验证充值类型
+    const topUpRecord = result.find(record => record.type === '充值');
+    expect(topUpRecord!.delta).toBe(150); // 50 + 100 = 150
+    
+    // 验证奖励类型
+    const rewardRecord = result.find(record => record.type === '奖励');
+    expect(rewardRecord!.delta).toBe(5); // 5
+  });
+
+  it('应该正确处理负数 delta 值', () => {
+    const records = [
+      createRecord(1609459200000, 100, -10, '扣除', 'user1'),
+      createRecord(1609459260000, 80, -20, '扣除', 'user1'),
+      createRecord(1609459320000, 50, -30, '扣除', 'user1'),
+    ];
+    
+    const result = aggregateBalanceRecordsByType(records);
+    
+    expect(result).toHaveLength(1);
+    expect(result[0]).toEqual({
+      username: 'user1',
+      timestamp: 0,
+      balance: 0,
+      type: '扣除',
+      delta: -60, // -10 + (-20) + (-30) = -60
+    });
+  });
+
+  it('应该正确处理零 delta 值', () => {
+    const records = [
+      createRecord(1609459200000, 100, 0, '查询', 'user1'),
+      createRecord(1609459260000, 100, 0, '查询', 'user1'),
+      createRecord(1609459320000, 100, 10, '充值', 'user1'),
+    ];
+    
+    const result = aggregateBalanceRecordsByType(records);
+    
+    expect(result).toHaveLength(2);
+    
+    const queryRecord = result.find(record => record.type === '查询');
+    expect(queryRecord!.delta).toBe(0); // 0 + 0 = 0
+    
+    const topUpRecord = result.find(record => record.type === '充值');
+    expect(topUpRecord!.delta).toBe(10);
+  });
+
+  it('应该使用每个类型组中第一条记录的用户名', () => {
+    const records = [
+      createRecord(1609459200000, 100, 50, '充值', 'user1'),
+      createRecord(1609459260000, 150, 50, '充值', 'user2'), // 同类型但不同用户
+      createRecord(1609459320000, 80, -20, '消费', 'user3'),
+    ];
+    
+    const result = aggregateBalanceRecordsByType(records);
+    
+    expect(result).toHaveLength(2);
+    
+    const topUpRecord = result.find(record => record.type === '充值');
+    expect(topUpRecord!.username).toBe('user1'); // 使用第一条记录的用户名
+    expect(topUpRecord!.delta).toBe(100); // 50 + 50 = 100
+    
+    const consumeRecord = result.find(record => record.type === '消费');
+    expect(consumeRecord!.username).toBe('user3');
+  });
+});

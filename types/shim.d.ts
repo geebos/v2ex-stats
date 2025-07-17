@@ -1,9 +1,10 @@
 import { ProtocolWithReturn } from "webext-bridge";
-import type { BalanceRecord } from "./types";
+import type { AggType, BalanceRecord, Granularity } from "./types";
 
 export interface BalanceRecordQuery {
   username: string;
   granularity: Granularity;
+  aggType: AggType;
   start: number;
   end: number;
 }

@@ -14,7 +14,6 @@ interface LabelProps {
 }
 
 // ==================== 配置常量 ====================
-// 时间范围选择器配置
 const timeLabels: LabelProps[] = [
   { name: '全部', granularity: 'month', start: () => 0, end: () => Date.now() },
   { name: '1年', granularity: 'month', start: () => Date.now() - 1000 * 60 * 60 * 24 * 365, end: () => Date.now() },
@@ -70,133 +69,167 @@ const Echarts = styled.div`
   margin: 0;
 `;
 
-// ==================== 工具函数 ====================
-/**
- * 将余额记录转换为图表数据格式
- * @param records 余额记录数组
- * @returns 包含 xAxis 和 series 的对象
- */
+// ==================== 数据转换函数 ====================
 const transformRecordsToChartData = (records: BalanceRecord[]) => {
-  // 反转数组以按时间正序显示
   records.reverse();
-  // 提取日期作为 x 轴数据
   const xAxis = records.map(record => new Date(record.timestamp).toLocaleDateString());
-  // 提取余额作为 y 轴数据
   const series = records.map(record => record.balance);
   return { xAxis, series };
 };
 
-/**
- * 更新图表配置和数据
- * @param chartInstance ECharts 实例
- * @param xAxis x 轴数据（日期）
- * @param series y 轴数据（余额）
- */
-const updateChart = (chartInstance: echarts.ECharts, xAxis: string[], series: number[]) => {
-  chartInstance.setOption({
-    tooltip: {
-      trigger: 'item',
-      formatter: '{b}: {c}'
-    },
-    grid: {
-      left: '0%',
-      right: '0%',
-      bottom: '0%',
-      top: '5%',
-      containLabel: true
-    },
-    xAxis: {
-      data: xAxis
-    },
-    yAxis: {},
-    series: [
-      {
-        data: series,
-        type: 'line',
-        smooth: true
-      }
-    ]
-  });
+const transformRecordsToPieChartSource = (records: any[]) => {
+  const source = records.map(record => [
+    record.type,
+    Math.abs(record.delta),
+    record.delta > 0 ? 'input' : 'output'
+  ]);
+  return [['type', 'delta', 'kind'], ...source];
 };
 
+// ==================== 图表配置函数 ====================
+const getLineChartOption = (xAxis: string[], series: number[]) => ({
+  tooltip: {
+    trigger: 'item',
+    formatter: '{b}: {c}'
+  },
+  grid: {
+    left: '0%',
+    right: '0%',
+    bottom: '0%',
+    top: '5%',
+    containLabel: true
+  },
+  xAxis: { data: xAxis },
+  yAxis: {},
+  series: [{
+    data: series,
+    type: 'line',
+    smooth: true
+  }]
+});
+
+const getPieChartOption = (source: any[][]) => ({
+  grid: {
+    left: '0%',
+    right: '0%',
+    bottom: '0%',
+    top: '15%',
+    containLabel: true
+  },
+  tooltip: {
+    trigger: 'item',
+    formatter: (params: any) => `${params.name}: ${params.data[1]} (${params.percent}%)`
+  },
+  dataset: [
+    { source: source },
+    {
+      transform: {
+        type: 'filter',
+        config: { dimension: 'kind', value: 'input' }
+      }
+    },
+    {
+      transform: {
+        type: 'filter',
+        config: { dimension: 'kind', value: 'output' }
+      }
+    }
+  ],
+  series: [
+    {
+      type: 'pie',
+      radius: '50%',
+      center: ['25%', '50%'],
+      datasetIndex: 1
+    },
+    {
+      type: 'pie',
+      radius: '50%',
+      center: ['75%', '50%'],
+      datasetIndex: 2
+    }
+  ]
+});
+
 // ==================== 主要组件 ====================
-/**
- * 余额图表组件
- * 显示用户余额变化趋势，支持不同时间范围查看
- */
-function Chart(props: { username: string, query: (query: BalanceRecordQuery) => Promise<BalanceRecord[]> }) {
-  // 图表容器引用
-  const chartRef = useRef<HTMLDivElement>(null);
-  // ECharts 实例引用
-  const chart = useRef<echarts.ECharts | null>(null);
+function Chart(props: { username: string, isDoingInit: boolean, query: (query: BalanceRecordQuery) => Promise<BalanceRecord[]> }) {
+  const timeChartRef = useRef<HTMLDivElement>(null);
+  const typeChartRef = useRef<HTMLDivElement>(null);
+  const timeChart = useRef<echarts.ECharts | null>(null);
+  const typeChart = useRef<echarts.ECharts | null>(null);
+  const selectedLabel = useRef<LabelProps | null>(null);
 
-  // 组件初始化时加载图表
-  useEffect(() => {
-    const loadChart = async () => {
-      // 检查容器和用户名是否存在
-      if (!chartRef.current) return;
-      if (!props.username) return;
+  // 初始化图表
+  const initCharts = () => {
+    if (!timeChartRef.current || !typeChartRef.current) return;
 
-      // 构建默认查询参数（显示全部数据，按月粒度）
-      const query: BalanceRecordQuery = {
-        username: props.username,
-        granularity: 'month',
-        start: 0,
-        end: Date.now()
-      };
-      
-      // 获取余额数据
-      const records = await props.query(query);
-      if (!records) return;
-      console.log('数据初始化', records);
+    timeChart.current = echarts.init(timeChartRef.current, null, {
+      renderer: 'svg',
+      height: '300px',
+    });
+    typeChart.current = echarts.init(typeChartRef.current, null, {
+      renderer: 'svg',
+      height: '300px',
+    });
+  };
 
-      // 转换数据格式
-      const { xAxis, series } = transformRecordsToChartData(records);
+  // 更新所有图表
+  const updateCharts = async (params: LabelProps) => {
+    if (!timeChart.current || !typeChart.current) return;
 
-      // 初始化 ECharts 实例
-      chart.current = echarts.init(chartRef.current, null, {
-        renderer: 'svg',
-        height: '300px',
-      });
-      
-      // 更新图表数据
-      updateChart(chart.current, xAxis, series);
-    };
-
-    loadChart();
-  }, []);
-
-  // 处理时间标签点击事件
-  const handleTimeLabelClick = async (params: LabelProps) => {
-    if (!chart.current) return;
-    
-    // 根据选择的时间范围重新查询数据
-    const records = await props.query({
+    const baseQuery = {
       username: props.username,
       granularity: params.granularity,
       start: params.start(),
       end: params.end()
-    });
-    if (!records) return;
-    console.log('数据更新', params, records);
+    };
 
-    // 转换数据并更新图表
-    const { xAxis, series } = transformRecordsToChartData(records);
-    updateChart(chart.current, xAxis, series);
+    // 并行查询时间和类型数据
+    const [timeRecords, typeRecords] = await Promise.all([
+      props.query({ ...baseQuery, aggType: 'agg_time' }),
+      props.query({ ...baseQuery, aggType: 'agg_type' })
+    ]);
+
+    if (timeRecords) {
+      const { xAxis, series } = transformRecordsToChartData(timeRecords);
+      timeChart.current.setOption(getLineChartOption(xAxis, series));
+      console.log('更新时间图表', params, timeRecords);
+    }
+
+    if (typeRecords) {
+      const source = transformRecordsToPieChartSource(typeRecords);
+      typeChart.current.setOption(getPieChartOption(source));
+      console.log('更新类型饼图', params, typeRecords);
+    }
   };
+
+  // 组件初始化
+  useEffect(() => {
+    if (!props.username) return;
+
+    initCharts();
+    updateCharts(timeLabels[0])
+    if (props.isDoingInit) {
+      setInterval(() => {
+        updateCharts(selectedLabel.current ?? timeLabels[0]);
+      }, 1000);
+    }
+  }, []);
 
   return (
     <Container>
-      {/* 时间范围选择器 */}
       <LabelRow>
         {timeLabels.map((label) => (
-          <Label key={label.name} onClick={() => handleTimeLabelClick(label)}>
+          <Label key={label.name} onClick={() => {
+            selectedLabel.current = label;
+            updateCharts(label);
+          }}>
             {label.name}
           </Label>
         ))}
       </LabelRow>
-      {/* 图表容器 */}
-      <Echarts ref={chartRef} />
+      <Echarts ref={timeChartRef} />
+      <Echarts ref={typeChartRef} />
     </Container>
   );
 }
