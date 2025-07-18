@@ -4,6 +4,7 @@ import { BalanceRecord, Granularity } from "@/types/types";
 import * as echarts from "echarts";
 import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 import styled from "styled-components";
+import { FaGithub } from "react-icons/fa";
 
 // ==================== 类型定义 ====================
 interface LabelProps {
@@ -45,13 +46,15 @@ const Container = styled.div`
 
 const LabelRow = styled.div`
   width: 100%;
-  height: fit-content;
+  height: 40px;
   padding: 16px 0;
   margin: 0;
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   position: relative;
+  justify-content: space-between;
+  align-items: flex-start;
 `;
 
 const Label = styled.div`
@@ -64,6 +67,11 @@ const Label = styled.div`
   font-size: 14px;
   color: #374151;
   transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  box-sizing: border-box;
 
   &:hover {
     background-color: #e5e7eb;
@@ -72,6 +80,27 @@ const Label = styled.div`
 
   &:active {
     background-color: #d1d5db;
+  }
+`;
+
+const TimeLabelsContainer = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+`;
+
+const GitHubLabel = styled(Label)`
+  background-color: #f0f9ff;
+  border-color: #0ea5e9;
+  color: #0ea5e9;
+
+  &:hover {
+    background-color: #e0f2fe;
+    border-color: #0284c7;
+  }
+
+  &:active {
+    background-color: #bae6fd;
   }
 `;
 
@@ -271,14 +300,19 @@ const Chart = forwardRef((props: ChartProps, ref: React.Ref<any>) => {
   return (
     <Container>
       <LabelRow>
-        {timeLabels.map((label) => (
-          <Label key={label.name} onClick={() => {
-            selectedLabel.current = label;
-            updateCharts(label);
-          }}>
-            {label.name}
-          </Label>
-        ))}
+        <TimeLabelsContainer>
+          {timeLabels.map((label) => (
+            <Label key={label.name} onClick={() => {
+              selectedLabel.current = label;
+              updateCharts(label);
+            }}>
+              {label.name}
+            </Label>
+          ))}
+        </TimeLabelsContainer>
+        <Label onClick={() => window.open('https://github.com/geebos/v2ex-stats', '_blank')}>
+          <FaGithub size={16} />
+        </Label>
         {props.crawlerProgress.isLoading && (
           <ProgressOverlay progress={props.crawlerProgress.currentPage / props.crawlerProgress.totalPages * 100}>
             <ProgressText>
