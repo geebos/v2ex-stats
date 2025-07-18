@@ -94,7 +94,7 @@ const crawlBalanceRecordsByPage = async (page: number, parser = new DOMParser())
 const startCrawler = async (
   maxPage: number, 
   username: string, 
-  cb: (page: number, records: BalanceRecord[]) => boolean
+  cb: (page: number, records: BalanceRecord[]) => Promise<boolean>
 ): Promise<void> => {
   if (!cb) return;
 
@@ -107,7 +107,7 @@ const startCrawler = async (
     records.forEach(record => { record.username = username; });
     
     // 调用回调函数处理数据，如果返回 false 则停止抓取
-    if (!cb(page, records)) break;
+    if (!(await cb(page, records))) break;
     
     // 页面间延迟，避免请求过于频繁
     await new Promise(resolve => setTimeout(resolve, 500));

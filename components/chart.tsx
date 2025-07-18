@@ -2,7 +2,7 @@
 import { BalanceRecordQuery } from "@/types/shim";
 import { BalanceRecord, Granularity } from "@/types/types";
 import * as echarts from "echarts";
-import { useEffect, useRef } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 import styled from "styled-components";
 
 // ==================== 类型定义 ====================
@@ -74,7 +74,7 @@ const transformRecordsToChartData = (records: BalanceRecord[], granularity: Gran
   records.reverse();
   const xAxis = records.map(record => {
     const date = new Date(record.timestamp);
-    
+
     // 使用 UTC 时间并根据 granularity 格式化
     switch (granularity) {
       case 'year':
@@ -168,7 +168,7 @@ const getPieChartOption = (source: any[][]) => ({
 });
 
 // ==================== 主要组件 ====================
-function Chart(props: { username: string, isDoingInit: boolean, query: (query: BalanceRecordQuery) => Promise<BalanceRecord[]> }) {
+const Chart = forwardRef((props: { username: string, query: (query: BalanceRecordQuery) => Promise<BalanceRecord[]> }, ref: React.Ref<any>) => {
   const timeChartRef = useRef<HTMLDivElement>(null);
   const typeChartRef = useRef<HTMLDivElement>(null);
   const timeChart = useRef<echarts.ECharts | null>(null);
@@ -224,13 +224,12 @@ function Chart(props: { username: string, isDoingInit: boolean, query: (query: B
     if (!props.username) return;
 
     initCharts();
-    updateCharts(timeLabels[0])
-    if (props.isDoingInit) {
-      setInterval(() => {
-        updateCharts(selectedLabel.current ?? timeLabels[0]);
-      }, 1000);
-    }
+    updateCharts(timeLabels[0]);
   }, []);
+
+  useImperativeHandle(ref, () => ({
+    updateCharts: async () => await updateCharts(selectedLabel.current ?? timeLabels[0])
+  }));
 
   return (
     <Container>
@@ -248,6 +247,6 @@ function Chart(props: { username: string, isDoingInit: boolean, query: (query: B
       <Echarts ref={typeChartRef} />
     </Container>
   );
-}
+})
 
 export default Chart;
