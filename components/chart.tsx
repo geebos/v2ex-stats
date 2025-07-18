@@ -1,6 +1,31 @@
 // ==================== 导入依赖 ====================
 import { BalanceRecord, BalanceRecordQuery, Granularity } from "@/types/types";
-import * as echarts from "echarts";
+// 按需引入 ECharts 组件
+import * as echarts from 'echarts/core';
+import { LineChart, PieChart } from 'echarts/charts';
+import {
+  TitleComponent,
+  TooltipComponent,
+  GridComponent,
+  LegendComponent,
+  DatasetComponent,
+  TransformComponent
+} from 'echarts/components';
+import { SVGRenderer } from 'echarts/renderers';
+
+// 注册需要的组件
+echarts.use([
+  LineChart,
+  PieChart,
+  TitleComponent,
+  TooltipComponent,
+  GridComponent,
+  LegendComponent,
+  DatasetComponent,
+  TransformComponent,
+  SVGRenderer
+]);
+
 import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 import styled from "styled-components";
 import { FaGithub } from "react-icons/fa";
