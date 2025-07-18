@@ -1,12 +1,12 @@
-import type { PageInfo } from "@/types/types";
-import { createRoot } from "react-dom/client";
-import { createElement } from "react";
-import App from "@/components/app";
+import type { PageInfo } from '@/types/types';
+import { createRoot } from 'react-dom/client';
+import { createElement } from 'react';
+import App from '@/components/app';
 
 // ==================== 页面检测和信息获取 ====================
 const detectAndGetInfo = (): PageInfo => {
-  const isV2ex = window.location.hostname === "v2ex.com";
-  const isBalancePage = window.location.pathname === "/balance";
+  const isV2ex = window.location.hostname === 'v2ex.com';
+  const isBalancePage = window.location.pathname === '/balance';
 
   const memberLink = Array.from(document.querySelectorAll('a'))
     .find(a => /^\/member\/[\w-]+$/.test(a.getAttribute('href') || ''));
@@ -46,7 +46,20 @@ const initApp = async (username: string) => {
 
 // ==================== 主入口 ====================
 export default defineContentScript({
-  matches: ['*://v2ex.com/*'],
+  matches: [
+    '*://cn.v2ex.com/*',
+    '*://de.v2ex.com/*',
+    '*://fast.v2ex.com/*',
+    '*://global.v2ex.com/*',
+    '*://hk.v2ex.com/*',
+    '*://jp.v2ex.com/*',
+    '*://origin.v2ex.com/*',
+    '*://s.v2ex.com/*',
+    '*://staging.v2ex.com/*',
+    '*://us.v2ex.com/*',
+    '*://v2ex.com/*',
+    '*://www.v2ex.com/*'
+  ],
   main: async () => {
     console.log('V2EX Coins Extension: Content script loaded');
 
