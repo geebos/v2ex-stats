@@ -1,4 +1,4 @@
-import type { BalanceRecord, Granularity } from "@/types/types";
+import type { BalanceRecord, Granularity, RecordType } from "@/types/types";
 import { storage } from "@wxt-dev/storage";
 
 // ==================== 键值生成工具 ====================
@@ -103,7 +103,7 @@ const getAllBalanceRecords = async (username: string): Promise<BalanceRecord[]> 
 };
 
 // 根据时间范围查询余额记录，使用分片优化性能
-const queryBalanceRecords = async (username: string, start: number, end: number): Promise<BalanceRecord[]> => {
+const queryBalanceRecords = async (username: string, recordType: RecordType, start: number, end: number): Promise<BalanceRecord[]> => {
   const shardingListKey: StorageItemKey = `local:balanceRecordShardings:${username}`;
   const shardings = await storage.getItem<StorageItemKey[]>(shardingListKey, { fallback: [] });
 
@@ -139,6 +139,7 @@ const queryBalanceRecords = async (username: string, start: number, end: number)
 
   return records
     .filter(record => record.timestamp >= start && record.timestamp <= end)
+    .filter(record => recordType === 'all' || (recordType === 'income' && record.delta > 0) || (recordType === 'expense' && record.delta < 0))
     .sort((a, b) => b.timestamp - a.timestamp);
 };
 

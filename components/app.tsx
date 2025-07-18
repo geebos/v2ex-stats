@@ -1,4 +1,4 @@
-import { BalanceRecordQuery } from "@/types/shim";
+import { BalanceRecordQuery } from "@/types/types";
 import Chart, { CrawlerProgress } from "./chart";
 import { useEffect, useRef, useState } from "react";
 import { sendMessage } from "webext-bridge/content-script";

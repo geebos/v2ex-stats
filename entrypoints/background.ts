@@ -46,10 +46,10 @@ const setupBalanceRecordHandlers = () => {
 
 // ==================== 余额记录查询聚合 ====================
 const setupBalanceQueryHandler = () => {
-  onMessage('queryBalanceRecords', async ({ data: { username, granularity, aggType, start, end } }) => {
-    console.log(`queryBalanceRecords: ${username}, ${granularity}, ${aggType}, ${start}-${end}`);
+  onMessage('queryBalanceRecords', async ({ data: { username, granularity, aggType, recordType, start, end } }) => {
+    console.log(`queryBalanceRecords: ${username}, ${granularity}, ${aggType}, ${recordType}, ${start}-${end}`);
 
-    const balanceRecords = await queryBalanceRecords(username, start, end);
+    const balanceRecords = await queryBalanceRecords(username, recordType, start, end);
 
     if (aggType === 'agg_time') {
       const aggregatedRecords = aggregateBalanceRecordsByTime(balanceRecords, granularity);

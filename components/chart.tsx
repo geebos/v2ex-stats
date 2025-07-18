@@ -1,6 +1,5 @@
 // ==================== 导入依赖 ====================
-import { BalanceRecordQuery } from "@/types/shim";
-import { BalanceRecord, Granularity } from "@/types/types";
+import { BalanceRecord, BalanceRecordQuery, Granularity } from "@/types/types";
 import * as echarts from "echarts";
 import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 import styled from "styled-components";
@@ -136,7 +135,15 @@ const Echarts = styled.div`
 `;
 
 // ==================== 数据转换函数 ====================
-const transformRecordsToChartData = (records: BalanceRecord[], granularity: Granularity) => {
+const cumulativeSum = (numbers: number[]): number[] => {
+  const result = [...numbers]; // 复制输入数组
+  for (let i = 0; i < result.length - 1; i++) {
+    result[i + 1] = result[i] + result[i + 1];
+  }
+  return result;
+};
+
+const transformRecordsToChartData = (records: BalanceRecord[], value: (record: BalanceRecord) => number, granularity: Granularity) => {
   records.reverse();
   const xAxis = records.map(record => {
     const date = new Date(record.timestamp);
@@ -155,7 +162,7 @@ const transformRecordsToChartData = (records: BalanceRecord[], granularity: Gran
         return date.toISOString();
     }
   });
-  const series = records.map(record => record.balance);
+  const series = records.map(record => value(record));
   return { xAxis, series };
 };
 
@@ -163,32 +170,59 @@ const transformRecordsToPieChartSource = (records: any[]) => {
   const source = records.map(record => [
     record.type,
     Math.abs(record.delta),
-    record.delta > 0 ? 'input' : 'output'
+    record.delta > 0 ? 'income' : 'expense'
   ]);
   return [['type', 'delta', 'kind'], ...source];
 };
 
 // ==================== 图表配置函数 ====================
-const getLineChartOption = (xAxis: string[], series: number[]) => ({
-  tooltip: {
-    trigger: 'item',
-    formatter: '{b}: {c}'
-  },
-  grid: {
-    left: '0%',
-    right: '0%',
-    bottom: '0%',
-    top: '5%',
-    containLabel: true
-  },
-  xAxis: { data: xAxis },
-  yAxis: {},
-  series: [{
-    data: series,
-    type: 'line',
-    smooth: true
-  }]
-});
+const getLineChartOption = (allRecords: BalanceRecord[], incomeRecords: BalanceRecord[], expenseRecords: BalanceRecord[], granularity: Granularity) => {
+  const { xAxis, series: allSeries } = transformRecordsToChartData(allRecords, (record) => record.balance, granularity);
+  const { series: incomeSeries } = transformRecordsToChartData(incomeRecords, (record) => record.delta, granularity);
+  const { series: expenseSeries } = transformRecordsToChartData(expenseRecords, (record) => Math.abs(record.delta), granularity);
+  const cumulativeIncomeSeries = cumulativeSum(incomeSeries);
+  const cumulativeExpenseSeries = cumulativeSum(expenseSeries);
+
+  return {
+    legend: {
+      orient: 'horizontal',
+      right: 10,
+      top: 10,
+      data: ['余额', '总收入', '总支出']
+    },
+    tooltip: {
+      trigger: 'item',
+      formatter: '{b}: {c}'
+    },
+    grid: {
+      left: '0%',
+      right: '0%',
+      bottom: '0%',
+      top: '5%',
+      containLabel: true
+    },
+    xAxis: { data: xAxis },
+    yAxis: {},
+    series: [{
+      name: '余额',
+      data: allSeries,
+      type: 'line',
+      smooth: true
+    },
+    {
+      name: '总支出',
+      data: cumulativeExpenseSeries,
+      type: 'line',
+      smooth: true
+    },
+    {
+      name: '总收入',
+      data: cumulativeIncomeSeries,
+      type: 'line',
+      smooth: true
+    }]
+  };
+};
 
 const getPieChartOption = (source: any[][]) => ({
   grid: {
@@ -207,13 +241,13 @@ const getPieChartOption = (source: any[][]) => ({
     {
       transform: {
         type: 'filter',
-        config: { dimension: 'kind', value: 'input' }
+        config: { dimension: 'kind', value: 'income' }
       }
     },
     {
       transform: {
         type: 'filter',
-        config: { dimension: 'kind', value: 'output' }
+        config: { dimension: 'kind', value: 'expense' }
       }
     }
   ],
@@ -263,26 +297,27 @@ const Chart = forwardRef((props: ChartProps, ref: React.Ref<any>) => {
       username: props.username,
       granularity: params.granularity,
       start: params.start(),
-      end: params.end()
+      end: params.end(),
     };
 
     // 并行查询时间和类型数据
-    const [timeRecords, typeRecords] = await Promise.all([
-      props.query({ ...baseQuery, aggType: 'agg_time' }),
-      props.query({ ...baseQuery, aggType: 'agg_type' })
+    const [typeRecords, allRecords, incomeRecords, expenseRecords] = await Promise.all([
+      props.query({ ...baseQuery, aggType: 'agg_type', recordType: 'all' }),
+      props.query({ ...baseQuery, aggType: 'agg_time', recordType: 'all' }),
+      props.query({ ...baseQuery, aggType: 'agg_time', recordType: 'income' }),
+      props.query({ ...baseQuery, aggType: 'agg_time', recordType: 'expense' })
     ]);
+    console.log('typeRecords', typeRecords);
+    console.log('allRecords', allRecords);
+    console.log('incomeRecords', incomeRecords);
+    console.log('expenseRecords', expenseRecords);
 
-    if (timeRecords) {
-      const { xAxis, series } = transformRecordsToChartData(timeRecords, params.granularity);
-      timeChart.current.setOption(getLineChartOption(xAxis, series));
-      console.log('更新时间图表', params, timeRecords);
-    }
+    timeChart.current.setOption(getLineChartOption(allRecords, incomeRecords, expenseRecords, params.granularity));
+    console.log('更新时间图表', params, allRecords);
 
-    if (typeRecords) {
-      const source = transformRecordsToPieChartSource(typeRecords);
-      typeChart.current.setOption(getPieChartOption(source));
-      console.log('更新类型饼图', params, typeRecords);
-    }
+    const source = transformRecordsToPieChartSource(typeRecords);
+    typeChart.current.setOption(getPieChartOption(source));
+    console.log('更新类型饼图', params, typeRecords);
   };
 
   // 组件初始化
