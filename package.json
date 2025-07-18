@@ -1,8 +1,8 @@
 {
-  "name": "v2ex-coins-chart",
-  "description": "manifest.json description",
+  "name": "v2ex-stats",
+  "description": "V2EX 统计",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "wxt",
