@@ -39,7 +39,7 @@ jobs:
           path: |
             output/v2ex-stats-chrome-${{ github.ref_name }}.zip
             output/v2ex-stats-firefox-${{ github.ref_name }}.zip
-            output/v2ex-stats-source-${{ github.ref_name }}.zip
+            output/v2ex-stats-sources-${{ github.ref_name }}.zip
   release-chrome:
     runs-on: ubuntu-latest
     needs: ['build']
