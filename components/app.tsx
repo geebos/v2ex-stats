@@ -1,6 +1,6 @@
 import { BalanceRecordQuery } from "@/types/shim";
-import Chart from "./chart";
-import { useEffect, useRef } from "react";
+import Chart, { CrawlerProgress } from "./chart";
+import { useEffect, useRef, useState } from "react";
 import { sendMessage } from "webext-bridge/content-script";
 import { parseBalanceMaxPage, startCrawler } from "@/service/crawler";
 
@@ -12,20 +12,32 @@ async function queryBalanceRecords(query: BalanceRecordQuery) {
 // V2EX 余额图表应用组件
 function App(props: { username: string }) {
   const chartRef = useRef<any>(null);
+  const [crawlerProgress, setCrawlerProgress] = useState<CrawlerProgress>({
+    isLoading: false,
+    currentPage: 0,
+    totalPages: 0
+  });
 
   // 初始化余额历史数据（首次抓取）
   const initBalanceRecords = async (maxPage: number) => {
     console.log('开始初始化余额历史数据, 最大页数:', maxPage);
 
+    setCrawlerProgress({ isLoading: true, currentPage: 0, totalPages: maxPage });
+
     await startCrawler(maxPage, props.username, async (page, records) => {
       console.log(`抓取第${page}页:`, records.length, '条记录');
       await sendMessage('appendBalanceRecords', { records }, 'background');
+
+      setCrawlerProgress({ isLoading: true, currentPage: page, totalPages: maxPage });
+
       await chartRef.current?.updateCharts();
       return true;
     });
 
     await sendMessage('setIsInited', { isInited: true }, 'background');
     console.log('初始化余额历史数据完成');
+
+    setCrawlerProgress({ isLoading: false, currentPage: 0, totalPages: 0 });
   }
 
   // 增量抓取新的余额记录
@@ -51,6 +63,8 @@ function App(props: { username: string }) {
       return false;
     });
 
+    // 更新图表
+    await chartRef.current?.updateCharts();
     console.log('增量抓取完成');
   }
 
@@ -58,7 +72,7 @@ function App(props: { username: string }) {
   const initApp = async () => {
     // 解析余额记录的最大页数
     const maxPage = parseBalanceMaxPage(document);
-    
+
     // 检查是否已经初始化过
     const isInited = await sendMessage('getIsInited', undefined, 'background');
 
@@ -77,7 +91,7 @@ function App(props: { username: string }) {
   }, []);
 
   return <>
-    <Chart username={props.username} query={queryBalanceRecords} ref={chartRef} />
+    <Chart username={props.username} query={queryBalanceRecords} ref={chartRef} crawlerProgress={crawlerProgress} />
   </>;
 }
 

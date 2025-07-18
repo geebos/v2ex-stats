@@ -13,6 +13,18 @@ interface LabelProps {
   end: () => number;
 }
 
+export interface CrawlerProgress {
+  isLoading: boolean;
+  currentPage: number;
+  totalPages: number;
+}
+
+interface ChartProps {
+  username: string;
+  query: (query: BalanceRecordQuery) => Promise<BalanceRecord[]>;
+  crawlerProgress: CrawlerProgress;
+}
+
 // ==================== 配置常量 ====================
 const timeLabels: LabelProps[] = [
   { name: '全部', granularity: 'month', start: () => 0, end: () => Date.now() },
@@ -39,6 +51,7 @@ const LabelRow = styled.div`
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  position: relative;
 `;
 
 const Label = styled.div`
@@ -60,6 +73,30 @@ const Label = styled.div`
   &:active {
     background-color: #d1d5db;
   }
+`;
+
+const ProgressOverlay = styled.div<{ progress: number }>`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    to right,
+    rgba(220, 252, 231, 0.9) ${props => props.progress}%,
+    rgba(255, 255, 255, 0.9) ${props => props.progress}%
+  );
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+`;
+
+const ProgressText = styled.div`
+  font-size: 14px;
+  color: #374151;
+  font-weight: 500;
 `;
 
 const Echarts = styled.div`
@@ -168,7 +205,7 @@ const getPieChartOption = (source: any[][]) => ({
 });
 
 // ==================== 主要组件 ====================
-const Chart = forwardRef((props: { username: string, query: (query: BalanceRecordQuery) => Promise<BalanceRecord[]> }, ref: React.Ref<any>) => {
+const Chart = forwardRef((props: ChartProps, ref: React.Ref<any>) => {
   const timeChartRef = useRef<HTMLDivElement>(null);
   const typeChartRef = useRef<HTMLDivElement>(null);
   const timeChart = useRef<echarts.ECharts | null>(null);
@@ -242,6 +279,13 @@ const Chart = forwardRef((props: { username: string, query: (query: BalanceRecor
             {label.name}
           </Label>
         ))}
+        {props.crawlerProgress.isLoading && (
+          <ProgressOverlay progress={props.crawlerProgress.currentPage / props.crawlerProgress.totalPages * 100}>
+            <ProgressText>
+              正在抓取数据... {props.crawlerProgress.currentPage}/{props.crawlerProgress.totalPages}
+            </ProgressText>
+          </ProgressOverlay>
+        )}
       </LabelRow>
       <Echarts ref={timeChartRef} />
       <Echarts ref={typeChartRef} />
