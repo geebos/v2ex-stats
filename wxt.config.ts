@@ -7,6 +7,10 @@ export default defineConfig({
     permissions: ['storage'],
   },
   outDir: 'output',
+  zip: {
+    artifactTemplate: '{{name}}-{{browser}}-v{{version}}.zip',
+    sourcesTemplate: '{{name}}-sources-v{{version}}.zip'
+  },
   webExt: {
     disabled: true,
   },
