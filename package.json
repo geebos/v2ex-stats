@@ -2,7 +2,7 @@
   "name": "V2EX Stats",
   "description": "V2EX 统计",
   "private": true,
-  "version": "1.0.1",
+  "version": "1.0.2",
   "type": "module",
   "scripts": {
     "dev": "wxt",
