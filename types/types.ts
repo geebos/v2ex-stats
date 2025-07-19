@@ -3,7 +3,7 @@ export interface BalanceRecord {
   type: string;
   delta: number;
   balance: number;
-  username?: string;
+  username: string;
 }
 
 export interface PageInfo {
@@ -21,6 +21,13 @@ export interface BalanceRecordQuery {
   start: number;
   end: number;
 }
+
+export interface BalanceRecordType {
+  id: number;
+  value: string;
+}
+
+export type CompactBalanceRecord = [number, number, number, number];
 
 export type Granularity = 'minute' | 'hour' | 'day' | 'month' | 'year';
 

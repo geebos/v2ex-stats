@@ -25,7 +25,7 @@ function App(props: { username: string }) {
     setCrawlerProgress({ isLoading: true, currentPage: 0, totalPages: maxPage });
 
     await startCrawler(maxPage, props.username, async (page, records) => {
-      console.log(`抓取第${page}页:`, records.length, '条记录');
+      console.log(`抓取第${page}页:`, records.length, '条记录', records);
       await sendMessage('appendBalanceRecords', { records }, 'background');
 
       setCrawlerProgress({ isLoading: true, currentPage: page, totalPages: maxPage });
