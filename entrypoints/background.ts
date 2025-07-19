@@ -9,6 +9,7 @@ import {
   getLatestBalanceRecord, 
   queryBalanceRecords 
 } from "@/service/query";
+import { getStorageSize } from "@/service/storage";
 
 // ==================== 初始化状态管理 ====================
 const setupInitStateHandlers = () => {
@@ -69,6 +70,15 @@ const setupBalanceQueryHandler = () => {
   });
 };
 
+// ==================== 存储容量查询 ====================
+const setupStorageHandlers = () => {
+  onMessage('getStorageSize', async () => {
+    console.log('getStorageSize 请求');
+    const formattedSize = await getStorageSize();
+    return formattedSize;
+  });
+};
+
 // ==================== 主入口 ====================
 export default defineBackground({
   main: async () => {
@@ -77,5 +87,6 @@ export default defineBackground({
     setupInitStateHandlers();
     setupBalanceRecordHandlers();
     setupBalanceQueryHandler();
+    setupStorageHandlers();
   }
 });

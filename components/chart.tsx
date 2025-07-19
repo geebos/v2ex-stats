@@ -26,9 +26,10 @@ echarts.use([
   SVGRenderer
 ]);
 
-import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import styled from "styled-components";
-import { FaGithub } from "react-icons/fa";
+import { FaGithub, FaInfoCircle } from "react-icons/fa";
+import { sendMessage } from "webext-bridge/content-script";
 
 // ==================== 类型定义 ====================
 interface LabelProps {
@@ -107,24 +108,38 @@ const Label = styled.div`
   }
 `;
 
-const TimeLabelsContainer = styled.div`
+const LabelGroup = styled.div`
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 `;
 
-const GitHubLabel = styled(Label)`
-  background-color: #f0f9ff;
-  border-color: #0ea5e9;
-  color: #0ea5e9;
+const InfoLabel = styled(Label)`
+  position: relative;
+`;
 
-  &:hover {
-    background-color: #e0f2fe;
-    border-color: #0284c7;
-  }
-
-  &:active {
-    background-color: #bae6fd;
+const Tooltip = styled.div`
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  margin-bottom: 5px;
+  z-index: 1000;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: rgba(0, 0, 0, 0.8);
   }
 `;
 
@@ -199,6 +214,17 @@ const transformRecordsToPieChartSource = (records: any[]) => {
   ]);
   return [['type', 'delta', 'kind'], ...source];
 };
+
+// 格式化字节数为人类可读格式
+function formatBytes(bytes: number): string {
+  if (bytes === 0) return '0 B';
+
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+}
 
 // ==================== 图表配置函数 ====================
 const getLineChartOption = (allRecords: BalanceRecord[], incomeRecords: BalanceRecord[], expenseRecords: BalanceRecord[], granularity: Granularity) => {
@@ -300,6 +326,9 @@ const Chart = forwardRef((props: ChartProps, ref: React.Ref<any>) => {
   const typeChart = useRef<echarts.ECharts | null>(null);
   const selectedLabel = useRef<LabelProps | null>(null);
 
+  const [formattedSize, setFormattedSize] = useState<string>('');
+  const [showTooltip, setShowTooltip] = useState<boolean>(false);
+
   // 初始化图表
   const initCharts = () => {
     if (!timeChartRef.current || !typeChartRef.current) return;
@@ -345,6 +374,18 @@ const Chart = forwardRef((props: ChartProps, ref: React.Ref<any>) => {
     console.log('更新类型饼图', params, typeRecords);
   };
 
+  // 获取存储容量
+  const getStorageSize = async () => {
+    try {
+      const size = await sendMessage('getStorageSize', undefined);
+      console.log('storage size', size);
+      setFormattedSize(formatBytes(size)); // 格式化字节数
+    } catch (error) {
+      console.error('获取存储容量失败:', error);
+      setFormattedSize('获取失败');
+    }
+  };
+
   // 组件初始化
   useEffect(() => {
     if (!props.username) return;
@@ -360,7 +401,7 @@ const Chart = forwardRef((props: ChartProps, ref: React.Ref<any>) => {
   return (
     <Container>
       <LabelRow>
-        <TimeLabelsContainer>
+        <LabelGroup>
           {timeLabels.map((label) => (
             <Label key={label.name} onClick={() => {
               selectedLabel.current = label;
@@ -369,10 +410,26 @@ const Chart = forwardRef((props: ChartProps, ref: React.Ref<any>) => {
               {label.name}
             </Label>
           ))}
-        </TimeLabelsContainer>
-        <Label onClick={() => window.open('https://github.com/geebos/v2ex-stats', '_blank')}>
-          <FaGithub size={16} />
-        </Label>
+        </LabelGroup>
+        <LabelGroup>
+          <InfoLabel
+            onMouseEnter={() => {
+              setShowTooltip(true);
+              getStorageSize();
+            }}
+            onMouseLeave={() => setShowTooltip(false)}
+          >
+            <FaInfoCircle size={16} />
+            {showTooltip && formattedSize && (
+              <Tooltip>
+                缓存占用: {formattedSize}
+              </Tooltip>
+            )}
+          </InfoLabel>
+          <Label onClick={() => window.open('https://github.com/geebos/v2ex-stats', '_blank')}>
+            <FaGithub size={16} />
+          </Label>
+        </LabelGroup>
         {props.crawlerProgress.isLoading && (
           <ProgressOverlay progress={props.crawlerProgress.currentPage / props.crawlerProgress.totalPages * 100}>
             <ProgressText>

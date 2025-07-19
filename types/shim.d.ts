@@ -9,5 +9,6 @@ declare module "webext-bridge" {
     getBalanceRecords: ProtocolWithReturn<{ username: string }, BalanceRecord[]>;
     getLatestBalanceRecord: ProtocolWithReturn<{ username: string }, BalanceRecord | null>;
     queryBalanceRecords: ProtocolWithReturn<BalanceRecordQuery, BalanceRecord[]>;
+    getStorageSize: ProtocolWithReturn<void, number>;
   }
 }
