@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest';
-import type { BalanceRecord } from '@/types/types';
-import { aggregateBalanceRecordsByTime, fillTimeSeriesGaps, aggregateBalanceRecordsByType } from './query';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { BalanceRecord, CompactBalanceRecord } from '@/types/types';
+import { aggregateBalanceRecordsByTime, fillTimeSeriesGaps, aggregateBalanceRecordsByType, getBalanceRecords, setBalanceRecords } from './query';
 
 describe('aggregateBalanceRecords', () => {
   // 测试数据工厂函数
@@ -531,5 +531,268 @@ describe('aggregateBalanceRecordsByType', () => {
     
     const consumeRecord = result.find(record => record.type === '消费');
     expect(consumeRecord!.username).toBe('user3');
+  });
+});
+
+// Mock storage module
+vi.mock('@wxt-dev/storage', () => ({
+  storage: {
+    getItem: vi.fn(),
+    setItem: vi.fn(),
+  }
+}));
+
+import { storage } from '@wxt-dev/storage';
+
+describe('getBalanceRecords', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  // 测试数据工厂函数
+  const createCompactRecord = (
+    timestamp: number,
+    typeId: number,
+    delta: number,
+    balance: number
+  ): CompactBalanceRecord => [timestamp, typeId, delta, balance];
+
+  const createExpectedRecord = (
+    timestamp: number,
+    type: string,
+    delta: number,
+    balance: number,
+    username: string = 'testuser'
+  ): BalanceRecord => ({
+    timestamp,
+    type,
+    delta,
+    balance,
+    username
+  });
+
+  it('应该正确将压缩记录转换为 BalanceRecord', async () => {
+    const username = 'testuser';
+    const keys = ['local:balanceRecords:testuser|2024|01'] as any[];
+    
+    // Mock 压缩记录数据
+    const compactRecords: CompactBalanceRecord[] = [
+      createCompactRecord(1609459200000, 10, 50, 150),
+      createCompactRecord(1609459260000, 11, 20, 170),
+    ];
+    
+    // Mock storage.getItem 返回压缩记录
+    vi.mocked(storage.getItem).mockResolvedValueOnce(compactRecords);
+    
+    // Mock 类型映射 - 使用预定义的类型
+    // 由于 getBalanceRecordTypeValue 是内部函数且使用了预定义类型，10 对应 "每日活跃度奖励"，11 对应 "每日登录奖励"
+    
+    const result = await getBalanceRecords(username, keys);
+    
+    expect(storage.getItem).toHaveBeenCalledWith('local:balanceRecords:testuser|2024|01');
+    expect(result).toHaveLength(2);
+    
+    // 验证结果按时间戳降序排列
+    expect(result[0]).toEqual(createExpectedRecord(1609459260000, '每日登录奖励', 20, 170, username));
+    expect(result[1]).toEqual(createExpectedRecord(1609459200000, '每日活跃度奖励', 50, 150, username));
+  });
+
+  it('应该处理多个存储键', async () => {
+    const username = 'testuser';
+    const keys = [
+      'local:balanceRecords:testuser|2024|01',
+      'local:balanceRecords:testuser|2024|02'
+    ] as any[];
+    
+    const compactRecords1: CompactBalanceRecord[] = [
+      createCompactRecord(1609459200000, 12, 30, 100),
+    ];
+    
+    const compactRecords2: CompactBalanceRecord[] = [
+      createCompactRecord(1612137600000, 13, 40, 140),
+    ];
+    
+    vi.mocked(storage.getItem)
+      .mockResolvedValueOnce(compactRecords1)
+      .mockResolvedValueOnce(compactRecords2);
+    
+    const result = await getBalanceRecords(username, keys);
+    
+    expect(storage.getItem).toHaveBeenCalledTimes(2);
+    expect(result).toHaveLength(2);
+    
+    // 验证结果按时间戳降序排列
+    expect(result[0].timestamp).toBe(1612137600000); // 2月的记录在前
+    expect(result[1].timestamp).toBe(1609459200000); // 1月的记录在后
+  });
+
+  it('应该处理空的存储记录', async () => {
+    const username = 'testuser';
+    const keys = ['local:balanceRecords:testuser|2024|01'] as any[];
+    
+    vi.mocked(storage.getItem).mockResolvedValueOnce(null);
+    
+    const result = await getBalanceRecords(username, keys);
+    
+    expect(result).toEqual([]);
+  });
+
+  it('应该处理不存在的存储键', async () => {
+    const username = 'testuser';
+    const keys = [
+      'local:balanceRecords:testuser|2024|01',
+      'local:balanceRecords:testuser|2024|02'
+    ] as any[];
+    
+    vi.mocked(storage.getItem)
+      .mockResolvedValueOnce([createCompactRecord(1609459200000, 10, 50, 150)])
+      .mockResolvedValueOnce(null); // 第二个键不存在
+    
+    const result = await getBalanceRecords(username, keys);
+    
+    expect(result).toHaveLength(1);
+    expect(result[0].type).toBe('每日活跃度奖励');
+  });
+
+  it('应该处理空的键数组', async () => {
+    const username = 'testuser';
+    const keys: any[] = [];
+    
+    const result = await getBalanceRecords(username, keys);
+    
+    expect(storage.getItem).not.toHaveBeenCalled();
+    expect(result).toEqual([]);
+  });
+});
+
+describe('setBalanceRecords', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  // 测试数据工厂函数
+  const createRecord = (
+    timestamp: number,
+    type: string,
+    delta: number,
+    balance: number,
+    username: string = 'testuser'
+  ): BalanceRecord => ({
+    timestamp,
+    type,
+    delta,
+    balance,
+    username
+  });
+
+  it('应该正确将 BalanceRecord 压缩并存储', async () => {
+    const key = 'local:balanceRecords:testuser|2024|01' as any;
+    const records: BalanceRecord[] = [
+      createRecord(1609459200000, '每日活跃度奖励', 50, 150),
+      createRecord(1609459260000, '每日登录奖励', 20, 170),
+    ];
+    
+    // Mock storage.getItem 用于获取现有的类型记录
+    vi.mocked(storage.getItem).mockResolvedValue([]);
+    
+    await setBalanceRecords(key, records);
+    
+    expect(storage.setItem).toHaveBeenCalledWith(key, [
+      [1609459260000, 11, 20, 170], // 按时间戳降序排列，11 是 "每日登录奖励" 的ID
+      [1609459200000, 10, 50, 150], // 10 是 "每日活跃度奖励" 的ID
+    ]);
+  });
+
+  it('应该按时间戳降序排列记录', async () => {
+    const key = 'local:balanceRecords:testuser|2024|01' as any;
+    const records: BalanceRecord[] = [
+      createRecord(1609459200000, '每日活跃度奖励', 50, 150),  // 较早的记录
+      createRecord(1609459320000, '创建回复', 30, 200),        // 最新的记录
+      createRecord(1609459260000, '每日登录奖励', 20, 170),    // 中间的记录
+    ];
+    
+    vi.mocked(storage.getItem).mockResolvedValue([]);
+    
+    await setBalanceRecords(key, records);
+    
+    const expectedCompactRecords = [
+      [1609459320000, 13, 30, 200], // 最新的记录排在第一位
+      [1609459260000, 11, 20, 170], // 中间的记录
+      [1609459200000, 10, 50, 150], // 最早的记录排在最后
+    ];
+    
+    expect(storage.setItem).toHaveBeenCalledWith(key, expectedCompactRecords);
+  });
+
+  it('应该处理新的类型记录', async () => {
+    const key = 'local:balanceRecords:testuser|2024|01' as any;
+    const records: BalanceRecord[] = [
+      createRecord(1609459200000, '新类型', 50, 150),
+    ];
+    
+    // Mock 初次查询返回空数组，然后模拟新类型被添加
+    vi.mocked(storage.getItem)
+      .mockResolvedValueOnce([]) // 第一次查询类型记录为空
+      .mockResolvedValueOnce([{ id: 0, value: '新类型' }]); // 设置新类型后查询
+    
+    await setBalanceRecords(key, records);
+    
+    // 验证新类型被保存
+    expect(storage.setItem).toHaveBeenCalledWith(
+      'local:balanceRecordTypes', 
+      [{ id: 0, value: '新类型' }]
+    );
+    
+    // 验证记录被保存，新类型的ID是0
+    expect(storage.setItem).toHaveBeenCalledWith(key, [
+      [1609459200000, 0, 50, 150]
+    ]);
+  });
+
+  it('应该处理空记录数组', async () => {
+    const key = 'local:balanceRecords:testuser|2024|01' as any;
+    const records: BalanceRecord[] = [];
+    
+    await setBalanceRecords(key, records);
+    
+    expect(storage.setItem).toHaveBeenCalledWith(key, []);
+  });
+
+  it('应该处理单条记录', async () => {
+    const key = 'local:balanceRecords:testuser|2024|01' as any;
+    const records: BalanceRecord[] = [
+      createRecord(1609459200000, '每日活跃度奖励', 50, 150),
+    ];
+    
+    vi.mocked(storage.getItem).mockResolvedValue([]);
+    
+    await setBalanceRecords(key, records);
+    
+    expect(storage.setItem).toHaveBeenCalledWith(key, [
+      [1609459200000, 10, 50, 150]
+    ]);
+  });
+
+  it('应该正确处理混合类型的记录', async () => {
+    const key = 'local:balanceRecords:testuser|2024|01' as any;
+    const records: BalanceRecord[] = [
+      createRecord(1609459200000, '每日活跃度奖励', 10, 100),
+      createRecord(1609459260000, '每日登录奖励', 20, 120), 
+      createRecord(1609459320000, '主题回复收益', 15, 135),
+      createRecord(1609459380000, '创建回复', 5, 140),
+    ];
+    
+    vi.mocked(storage.getItem).mockResolvedValue([]);
+    
+    await setBalanceRecords(key, records);
+    
+    const expectedCompactRecords = [
+      [1609459380000, 13, 5, 140],   // 创建回复
+      [1609459320000, 12, 15, 135],  // 主题回复收益
+      [1609459260000, 11, 20, 120],  // 每日登录奖励
+      [1609459200000, 10, 10, 100],  // 每日活跃度奖励
+    ];
+    
+    expect(storage.setItem).toHaveBeenCalledWith(key, expectedCompactRecords);
   });
 });

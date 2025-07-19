@@ -363,5 +363,8 @@ export {
   queryBalanceRecords,
   aggregateBalanceRecordsByTime,
   fillTimeSeriesGaps,
-  aggregateBalanceRecordsByType
+  aggregateBalanceRecordsByType,
+  // 为测试导出的内部函数
+  getBalanceRecords,
+  setBalanceRecords
 };

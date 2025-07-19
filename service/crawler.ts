@@ -40,6 +40,7 @@ const parseBalanceRecord = (record: string[]): BalanceRecord => {
 
   return {
     timestamp,
+    username: '',
     type: record[1],
     delta: parseFloat(record[2]),
     balance: parseFloat(record[3])
