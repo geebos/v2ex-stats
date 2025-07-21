@@ -82,7 +82,7 @@ const withRetry = async <T>(
 
 // 爬取指定页面的余额记录
 const crawlBalanceRecordsByPage = async (page: number, parser = new DOMParser()): Promise<string[][]> => {
-  const url = `https://v2ex.com/balance?p=${page}`;
+  const url = `/balance?p=${page}`;
   const response = await fetch(url);
   const html = await response.text();
   const document = parser.parseFromString(html, 'text/html');
