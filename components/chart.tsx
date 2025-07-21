@@ -31,6 +31,22 @@ import styled from "styled-components";
 import { FaGithub, FaInfoCircle } from "react-icons/fa";
 import { sendMessage } from "webext-bridge/content-script";
 
+
+const chartsBackgroundColor = 'transparent';
+const chartsColors = [
+  '#dd6b66',
+  '#759aa0',
+  '#e69d87',
+  '#8dc1a9',
+  '#ea7e53',
+  '#eedd78',
+  '#73a373',
+  '#73b9bc',
+  '#7289ab',
+  '#91ca8c',
+  '#f49f42'
+]
+
 // ==================== 类型定义 ====================
 interface LabelProps {
   name: string;
@@ -71,7 +87,7 @@ const Container = styled.div`
 
 const LabelRow = styled.div`
   width: 100%;
-  height: 40px;
+  height: 30px;
   padding: 16px 0;
   margin: 0;
   display: flex;
@@ -82,15 +98,15 @@ const LabelRow = styled.div`
   align-items: flex-start;
 `;
 
-const Label = styled.div`
+const Label = styled.div<{ isDarkMode: boolean }>`
   padding: 8px 16px;
-  border: 1px solid #d1d5db;
+  border: 1px solid ${props => props.isDarkMode ? '#adbac7' : '#d1d5db'};
   border-radius: 6px;
-  background-color: #f9fafb;
+  background-color: ${props => props.isDarkMode ? 'transparent' : '#f9fafb'};
   cursor: pointer;
   user-select: none;
   font-size: 14px;
-  color: #374151;
+  color: ${props => props.isDarkMode ? '#adbac7' : '#374151'};
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
@@ -99,8 +115,8 @@ const Label = styled.div`
   box-sizing: border-box;
 
   &:hover {
-    background-color: #e5e7eb;
-    border-color: #9ca3af;
+    filter: ${props => props.isDarkMode ? 'invert(0.5)' : 'none'};
+    background-color: ${props => props.isDarkMode ? 'transparent' : '#e5e7eb'};
   }
 
   &:active {
@@ -112,19 +128,20 @@ const LabelGroup = styled.div`
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  height: 100%;
 `;
 
 const InfoLabel = styled(Label)`
   position: relative;
 `;
 
-const Tooltip = styled.div`
+const Tooltip = styled.div<{ isDarkMode: boolean }>`
   position: absolute;
   bottom: 100%;
   left: 50%;
   transform: translateX(-50%);
   background-color: rgba(0, 0, 0, 0.8);
-  color: white;
+  color: ${props => props.isDarkMode ? '#adbac7' : '#374151'};
   padding: 8px 12px;
   border-radius: 4px;
   font-size: 12px;
@@ -227,6 +244,27 @@ function formatBytes(bytes: number): string {
 }
 
 // ==================== 图表配置函数 ====================
+const getIsDarkMode = () => {
+  let isDarkMode = false;
+  for (const c of document.body.classList) {
+    if (c.toLowerCase().includes('dark')) {
+      isDarkMode = true;
+      break;
+    }
+  }
+  console.log('isDarkMode', isDarkMode, [...document.body.classList]);
+  return isDarkMode;
+}
+
+const adjustDarkMode = (option: echarts.EChartsCoreOption) => {
+  if (!getIsDarkMode()) {
+    return option;
+  }
+  option.backgroundColor = chartsBackgroundColor;
+  option.color = chartsColors;
+  return option;
+}
+
 const getLineChartOption = (allRecords: BalanceRecord[], incomeRecords: BalanceRecord[], expenseRecords: BalanceRecord[], granularity: Granularity) => {
   const { xAxis, series: allSeries } = transformRecordsToChartData(allRecords, (record) => record.balance, granularity);
   const { series: incomeSeries } = transformRecordsToChartData(incomeRecords, (record) => record.delta, granularity);
@@ -234,7 +272,7 @@ const getLineChartOption = (allRecords: BalanceRecord[], incomeRecords: BalanceR
   const cumulativeIncomeSeries = cumulativeSum(incomeSeries);
   const cumulativeExpenseSeries = cumulativeSum(expenseSeries);
 
-  return {
+  return adjustDarkMode({
     legend: {
       orient: 'horizontal',
       right: 10,
@@ -242,8 +280,7 @@ const getLineChartOption = (allRecords: BalanceRecord[], incomeRecords: BalanceR
       data: ['余额', '总收入', '总支出']
     },
     tooltip: {
-      trigger: 'item',
-      formatter: '{b}: {c}'
+      trigger: 'axis'
     },
     grid: {
       left: '0%',
@@ -272,51 +309,53 @@ const getLineChartOption = (allRecords: BalanceRecord[], incomeRecords: BalanceR
       type: 'line',
       smooth: true
     }]
-  };
+  });
 };
 
-const getPieChartOption = (source: any[][]) => ({
-  grid: {
-    left: '0%',
-    right: '0%',
-    bottom: '0%',
-    top: '15%',
-    containLabel: true
-  },
-  tooltip: {
-    trigger: 'item',
-    formatter: (params: any) => `${params.name}: ${params.data[1]} (${params.percent}%)`
-  },
-  dataset: [
-    { source: source },
-    {
-      transform: {
-        type: 'filter',
-        config: { dimension: 'kind', value: 'income' }
-      }
+const getPieChartOption = (source: any[][]) => {
+  return adjustDarkMode({
+    grid: {
+      left: '0%',
+      right: '0%',
+      bottom: '0%',
+      top: '15%',
+      containLabel: true
     },
-    {
-      transform: {
-        type: 'filter',
-        config: { dimension: 'kind', value: 'expense' }
-      }
-    }
-  ],
-  series: [
-    {
-      type: 'pie',
-      radius: '50%',
-      center: ['25%', '50%'],
-      datasetIndex: 1
+    tooltip: {
+      trigger: 'item',
+      formatter: (params: any) => `${params.name}: ${params.data[1]} (${params.percent}%)`
     },
-    {
-      type: 'pie',
-      radius: '50%',
-      center: ['75%', '50%'],
-      datasetIndex: 2
-    }
-  ]
-});
+    dataset: [
+      { source: source },
+      {
+        transform: {
+          type: 'filter',
+          config: { dimension: 'kind', value: 'income' }
+        }
+      },
+      {
+        transform: {
+          type: 'filter',
+          config: { dimension: 'kind', value: 'expense' }
+        }
+      }
+    ],
+    series: [
+      {
+        type: 'pie',
+        radius: '50%',
+        center: ['25%', '50%'],
+        datasetIndex: 1
+      },
+      {
+        type: 'pie',
+        radius: '50%',
+        center: ['75%', '50%'],
+        datasetIndex: 2
+      }
+    ]
+  });
+};
 
 // ==================== 主要组件 ====================
 const Chart = forwardRef((props: ChartProps, ref: React.Ref<any>) => {
@@ -328,16 +367,20 @@ const Chart = forwardRef((props: ChartProps, ref: React.Ref<any>) => {
 
   const [formattedSize, setFormattedSize] = useState<string>('');
   const [showTooltip, setShowTooltip] = useState<boolean>(false);
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
 
   // 初始化图表
   const initCharts = () => {
     if (!timeChartRef.current || !typeChartRef.current) return;
+    const theme = getIsDarkMode() ? 'dark' : null;
+    setIsDarkMode(getIsDarkMode());
+    console.log('图表主题', theme);
 
-    timeChart.current = echarts.init(timeChartRef.current, null, {
+    timeChart.current = echarts.init(timeChartRef.current, theme, {
       renderer: 'svg',
       height: '300px',
     });
-    typeChart.current = echarts.init(typeChartRef.current, null, {
+    typeChart.current = echarts.init(typeChartRef.current, theme, {
       renderer: 'svg',
       height: '300px',
     });
@@ -403,7 +446,7 @@ const Chart = forwardRef((props: ChartProps, ref: React.Ref<any>) => {
       <LabelRow>
         <LabelGroup>
           {timeLabels.map((label) => (
-            <Label key={label.name} onClick={() => {
+            <Label key={label.name} isDarkMode={isDarkMode} onClick={() => {
               selectedLabel.current = label;
               updateCharts(label);
             }}>
@@ -413,6 +456,7 @@ const Chart = forwardRef((props: ChartProps, ref: React.Ref<any>) => {
         </LabelGroup>
         <LabelGroup>
           <InfoLabel
+            isDarkMode={isDarkMode}
             onMouseEnter={() => {
               setShowTooltip(true);
               getStorageSize();
@@ -421,12 +465,12 @@ const Chart = forwardRef((props: ChartProps, ref: React.Ref<any>) => {
           >
             <FaInfoCircle size={16} />
             {showTooltip && formattedSize && (
-              <Tooltip>
+              <Tooltip isDarkMode={isDarkMode}>
                 缓存占用: {formattedSize}
               </Tooltip>
             )}
           </InfoLabel>
-          <Label onClick={() => window.open('https://github.com/geebos/v2ex-stats', '_blank')}>
+          <Label isDarkMode={isDarkMode} onClick={() => window.open('https://github.com/geebos/v2ex-stats', '_blank')}>
             <FaGithub size={16} />
           </Label>
         </LabelGroup>
