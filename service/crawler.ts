@@ -117,4 +117,4 @@ const startCrawler = async (
 };
 
 // ==================== 导出 ====================
-export { startCrawler, parseBalanceMaxPage, parseBalanceRecord, withRetry };
+export { startCrawler, parseBalanceMaxPage, parseBalanceRecord, parseBalanceRecords, withRetry };

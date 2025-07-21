@@ -1,8 +1,8 @@
-import { BalanceRecordQuery } from "@/types/types";
+import { BalanceRecord, BalanceRecordQuery } from "@/types/types";
 import Chart, { CrawlerProgress } from "./chart";
 import { useEffect, useRef, useState } from "react";
 import { sendMessage } from "webext-bridge/content-script";
-import { parseBalanceMaxPage, startCrawler } from "@/service/crawler";
+import { parseBalanceMaxPage, parseBalanceRecord, parseBalanceRecords, startCrawler } from "@/service/crawler";
 
 // 查询余额记录
 async function queryBalanceRecords(query: BalanceRecordQuery) {
@@ -50,20 +50,34 @@ function App(props: { username: string }) {
 
     console.log('开始增量抓取, 最新时间戳:', latestTimestamp);
 
-    await startCrawler(1, maxPage, props.username, async (page, records) => {
-      // 过滤出新的记录（时间戳大于等于最新记录的时间戳） 
-      const newRecords = records.filter(record => record.timestamp >= latestTimestamp);
+    const processRecords = async (page: number, records: BalanceRecord[]): Promise<boolean> => {
+      // 过滤出新的记录（时间戳大于最新记录的时间戳）
+      // 可能导致同样时间戳的记录漏抓，但概率极低优先保证性能
+      const newRecords = records.filter(record => record.timestamp > latestTimestamp);
 
       if (newRecords.length > 0) {
-        console.log(`抓取第${page}页: 新增${newRecords.length}/${records.length}条记录`);
+        console.log(`抓取第${page}页: 新增${newRecords.length}/${records.length}条记录`, newRecords);
         await sendMessage('appendBalanceRecords', { records: newRecords }, 'background');
         // 如果新记录数量等于页面记录数量，说明这页都是新记录，继续抓取
         return newRecords.length === records.length;
       }
 
+      console.log('没有新记录，停止抓取 page:', page, 'records:', records);
       // 没有新记录，停止抓取
       return false;
-    });
+    }
+
+    // 第一页直接从当前页面获取
+    const rawRecords = parseBalanceRecords(document);
+    const records = rawRecords.map(parseBalanceRecord);
+    if (!await processRecords(1, records)) {
+      console.log('在第一页发现最新记录，停止增量抓取');
+      return;
+    }
+
+    // 从第二页开始增量抓取
+    console.log('从第二页开始增量抓取');
+    await startCrawler(2, maxPage, props.username, processRecords);
 
     // 更新图表
     await chartRef.current?.updateCharts();
