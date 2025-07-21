@@ -34,7 +34,7 @@ function App(props: { username: string }) {
       return true;
     });
 
-    await sendMessage('setIsInited', { isInited: true }, 'background');
+    await sendMessage('setIsInited', { username: props.username, isInited: true }, 'background');
     console.log('初始化余额历史数据完成');
 
     setCrawlerProgress({ isLoading: false, currentPage: 0, totalPages: 0 });
@@ -74,7 +74,7 @@ function App(props: { username: string }) {
     const maxPage = parseBalanceMaxPage(document);
 
     // 检查是否已经初始化过
-    const isInited = await sendMessage('getIsInited', undefined, 'background');
+    const isInited = await sendMessage('getIsInited', { username: props.username }, 'background');
 
     if (!isInited) {
       // 首次初始化，抓取所有历史数据

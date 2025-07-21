@@ -14,15 +14,15 @@ import { browser } from 'wxt/browser';
 
 // ==================== 初始化状态管理 ====================
 const setupInitStateHandlers = () => {
-  onMessage('getIsInited', async () => {
-    const isInited = await storage.getItem<boolean>('local:isInited');
+  onMessage('getIsInited', async ({ data: { username } }) => {
+    const isInited = await storage.getItem<boolean>(`local:isInited:${username}`);
     console.log('getIsInited', isInited);
     return isInited ?? false;
   });
 
-  onMessage('setIsInited', async ({ data: { isInited } }) => {
+  onMessage('setIsInited', async ({ data: { username, isInited } }) => {
     console.log('setIsInited', isInited);
-    await storage.setItem('local:isInited', isInited);
+    await storage.setItem(`local:isInited:${username}`, isInited);
   });
 };
 
