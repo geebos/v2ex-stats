@@ -20,13 +20,15 @@ function App(props: { username: string }) {
 
   // 初始化余额历史数据（首次抓取）
   const initBalanceRecords = async (maxPage: number) => {
-    console.log('开始初始化余额历史数据, 最大页数:', maxPage);
+    const startPage = await sendMessage('getLatestCrawlerPage', { username: props.username }, 'background');
+    console.log('开始初始化余额历史数据, 最大页数:', maxPage, '开始页数:', startPage);
 
     setCrawlerProgress({ isLoading: true, currentPage: 0, totalPages: maxPage });
 
-    await startCrawler(maxPage, props.username, async (page, records) => {
+    await startCrawler(startPage, maxPage, props.username, async (page, records) => {
       console.log(`抓取第${page}页:`, records.length, '条记录', records);
       await sendMessage('appendBalanceRecords', { records }, 'background');
+      await sendMessage('setLatestCrawlerPage', { username: props.username, page: page }, 'background');
 
       setCrawlerProgress({ isLoading: true, currentPage: page, totalPages: maxPage });
 
@@ -48,8 +50,8 @@ function App(props: { username: string }) {
 
     console.log('开始增量抓取, 最新时间戳:', latestTimestamp);
 
-    await startCrawler(maxPage, props.username, async (page, records) => {
-      // 过滤出新的记录（时间戳大于等于最新记录的时间戳）
+    await startCrawler(1, maxPage, props.username, async (page, records) => {
+      // 过滤出新的记录（时间戳大于等于最新记录的时间戳） 
       const newRecords = records.filter(record => record.timestamp >= latestTimestamp);
 
       if (newRecords.length > 0) {

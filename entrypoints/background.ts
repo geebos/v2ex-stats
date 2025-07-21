@@ -24,6 +24,15 @@ const setupInitStateHandlers = () => {
     console.log('setIsInited', isInited);
     await storage.setItem(`local:isInited:${username}`, isInited);
   });
+
+  onMessage('getLatestCrawlerPage', async ({ data: { username } }) => {
+    const latestCrawlerPage = await storage.getItem<number>(`local:latestCrawlerPage:${username}`);
+    return latestCrawlerPage ?? 1;
+  });
+
+  onMessage('setLatestCrawlerPage', async ({ data: { username, page } }) => {
+    await storage.setItem(`local:latestCrawlerPage:${username}`, page);
+  });
 };
 
 // ==================== 余额记录基础操作 ====================

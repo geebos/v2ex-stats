@@ -93,13 +93,14 @@ const crawlBalanceRecordsByPage = async (page: number, parser = new DOMParser())
 // ==================== 爬虫主流程 ====================
 // 启动爬虫，按页面顺序抓取余额记录
 const startCrawler = async (
+  startPage: number,
   maxPage: number, 
   username: string, 
   cb: (page: number, records: BalanceRecord[]) => Promise<boolean>
 ): Promise<void> => {
   if (!cb) return;
 
-  for (let page = 1; page <= maxPage; page++) {
+  for (let page = startPage; page <= maxPage; page++) {
     // 使用重试机制抓取当前页面数据
     const rawRecords = await withRetry(() => crawlBalanceRecordsByPage(page));
     
