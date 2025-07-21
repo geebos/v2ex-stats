@@ -141,7 +141,7 @@ const Tooltip = styled.div<{ isDarkMode: boolean }>`
   left: 50%;
   transform: translateX(-50%);
   background-color: rgba(0, 0, 0, 0.8);
-  color: ${props => props.isDarkMode ? '#adbac7' : '#374151'};
+  color: ${props => props.isDarkMode ? '#adbac7' : 'white'};
   padding: 8px 12px;
   border-radius: 4px;
   font-size: 12px;
