@@ -1,15 +1,16 @@
 import { onMessage } from "webext-bridge/background";
 import { storage } from "@wxt-dev/storage";
-import { 
-  aggregateBalanceRecordsByTime, 
-  aggregateBalanceRecordsByType, 
-  appendBalanceRecords, 
-  fillTimeSeriesGaps, 
-  getAllBalanceRecords, 
-  getLatestBalanceRecord, 
-  queryBalanceRecords 
+import {
+  aggregateBalanceRecordsByTime,
+  aggregateBalanceRecordsByType,
+  appendBalanceRecords,
+  fillTimeSeriesGaps,
+  getAllBalanceRecords,
+  getLatestBalanceRecord,
+  queryBalanceRecords
 } from "@/service/query";
 import { getStorageSize } from "@/service/storage";
+import { browser } from 'wxt/browser';
 
 // ==================== 初始化状态管理 ====================
 const setupInitStateHandlers = () => {
@@ -47,6 +48,10 @@ const setupBalanceRecordHandlers = () => {
 
 // ==================== 余额记录查询聚合 ====================
 const setupBalanceQueryHandler = () => {
+  browser.action.onClicked.addListener(async () => {
+    browser.tabs.create({ url: 'https://v2ex.com/balance' });
+  });
+
   onMessage('queryBalanceRecords', async ({ data: { username, granularity, aggType, recordType, start, end } }) => {
     console.log(`queryBalanceRecords: ${username}, ${granularity}, ${aggType}, ${recordType}, ${start}-${end}`);
 
