@@ -22,6 +22,8 @@ const balanceTypeId2ValueMap = new Map<number, string>(defaultBalanceRecordTypes
 // 类型值到ID的映射缓存
 const balanceTypeValue2IdMap = new Map<string, number>(defaultBalanceRecordTypes.map(type => [type.value, type.id]));
 
+const descSort = (a: number, b: number) => b - a;
+
 // ==================== 键值生成工具 ====================
 // 根据时间戳生成分片键：年|月格式
 const getShardingKey = (record: BalanceRecord): string => {
@@ -80,12 +82,12 @@ const getBalanceRecords = async (username: string, keys: StorageItemKey[]): Prom
     }
   }
   console.log('getBalanceRecords', username, keys, result);
-  return result.sort((a, b) => b.timestamp - a.timestamp);
+  return result.sort((a, b) => descSort(a.timestamp, b.timestamp));
 };
 
 // 将BalanceRecord对象压缩后存储
 const setBalanceRecords = async (key: StorageItemKey, records: BalanceRecord[]): Promise<void> => {
-  records = records.sort((a, b) => b.timestamp - a.timestamp);
+  records = records.sort((a, b) => descSort(a.timestamp, b.timestamp));
   const compactRecords: CompactBalanceRecord[] = [];
   for (const record of records) {
     compactRecords.push([record.timestamp, await getBalanceRecordTypeID(record.type), record.delta, record.balance]);
@@ -99,7 +101,7 @@ const setBalanceRecords = async (key: StorageItemKey, records: BalanceRecord[]):
 const getUniqueBalanceRecords = (records: BalanceRecord[]): BalanceRecord[] => {
   const uniqueMap = new Map<string, BalanceRecord>();
   records.forEach(record => uniqueMap.set(getUniqueKey(record), record));
-  return Array.from(uniqueMap.values()).sort((a, b) => b.timestamp - a.timestamp);
+  return Array.from(uniqueMap.values()).sort((a, b) => descSort(a.timestamp, b.timestamp));
 };
 
 // ==================== 时间处理工具 ====================
@@ -256,7 +258,7 @@ const aggregateBalanceRecordsByTime = (records: BalanceRecord[], granularity: Gr
     });
   }
 
-  return aggregated.sort((a, b) => b.timestamp - a.timestamp);
+  return aggregated.sort((a, b) => descSort(a.timestamp, b.timestamp));
 };
 
 // 按操作类型聚合记录：相同类型的记录合并为统计数据
@@ -352,7 +354,51 @@ const fillTimeSeriesGaps = (
     currentTimestamp = getNextTimestamp(currentTimestamp, granularity);
   }
 
-  return result.sort((a, b) => b.timestamp - a.timestamp);
+  return result.sort((a, b) => descSort(a.timestamp, b.timestamp));
+};
+
+// 对齐多个时间序列的时间点，缺失时间点补充默认记录
+const alignBanlanceRecordsTimeSeries = (series: BalanceRecord[][]): BalanceRecord[][] => {
+  if (series.length === 0 || series.length === 1) return series;
+
+  // 对每个序列按时间戳降序排序
+  const sortedSeries = series.map(serie =>
+    [...serie].sort((a, b) => descSort(a.timestamp, b.timestamp))
+  );
+
+  // 收集所有不同的时间戳
+  const allTimestamps = new Set<number>();
+  sortedSeries.forEach(serie => {
+    serie.forEach(record => allTimestamps.add(record.timestamp));
+  });
+
+  // 时间戳降序排列
+  const sortedTimestamps = Array.from(allTimestamps).sort(descSort);
+
+  // 初始化结果数组和游标数组
+  const alignedSeries: BalanceRecord[][] = sortedSeries.map(() => []);
+  const cursors = new Array(sortedSeries.length).fill(0);
+
+  // 使用第一个序列的用户名作为默认值
+  const username = sortedSeries[0][0].username ?? 'unknown';
+
+  // 遍历所有时间戳，为每个序列填充记录
+  sortedTimestamps.forEach(timestamp => {
+    sortedSeries.forEach((serie, seriesIndex) => {
+      const cursor = cursors[seriesIndex];
+
+      if (cursor < serie.length && serie[cursor].timestamp === timestamp) {
+        // 时间戳匹配，使用原记录并推进游标
+        alignedSeries[seriesIndex].push(serie[cursor]);
+        cursors[seriesIndex]++;
+      } else {
+        // 时间戳不匹配，插入默认记录
+        alignedSeries[seriesIndex].push({ username, timestamp, balance: 0, delta: 0, type: '' });
+      }
+    });
+  });
+
+  return alignedSeries;
 };
 
 // ==================== 导出 ====================
@@ -364,6 +410,7 @@ export {
   aggregateBalanceRecordsByTime,
   fillTimeSeriesGaps,
   aggregateBalanceRecordsByType,
+  alignBanlanceRecordsTimeSeries,
   // 为测试导出的内部函数
   getBalanceRecords,
   setBalanceRecords

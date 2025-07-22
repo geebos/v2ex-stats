@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { BalanceRecord, CompactBalanceRecord } from '@/types/types';
-import { aggregateBalanceRecordsByTime, fillTimeSeriesGaps, aggregateBalanceRecordsByType, getBalanceRecords, setBalanceRecords } from './query';
+import { aggregateBalanceRecordsByTime, fillTimeSeriesGaps, aggregateBalanceRecordsByType, alignBanlanceRecordsTimeSeries, getBalanceRecords, setBalanceRecords } from './query';
 
 describe('aggregateBalanceRecords', () => {
   // 测试数据工厂函数
@@ -794,5 +794,321 @@ describe('setBalanceRecords', () => {
     ];
     
     expect(storage.setItem).toHaveBeenCalledWith(key, expectedCompactRecords);
+  });
+});
+
+describe('alignBanlanceRecordsTimeSeries', () => {
+  // 测试数据工厂函数
+  const createRecord = (
+    timestamp: number,
+    balance: number,
+    delta: number = 0,
+    type: string = 'test',
+    username: string = 'testuser'
+  ): BalanceRecord => ({
+    timestamp,
+    balance,
+    delta,
+    type,
+    username
+  });
+
+  it('应该返回空数组当输入为空数组时', () => {
+    const result = alignBanlanceRecordsTimeSeries([]);
+    expect(result).toEqual([]);
+  });
+
+  it('应该返回原数组当输入只有一个序列时', () => {
+    const series = [
+      [
+        createRecord(1609459200000, 100, 10, '充值', 'user1'),
+        createRecord(1609459260000, 120, 20, '充值', 'user1'),
+      ]
+    ];
+    
+    const result = alignBanlanceRecordsTimeSeries(series);
+    
+    expect(result).toHaveLength(1);
+    expect(result[0]).toHaveLength(2);
+    // 验证排序：按时间戳从小到大
+    expect(result[0][0].timestamp).toBe(1609459200000);
+    expect(result[0][1].timestamp).toBe(1609459260000);
+  });
+
+  it('应该对单个序列中的记录按时间戳排序', () => {
+    const series = [
+      [
+        createRecord(1609459260000, 120, 20, '充值', 'user1'), // 较晚的时间
+        createRecord(1609459200000, 100, 10, '充值', 'user1'), // 较早的时间
+        createRecord(1609459320000, 140, 20, '充值', 'user1'), // 最晚的时间
+      ]
+    ];
+    
+    const result = alignBanlanceRecordsTimeSeries(series);
+    
+    expect(result).toHaveLength(1);
+    expect(result[0]).toHaveLength(3);
+    // 单个序列直接返回原数组，保持输入顺序
+    expect(result[0][0].timestamp).toBe(1609459260000);
+    expect(result[0][1].timestamp).toBe(1609459200000);
+    expect(result[0][2].timestamp).toBe(1609459320000);
+  });
+
+  it('应该对齐两个序列的时间戳', () => {
+    const series = [
+      [
+        createRecord(1609459200000, 100, 10, '充值', 'user1'),
+        createRecord(1609459320000, 140, 40, '充值', 'user1'),
+      ],
+      [
+        createRecord(1609459260000, 200, 20, '消费', 'user2'),
+        createRecord(1609459380000, 180, -20, '消费', 'user2'),
+      ]
+    ];
+    
+    const result = alignBanlanceRecordsTimeSeries(series);
+    
+    expect(result).toHaveLength(2);
+    
+    // 两个序列都应该有4条记录（所有时间戳）
+    expect(result[0]).toHaveLength(4);
+    expect(result[1]).toHaveLength(4);
+    
+    // 验证第一个序列的对齐（降序排列）
+    expect(result[0][0].timestamp).toBe(1609459380000); // 插入的默认记录
+    expect(result[0][0].balance).toBe(0);
+    expect(result[0][0].delta).toBe(0);
+    expect(result[0][0].type).toBe('');
+    expect(result[0][0].username).toBe('user1'); // 使用第一个序列的username作为默认值
+    
+    expect(result[0][1].timestamp).toBe(1609459320000); // 原始记录
+    expect(result[0][1].balance).toBe(140);
+    expect(result[0][1].username).toBe('user1');
+    
+    expect(result[0][2].timestamp).toBe(1609459260000); // 插入的默认记录
+    expect(result[0][2].balance).toBe(0);
+    expect(result[0][2].delta).toBe(0);
+    expect(result[0][2].type).toBe('');
+    expect(result[0][2].username).toBe('user1');
+    
+    expect(result[0][3].timestamp).toBe(1609459200000); // 原始记录
+    expect(result[0][3].balance).toBe(100);
+    expect(result[0][3].username).toBe('user1');
+    
+    // 验证第二个序列的对齐（降序排列）
+    expect(result[1][0].timestamp).toBe(1609459380000); // 原始记录
+    expect(result[1][0].balance).toBe(180);
+    expect(result[1][0].username).toBe('user2');
+    
+    expect(result[1][1].timestamp).toBe(1609459320000); // 插入的默认记录
+    expect(result[1][1].balance).toBe(0);
+    expect(result[1][1].delta).toBe(0);
+    expect(result[1][1].type).toBe('');
+    expect(result[1][1].username).toBe('user1'); // 使用第一个序列的username作为默认值
+    
+    expect(result[1][2].timestamp).toBe(1609459260000); // 原始记录
+    expect(result[1][2].balance).toBe(200);
+    expect(result[1][2].username).toBe('user2');
+    
+    expect(result[1][3].timestamp).toBe(1609459200000); // 插入的默认记录
+    expect(result[1][3].balance).toBe(0);
+    expect(result[1][3].delta).toBe(0);
+    expect(result[1][3].type).toBe('');
+    expect(result[1][3].username).toBe('user1'); // 使用第一个序列的username作为默认值
+  });
+
+  it('应该处理完全不重叠的时间戳', () => {
+    const series = [
+      [
+        createRecord(1609459200000, 100, 10, '充值', 'user1'),
+        createRecord(1609459260000, 120, 20, '充值', 'user1'),
+      ],
+      [
+        createRecord(1609459320000, 200, 30, '消费', 'user2'),
+        createRecord(1609459380000, 170, -30, '消费', 'user2'),
+      ]
+    ];
+    
+    const result = alignBanlanceRecordsTimeSeries(series);
+    
+    expect(result).toHaveLength(2);
+    expect(result[0]).toHaveLength(4);
+    expect(result[1]).toHaveLength(4);
+    
+    // 第一个序列在前两个时间点（最大的两个）应该是默认记录（降序排列）
+    expect(result[0][0].timestamp).toBe(1609459380000);
+    expect(result[0][0].balance).toBe(0);
+    expect(result[0][0].username).toBe('user1');
+    
+    expect(result[0][1].timestamp).toBe(1609459320000);
+    expect(result[0][1].balance).toBe(0);
+    expect(result[0][1].username).toBe('user1');
+    
+    // 第二个序列在后两个时间点（最小的两个）应该是默认记录
+    expect(result[1][2].timestamp).toBe(1609459260000);
+    expect(result[1][2].balance).toBe(0);
+    expect(result[1][2].username).toBe('user1'); // 使用第一个序列的username作为默认值
+    
+    expect(result[1][3].timestamp).toBe(1609459200000);
+    expect(result[1][3].balance).toBe(0);
+    expect(result[1][3].username).toBe('user1'); // 使用第一个序列的username作为默认值
+  });
+
+  it('应该处理部分重叠的时间戳', () => {
+    const series = [
+      [
+        createRecord(1609459200000, 100, 10, '充值', 'user1'),
+        createRecord(1609459260000, 120, 20, '充值', 'user1'),
+        createRecord(1609459320000, 140, 20, '充值', 'user1'),
+      ],
+      [
+        createRecord(1609459260000, 200, 20, '消费', 'user2'), // 与第一个序列重叠
+        createRecord(1609459380000, 180, -20, '消费', 'user2'),
+      ]
+    ];
+    
+    const result = alignBanlanceRecordsTimeSeries(series);
+    
+    expect(result).toHaveLength(2);
+    expect(result[0]).toHaveLength(4);
+    expect(result[1]).toHaveLength(4);
+    
+    // 验证重叠时间点的记录（降序排列，260000在索引2位置）
+    expect(result[0][2].timestamp).toBe(1609459260000);
+    expect(result[0][2].balance).toBe(120); // 第一个序列的原始记录
+    expect(result[0][2].username).toBe('user1');
+    
+    expect(result[1][2].timestamp).toBe(1609459260000);
+    expect(result[1][2].balance).toBe(200); // 第二个序列的原始记录
+    expect(result[1][2].username).toBe('user2');
+  });
+
+  it('应该处理多个序列的复杂场景', () => {
+    const series = [
+      [
+        createRecord(1609459200000, 100, 10, '充值', 'user1'),
+        createRecord(1609459320000, 140, 40, '充值', 'user1'),
+      ],
+      [
+        createRecord(1609459260000, 200, 20, '消费', 'user2'),
+      ],
+      [
+        createRecord(1609459200000, 300, 30, '奖励', 'user3'),
+        createRecord(1609459260000, 320, 20, '奖励', 'user3'),
+        createRecord(1609459320000, 350, 30, '奖励', 'user3'),
+      ]
+    ];
+    
+    const result = alignBanlanceRecordsTimeSeries(series);
+    
+    expect(result).toHaveLength(3);
+    expect(result[0]).toHaveLength(3);
+    expect(result[1]).toHaveLength(3);
+    expect(result[2]).toHaveLength(3);
+    
+    // 验证每个序列在各个时间点的记录（降序排列）
+    // 序列1: 有记录在 200000, 320000，缺失 260000
+    expect(result[0][0].timestamp).toBe(1609459320000);
+    expect(result[0][0].balance).toBe(140);
+    expect(result[0][1].timestamp).toBe(1609459260000);
+    expect(result[0][1].balance).toBe(0); // 默认记录
+    expect(result[0][2].timestamp).toBe(1609459200000);
+    expect(result[0][2].balance).toBe(100);
+    
+    // 序列2: 只有记录在 260000，缺失 200000, 320000
+    expect(result[1][0].timestamp).toBe(1609459320000);
+    expect(result[1][0].balance).toBe(0); // 默认记录
+    expect(result[1][1].timestamp).toBe(1609459260000);
+    expect(result[1][1].balance).toBe(200);
+    expect(result[1][2].timestamp).toBe(1609459200000);
+    expect(result[1][2].balance).toBe(0); // 默认记录
+    
+    // 序列3: 有记录在所有时间点
+    expect(result[2][0].timestamp).toBe(1609459320000);
+    expect(result[2][0].balance).toBe(350);
+    expect(result[2][1].timestamp).toBe(1609459260000);
+    expect(result[2][1].balance).toBe(320);
+    expect(result[2][2].timestamp).toBe(1609459200000);
+    expect(result[2][2].balance).toBe(300);
+  });
+
+  it('应该处理空序列与非空序列混合', () => {
+    const series = [
+      [
+        createRecord(1609459200000, 100, 10, '充值', 'user1'),
+      ],
+      [], // 空序列
+      [
+        createRecord(1609459260000, 200, 20, '消费', 'user3'),
+      ]
+    ];
+    
+    const result = alignBanlanceRecordsTimeSeries(series);
+    
+    expect(result).toHaveLength(3);
+    expect(result[0]).toHaveLength(2);
+    expect(result[1]).toHaveLength(2);
+    expect(result[2]).toHaveLength(2);
+    
+    // 第二个序列是空的，所有记录都应该是默认记录，但使用第一个序列的username
+    expect(result[1][0].username).toBe('user1'); // 使用第一个序列的username作为默认值
+    expect(result[1][1].username).toBe('user1'); // 使用第一个序列的username作为默认值
+    expect(result[1][0].balance).toBe(0);
+    expect(result[1][1].balance).toBe(0);
+  });
+
+  it('应该保持插入记录的其他属性正确', () => {
+    const series = [
+      [
+        createRecord(1609459200000, 100, 10, '充值', 'user1'),
+      ],
+      [
+        createRecord(1609459260000, 200, -20, '消费', 'user2'),
+      ]
+    ];
+    
+    const result = alignBanlanceRecordsTimeSeries(series);
+    
+    // 验证插入的默认记录的属性（降序排列）
+    expect(result[0][0]).toEqual({
+      username: 'user1',
+      timestamp: 1609459260000,
+      balance: 0,
+      delta: 0,
+      type: ''
+    });
+    
+    expect(result[1][1]).toEqual({
+      username: 'user1', // 使用第一个序列的username作为默认值
+      timestamp: 1609459200000,
+      balance: 0,
+      delta: 0,
+      type: ''
+    });
+  });
+
+  it('应该正确处理相同时间戳的记录', () => {
+    const series = [
+      [
+        createRecord(1609459200000, 100, 10, '充值', 'user1'),
+        createRecord(1609459260000, 120, 20, '充值', 'user1'),
+      ],
+      [
+        createRecord(1609459200000, 200, -10, '消费', 'user2'), // 相同时间戳
+        createRecord(1609459260000, 190, -10, '消费', 'user2'), // 相同时间戳
+      ]
+    ];
+    
+    const result = alignBanlanceRecordsTimeSeries(series);
+    
+    expect(result).toHaveLength(2);
+    expect(result[0]).toHaveLength(2);
+    expect(result[1]).toHaveLength(2);
+    
+    // 所有记录都应该是原始记录，没有插入的默认记录（降序排列）
+    expect(result[0][0].balance).toBe(120);
+    expect(result[0][1].balance).toBe(100);
+    expect(result[1][0].balance).toBe(190);
+    expect(result[1][1].balance).toBe(200);
   });
 });

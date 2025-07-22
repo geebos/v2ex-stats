@@ -30,7 +30,7 @@ import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "re
 import styled from "styled-components";
 import { FaGithub, FaInfoCircle } from "react-icons/fa";
 import { sendMessage } from "webext-bridge/content-script";
-
+import { alignBanlanceRecordsTimeSeries } from "@/service/query";
 
 const chartsBackgroundColor = 'transparent';
 const chartsColors = [
@@ -404,12 +404,13 @@ const Chart = forwardRef((props: ChartProps, ref: React.Ref<any>) => {
       props.query({ ...baseQuery, aggType: 'agg_time', recordType: 'income' }),
       props.query({ ...baseQuery, aggType: 'agg_time', recordType: 'expense' })
     ]);
+    const [alignedAllRecords, alignedIncomeRecords, alignedExpenseRecords] = alignBanlanceRecordsTimeSeries([allRecords, incomeRecords, expenseRecords]);
     console.log('typeRecords', typeRecords);
-    console.log('allRecords', allRecords);
-    console.log('incomeRecords', incomeRecords);
-    console.log('expenseRecords', expenseRecords);
+    console.log('allRecords', allRecords, alignedAllRecords);
+    console.log('incomeRecords', incomeRecords, alignedIncomeRecords);
+    console.log('expenseRecords', expenseRecords, alignedExpenseRecords);
 
-    timeChart.current.setOption(getLineChartOption(allRecords, incomeRecords, expenseRecords, params.granularity));
+    timeChart.current.setOption(getLineChartOption(alignedAllRecords, alignedIncomeRecords, alignedExpenseRecords, params.granularity));
     console.log('更新时间图表', params, allRecords);
 
     const source = transformRecordsToPieChartSource(typeRecords);
