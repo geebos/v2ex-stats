@@ -16,7 +16,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "test:ui": "vitest --ui"
+    "test:ui": "vitest --ui",
+    "act": "act --secret-file .github/local/.secrets --env-file .github/local/.env --artifact-server-path .github/local/artifacts --container-architecture linux/amd64"
   },
   "dependencies": {
     "@types/jsdom": "^21.1.7",

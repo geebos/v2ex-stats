@@ -28,3 +28,8 @@ web-ext.config.ts
 
 # test
 coverage/
+
+# private files
+.secrets
+.env
+.github/local/

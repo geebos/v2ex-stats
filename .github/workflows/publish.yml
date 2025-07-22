@@ -4,6 +4,10 @@ on:
     tags:
       - v*
   workflow_dispatch:
+env:
+  CHROME_FILE_NAME: v2ex-stats-chrome-${{ github.ref_name }}
+  FIREFOX_FILE_NAME: v2ex-stats-firefox-${{ github.ref_name }}
+  SOURCES_FILE_NAME: v2ex-stats-sources-${{ github.ref_name }}
 jobs:
   ut:
     runs-on: ubuntu-latest
@@ -30,56 +34,34 @@ jobs:
         uses: actions/checkout@v4.2.2
       - name: Install deps
         run: pnpm install
-      - name: Build
-        run: pnpm zip && pnpm zip:firefox
-      - name: Upload
-        uses: actions/upload-artifact@v4.6.2
-        with:
-          name: build-output
-          path: |
-            output/v2ex-stats-chrome-${{ github.ref_name }}.zip
-            output/v2ex-stats-firefox-${{ github.ref_name }}.zip
-            output/v2ex-stats-sources-${{ github.ref_name }}.zip
-  release-chrome:
-    runs-on: ubuntu-latest
-    needs: ['build']
-    steps:
-      - name: Download
-        uses: actions/download-artifact@v4.3.0
-        with:
-          name: build-output
-      - name: Publish Chrome extension
-        uses: mnao305/chrome-extension-upload@v5.0.0
-        with:
-          extension-id: kclaclglgljalkhaihmicdlcnaacpghp
-          client-id: ${{ secrets.CLIENT_ID }}
-          client-secret: ${{ secrets.CLIENT_SECRET }}
-          refresh-token: ${{ secrets.REFRESH_TOKEN }}
-          file-path: v2ex-stats-chrome-${{ github.ref_name }}.zip
-  release-github:
-    runs-on: ubuntu-latest
-    needs: ['build']
-    permissions:
-      contents: write
-    steps:
-      - name: Download
-        uses: actions/download-artifact@v4.3.0
-        with:
-          name: build-output
-      - name: Create GitHub Release
+      - name: Release chrome extension
+        if: ${{ !env.ACT }}
+        run: |
+          pnpm zip
+          pnpm wxt submit --chrome-zip output/${{ env.CHROME_FILE_NAME }}.zip 
+        env:
+          CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
+          CHROME_CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          CHROME_CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          CHROME_REFRESH_TOKEN: ${{ secrets.REFRESH_TOKEN }}
+      - name: Release firefox extension
+        # if: ${{ !env.ACT }}
+        run: |
+          pnpm zip:firefox
+          pnpm wxt submit --firefox-zip output/${{ env.FIREFOX_FILE_NAME }}.zip --firefox-sources-zip output/${{ env.SOURCES_FILE_NAME }}.zip
+        env:
+          FIREFOX_JWT_ISSUER: ${{ secrets.FIREFOX_JWT_ISSUER }}
+          FIREFOX_JWT_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}
+          FIREFOX_EXTENSION_ID: ${{ secrets.FIREFOX_EXTENSION_ID }}
+      - name: Release to github
+        if: ${{ !env.ACT }}
         uses: softprops/action-gh-release@v2.3.2
         with:
           tag_name: ${{ github.ref_name }}
           files: |
-            v2ex-stats-chrome-${{ github.ref_name }}.zip
-            v2ex-stats-firefox-${{ github.ref_name }}.zip
-            v2ex-stats-source-${{ github.ref_name }}.zip
-  end:
-    runs-on: ubuntu-latest
-    needs: ['release-chrome', 'release-github']
-    steps:
-      - name: Finish
-        run: echo Finish
+            output/${{ env.CHROME_FILE_NAME }}.zip
+            output/${{ env.FIREFOX_FILE_NAME }}.zip
+            output/${{ env.SOURCES_FILE_NAME }}.zip
         
         
           
