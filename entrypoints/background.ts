@@ -57,9 +57,12 @@ const setupBalanceRecordHandlers = () => {
 
 // ==================== 余额记录查询聚合 ====================
 const setupBalanceQueryHandler = () => {
-  browser.action.onClicked.addListener(async () => {
-    browser.tabs.create({ url: 'https://v2ex.com/balance' });
-  });
+  if (browser.action) {
+    // TODO：兼容 Firefox 的 action 事件，wxt 编译的 v3 firefox 加载报错，先不处理
+    browser.action.onClicked.addListener(async () => {
+      browser.tabs.create({ url: 'https://v2ex.com/balance' });
+    });
+  }
 
   onMessage('queryBalanceRecords', async ({ data: { username, granularity, aggType, recordType, start, end } }) => {
     console.log(`queryBalanceRecords: ${username}, ${granularity}, ${aggType}, ${recordType}, ${start}-${end}`);
