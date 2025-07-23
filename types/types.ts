@@ -7,10 +7,10 @@ export interface BalanceRecord {
 }
 
 export interface PageInfo {
-  username: string;
-  isLoggedIn: boolean;
-  isBalancePage: boolean;
   isV2ex: boolean;
+  isLoggedIn: boolean;
+  username: string;
+  pathname: string;
 }
 
 export interface BalanceRecordQuery {

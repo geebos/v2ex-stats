@@ -611,6 +611,7 @@ function ChartApp(props: { username: string }) {
 
 // 尝试初始化余额图表
 export const tryInitBalanceChart = async (username: string) => {
+  console.log('尝试初始化余额图表', username);
   const anchor = document.querySelector('div.balance_area');
   if (!anchor?.parentElement) {
     console.log('没有找到定位元素');

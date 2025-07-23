@@ -2,11 +2,11 @@ import type { PageInfo } from '@/types/types';
 import { initCollect } from '@/service/time/collect';
 import { tryInitActivityBar } from '@/components/activity-bar';
 import { tryInitBalanceChart } from '@/components/balance-chart';
+import { tryInitActivityChart } from '@/components/activity-chart';
 
 // ==================== 页面检测和信息获取 ====================
 const detectAndGetInfo = (): PageInfo => {
   const isV2ex = /\.{0,1}v2ex\.com$/.test(window.location.hostname);
-  const isBalancePage = window.location.pathname === '/balance';
 
   const memberLink = Array.from(document.querySelectorAll('a'))
     .find(a => /^\/member\/[\w-]+$/.test(a.getAttribute('href') || ''));
@@ -16,7 +16,9 @@ const detectAndGetInfo = (): PageInfo => {
     ? memberLink.href.split('/').pop()?.trim() ?? ''
     : '';
 
-  const info: PageInfo = { isV2ex, isBalancePage, isLoggedIn, username };
+  const pathname = window.location.pathname;
+
+  const info: PageInfo = { isV2ex, isLoggedIn, username, pathname };
   console.log('页面信息:', info);
   return info;
 };
@@ -47,14 +49,17 @@ export default defineContentScript({
       return;
     }
 
-    if (info.isBalancePage) {
-      console.log('金币页面，初始化图表');
+    if (info.pathname === '/balance') {
       await tryInitBalanceChart(info.username);
     }
 
     if (info.isV2ex) {
       initCollect(info.username);
       await tryInitActivityBar(info.username);
+    }
+
+    if (info.pathname === `/member/${info.username}`) {
+      await tryInitActivityChart(info.username);
     }
   }
 }); 
