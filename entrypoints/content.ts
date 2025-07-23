@@ -1,9 +1,7 @@
 import type { PageInfo } from '@/types/types';
-import { createRoot } from 'react-dom/client';
-import { createElement } from 'react';
-import ChartApp from '@/components/chart';
 import { initCollect } from '@/service/time/collect';
 import { tryInitActivityBar } from '@/components/activity-bar';
+import { tryInitBalanceChart } from '@/components/balance-chart';
 
 // ==================== 页面检测和信息获取 ====================
 const detectAndGetInfo = (): PageInfo => {
@@ -21,29 +19,6 @@ const detectAndGetInfo = (): PageInfo => {
   const info: PageInfo = { isV2ex, isBalancePage, isLoggedIn, username };
   console.log('页面信息:', info);
   return info;
-};
-
-// ==================== 图表初始化 ====================
-const initChartApp = async (username: string) => {
-  const anchor = document.querySelector('div.balance_area');
-  if (!anchor?.parentElement) {
-    console.log('没有找到定位元素');
-    return;
-  }
-
-  const container = document.createElement('div');
-  Object.assign(container.style, {
-    width: '100%',
-    height: 'fit-content',
-    padding: '0',
-    margin: '0'
-  });
-
-  anchor.parentElement.appendChild(container);
-
-  createRoot(container).render(createElement(ChartApp, { username }));
-
-  console.log('图表初始化完成');
 };
 
 // ==================== 主入口 ====================
@@ -74,7 +49,7 @@ export default defineContentScript({
 
     if (info.isBalancePage) {
       console.log('金币页面，初始化图表');
-      await initChartApp(info.username);
+      await tryInitBalanceChart(info.username);
     }
 
     if (info.isV2ex) {

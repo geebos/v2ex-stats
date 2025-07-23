@@ -1,5 +1,5 @@
 // ==================== 第三方库 ====================
-import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
+import { createElement, forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import styled from "styled-components";
 import { FaGithub, FaInfoCircle } from "react-icons/fa";
 import { sendMessage } from "webext-bridge/content-script";
@@ -21,6 +21,7 @@ import { SVGRenderer } from 'echarts/renderers';
 import { BalanceRecord, BalanceRecordQuery, Granularity } from "@/types/types";
 import { parseBalanceMaxPage, parseBalanceRecord, parseBalanceRecords, startCrawler } from "@/service/balance/crawler";
 import { alignBanlanceRecordsTimeSeries } from "@/service/balance/query";
+import { createRoot } from "react-dom/client";
 
 // 注册 ECharts 组件
 echarts.use([
@@ -255,14 +256,14 @@ const getIsDarkMode = () => {
       return true;
     }
   }
-  
+
   // 检查原生 V2EX 的暗色模式切换按钮状态
   const lightToggle = document.querySelector('.light-toggle img');
   if (lightToggle) {
     console.log('V2EX original dark mode');
     return lightToggle.getAttribute('alt')?.toLowerCase() === 'dark';
   }
-  
+
   // 默认返回浅色模式
   console.log('isDarkMode', false, [...document.body.classList]);
   return false;
@@ -608,4 +609,25 @@ function ChartApp(props: { username: string }) {
   </>;
 }
 
-export default ChartApp;
+// 尝试初始化余额图表
+export const tryInitBalanceChart = async (username: string) => {
+  const anchor = document.querySelector('div.balance_area');
+  if (!anchor?.parentElement) {
+    console.log('没有找到定位元素');
+    return;
+  }
+
+  const container = document.createElement('div');
+  Object.assign(container.style, {
+    width: '100%',
+    height: 'fit-content',
+    padding: '0',
+    margin: '0'
+  });
+
+  anchor.parentElement.appendChild(container);
+
+  createRoot(container).render(createElement(ChartApp, { username }));
+
+  console.log('图表初始化完成');
+};
