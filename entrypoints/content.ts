@@ -1,7 +1,7 @@
 import type { PageInfo } from '@/types/types';
 import { createRoot } from 'react-dom/client';
 import { createElement } from 'react';
-import App from '@/components/app';
+import ChartApp from '@/components/chart';
 import { initCollect } from '@/service/time/collect';
 
 // ==================== 页面检测和信息获取 ====================
@@ -23,7 +23,7 @@ const detectAndGetInfo = (): PageInfo => {
 };
 
 // ==================== 图表初始化 ====================
-const initApp = async (username: string) => {
+const initChartApp = async (username: string) => {
   const anchor = document.querySelector('div.balance_area');
   if (!anchor?.parentElement) {
     console.log('没有找到定位元素');
@@ -40,7 +40,7 @@ const initApp = async (username: string) => {
 
   anchor.parentElement.appendChild(container);
 
-  createRoot(container).render(createElement(App, { username }));
+  createRoot(container).render(createElement(ChartApp, { username }));
 
   console.log('图表初始化完成');
 };
@@ -73,7 +73,7 @@ export default defineContentScript({
 
     if (info.isBalancePage) {
       console.log('金币页面，初始化图表');
-      await initApp(info.username);
+      await initChartApp(info.username);
     }
     if (info.isV2ex) {
       initCollect(info.username);
