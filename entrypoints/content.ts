@@ -2,10 +2,11 @@ import type { PageInfo } from '@/types/types';
 import { createRoot } from 'react-dom/client';
 import { createElement } from 'react';
 import App from '@/components/app';
+import { initCollect } from '@/service/time/collect';
 
 // ==================== 页面检测和信息获取 ====================
 const detectAndGetInfo = (): PageInfo => {
-  const isV2ex = window.location.hostname === 'v2ex.com';
+  const isV2ex = window.location.hostname.endsWith('.v2ex.com');
   const isBalancePage = window.location.pathname === '/balance';
 
   const memberLink = Array.from(document.querySelectorAll('a'))
@@ -65,11 +66,17 @@ export default defineContentScript({
 
     const info = detectAndGetInfo();
 
-    if (!info.isBalancePage) {
-      console.log('不是金币页面，跳过');
+    if (!info.isLoggedIn) {
+      console.log('用户未登录，跳过');
       return;
     }
 
-    await initApp(info.username);
-  },
+    if (info.isBalancePage) {
+      console.log('金币页面，初始化图表');
+      await initApp(info.username);
+    }
+    if (info.isV2ex) {
+      initCollect(info.username);
+    }
+  }
 }); 
