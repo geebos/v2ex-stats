@@ -30,7 +30,7 @@ import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "re
 import styled from "styled-components";
 import { FaGithub, FaInfoCircle } from "react-icons/fa";
 import { sendMessage } from "webext-bridge/content-script";
-import { alignBanlanceRecordsTimeSeries } from "@/service/query";
+import { alignBanlanceRecordsTimeSeries } from "@/service/balance/query";
 
 const chartsBackgroundColor = 'transparent';
 const chartsColors = [

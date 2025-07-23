@@ -2,7 +2,7 @@ import { BalanceRecord, BalanceRecordQuery } from "@/types/types";
 import Chart, { CrawlerProgress } from "./chart";
 import { useEffect, useRef, useState } from "react";
 import { sendMessage } from "webext-bridge/content-script";
-import { parseBalanceMaxPage, parseBalanceRecord, parseBalanceRecords, startCrawler } from "@/service/crawler";
+import { parseBalanceMaxPage, parseBalanceRecord, parseBalanceRecords, startCrawler } from "@/service/balance/crawler";
 
 // 查询余额记录
 async function queryBalanceRecords(query: BalanceRecordQuery) {
