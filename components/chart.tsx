@@ -248,15 +248,24 @@ function formatBytes(bytes: number): string {
 
 // ==================== 图表配置函数 ====================
 const getIsDarkMode = () => {
-  let isDarkMode = false;
+  // 检查 V2EX Polish 扩展的暗色模式类名
   for (const c of document.body.classList) {
     if (c.toLowerCase().includes('dark')) {
-      isDarkMode = true;
-      break;
+      console.log('V2EX Polish dark mode');
+      return true;
     }
   }
-  console.log('isDarkMode', isDarkMode, [...document.body.classList]);
-  return isDarkMode;
+  
+  // 检查原生 V2EX 的暗色模式切换按钮状态
+  const lightToggle = document.querySelector('.light-toggle img');
+  if (lightToggle) {
+    console.log('V2EX original dark mode');
+    return lightToggle.getAttribute('alt')?.toLowerCase() === 'dark';
+  }
+  
+  // 默认返回浅色模式
+  console.log('isDarkMode', false, [...document.body.classList]);
+  return false;
 }
 
 const adjustDarkMode = (option: echarts.EChartsCoreOption) => {
