@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { createElement } from 'react';
 import ChartApp from '@/components/chart';
 import { initCollect } from '@/service/time/collect';
+import { tryInitActivityBar } from '@/components/activity-bar';
 
 // ==================== 页面检测和信息获取 ====================
 const detectAndGetInfo = (): PageInfo => {
@@ -75,8 +76,10 @@ export default defineContentScript({
       console.log('金币页面，初始化图表');
       await initChartApp(info.username);
     }
+
     if (info.isV2ex) {
       initCollect(info.username);
+      await tryInitActivityBar(info.username);
     }
   }
 }); 

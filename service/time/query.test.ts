@@ -94,10 +94,18 @@ describe('updateMonthTimeRecord', () => {
         { timestamp: baseTimestamp, seconds: 600 }
       ];
       
-      vi.mocked(storage.getItem).mockResolvedValueOnce(existingRecords);
+      // Mock 版本获取和数据获取
+      vi.mocked(storage.getItem)
+        .mockResolvedValueOnce(0) // 版本获取
+        .mockResolvedValueOnce(existingRecords); // 数据获取
       
       await updateMonthTimeRecord(username, newRecord);
       
+      // 期望设置版本和数据
+      expect(storage.setItem).toHaveBeenCalledWith(
+        `local:monthTimeRecords:${username}:version`,
+        newRecord.timestamp
+      );
       expect(storage.setItem).toHaveBeenCalledWith(
         'local:monthTimeRecords:testuser',
         [{ timestamp: baseTimestamp, seconds: 900 }] // 600 + 300 = 900
@@ -115,10 +123,18 @@ describe('updateMonthTimeRecord', () => {
         { timestamp: hour1, seconds: 600 }
       ];
       
-      vi.mocked(storage.getItem).mockResolvedValueOnce(existingRecords);
+      // Mock 版本获取和数据获取
+      vi.mocked(storage.getItem)
+        .mockResolvedValueOnce(0) // 版本获取
+        .mockResolvedValueOnce(existingRecords); // 数据获取
       
       await updateMonthTimeRecord(username, newRecord);
       
+      // 期望设置版本和数据
+      expect(storage.setItem).toHaveBeenCalledWith(
+        `local:monthTimeRecords:${username}:version`,
+        newRecord.timestamp
+      );
       expect(storage.setItem).toHaveBeenCalledWith(
         'local:monthTimeRecords:testuser',
         [
@@ -141,10 +157,18 @@ describe('updateMonthTimeRecord', () => {
         { timestamp: hour2, seconds: 150 }
       ];
       
-      vi.mocked(storage.getItem).mockResolvedValueOnce(existingRecords);
+      // Mock 版本获取和数据获取
+      vi.mocked(storage.getItem)
+        .mockResolvedValueOnce(0) // 版本获取
+        .mockResolvedValueOnce(existingRecords); // 数据获取
       
       await updateMonthTimeRecord(username, newRecord);
       
+      // 期望设置版本和数据
+      expect(storage.setItem).toHaveBeenCalledWith(
+        `local:monthTimeRecords:${username}:version`,
+        newRecord.timestamp
+      );
       expect(storage.setItem).toHaveBeenCalledWith(
         'local:monthTimeRecords:testuser',
         [
@@ -169,10 +193,18 @@ describe('updateMonthTimeRecord', () => {
         { timestamp: hour3, seconds: 300 }
       ];
       
-      vi.mocked(storage.getItem).mockResolvedValueOnce(existingRecords);
+      // Mock 版本获取和数据获取
+      vi.mocked(storage.getItem)
+        .mockResolvedValueOnce(0) // 版本获取
+        .mockResolvedValueOnce(existingRecords); // 数据获取
       
       await updateMonthTimeRecord(username, newRecord);
       
+      // 期望设置版本和数据
+      expect(storage.setItem).toHaveBeenCalledWith(
+        `local:monthTimeRecords:${username}:version`,
+        newRecord.timestamp
+      );
       expect(storage.setItem).toHaveBeenCalledWith(
         'local:monthTimeRecords:testuser',
         [
@@ -196,10 +228,18 @@ describe('updateMonthTimeRecord', () => {
         { timestamp: day1Hour23, seconds: 480 }
       ];
       
-      vi.mocked(storage.getItem).mockResolvedValueOnce(existingRecords);
+      // Mock 版本获取和数据获取
+      vi.mocked(storage.getItem)
+        .mockResolvedValueOnce(0) // 版本获取
+        .mockResolvedValueOnce(existingRecords); // 数据获取
       
       await updateMonthTimeRecord(username, newRecord);
       
+      // 期望设置版本和数据
+      expect(storage.setItem).toHaveBeenCalledWith(
+        `local:monthTimeRecords:${username}:version`,
+        newRecord.timestamp
+      );
       expect(storage.setItem).toHaveBeenCalledWith(
         'local:monthTimeRecords:testuser',
         [
@@ -231,10 +271,18 @@ describe('updateMonthTimeRecord', () => {
         { timestamp: getNearestHour(record.timestamp), seconds: 3600 } // 1小时
       ];
       
-      vi.mocked(storage.getItem).mockResolvedValueOnce(existingRecords);
+      // Mock 版本获取和数据获取
+      vi.mocked(storage.getItem)
+        .mockResolvedValueOnce(0) // 版本获取
+        .mockResolvedValueOnce(existingRecords); // 数据获取
       
       await updateMonthTimeRecord(username, record);
       
+      // 期望设置版本和数据
+      expect(storage.setItem).toHaveBeenCalledWith(
+        `local:monthTimeRecords:${username}:version`,
+        record.timestamp
+      );
       expect(storage.setItem).toHaveBeenCalledWith(
         'local:monthTimeRecords:testuser',
         [{ timestamp: getNearestHour(record.timestamp), seconds: 10800 }] // 3600 + 7200 = 10800
@@ -251,10 +299,14 @@ describe('updateMonthTimeRecord', () => {
         { timestamp: getNearestHour(record.timestamp), seconds: 600 }
       ];
       
-      vi.mocked(storage.getItem).mockResolvedValueOnce(existingRecords);
+      // Mock 版本获取和数据获取
+      vi.mocked(storage.getItem)
+        .mockResolvedValueOnce(0) // 版本获取
+        .mockResolvedValueOnce(existingRecords); // 数据获取
       
       await updateMonthTimeRecord(username, record);
       
+      expect(console.log).toHaveBeenCalledWith(`更新版本, 更新前版本 0, 更新后版本 ${record.timestamp}, 间隔 ${record.timestamp / 1000} 秒`);
       expect(console.log).toHaveBeenCalledWith('更新月记录，查询结果:', existingRecords, '新记录:', record);
       expect(console.log).toHaveBeenCalledWith('更新月记录, 更新后', [
         { timestamp: getNearestHour(record.timestamp), seconds: 900 }
@@ -265,13 +317,17 @@ describe('updateMonthTimeRecord', () => {
       const username = 'testuser';
       const record = createRecord(1609459230000, 300);
       
-      vi.mocked(storage.getItem).mockResolvedValueOnce(null);
+      // Mock 版本获取和数据获取（null 表示首次创建）
+      vi.mocked(storage.getItem)
+        .mockResolvedValueOnce(null) // 版本获取
+        .mockResolvedValueOnce(null); // 数据获取
       
       await updateMonthTimeRecord(username, record);
       
+      expect(console.log).toHaveBeenCalledWith(`更新版本, 更新前版本 null, 更新后版本 ${record.timestamp}, 间隔 ${record.timestamp / 1000} 秒`);
       expect(console.log).toHaveBeenCalledWith('更新月记录，查询结果:', null, '新记录:', record);
-      // 首条记录创建时不会调用第二个日志
-      expect(console.log).toHaveBeenCalledTimes(1);
+      // 首条记录创建时只会调用这两个日志
+      expect(console.log).toHaveBeenCalledTimes(2);
     });
   });
 });

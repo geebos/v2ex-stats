@@ -6,6 +6,7 @@ export default defineConfig({
     include: [
       'service/**/*.test.{ts,js}',
       'entrypoints/**/*.test.{ts,js}',
+      'components/**/*.test.{ts,tsx}',
       'tests/**/*.test.{ts,js}'
     ],
     // 排除目录

@@ -38,7 +38,7 @@ const updateMonthTimeRecord = async (username: string, record: UsedTimeRecord) =
   console.log('更新月记录，查询结果:', timeRecords, '新记录:', record);
 
   // 如果没有历史记录，创建第一条记录
-  if (timeRecords === null || timeRecords?.length === 0) {
+  if (!timeRecords || timeRecords.length === 0) {
     timeRecords = [{ timestamp: getNearestHour(record.timestamp), seconds: record.seconds }];
     await storage.setItem(`local:monthTimeRecords:${username}`, timeRecords);
     return;
@@ -65,7 +65,7 @@ const updateMonthTimeRecord = async (username: string, record: UsedTimeRecord) =
 const getTodayTotalUsedSeconds = async (username: string) => {
   const timeRecords = await storage.getItem<UsedTimeRecord[]>(`local:monthTimeRecords:${username}`);
 
-  if (timeRecords === null || timeRecords?.length === 0) {
+  if (!timeRecords || timeRecords.length === 0) {
     return 0;
   }
 
