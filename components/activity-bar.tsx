@@ -1,5 +1,5 @@
 import { getTodayTotalUsedSeconds } from "@/service/time/query";
-import { createElement } from "react";
+import { createElement, useMemo } from "react";
 import { createRoot } from "react-dom/client";
 import styled from 'styled-components';
 
@@ -67,8 +67,12 @@ export const formatTime = (seconds: number, option?: {hour: string, minute: stri
 
 // 活动状态条组件
 const ActivityBar = (props: ActivityBarProps) => {
-  const formattedTime = formatTime(props.seconds, {hour: 'h', minute: 'm', second: 's'});
-  const formattedReadableTime = formatTime(props.seconds, {hour: '小时', minute: '分钟', second: '秒'});
+  const formattedTime = useMemo(() => {
+    return formatTime(props.seconds);
+  }, [props.seconds]);
+  const formattedReadableTime = useMemo(() => {
+    return formatTime(props.seconds, {hour: '小时', minute: '分钟', second: '秒'});
+  }, [props.seconds]);
 
   return (
     <Container>
