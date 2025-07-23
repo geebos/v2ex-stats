@@ -101,15 +101,15 @@ const LabelRow = styled.div`
   align-items: flex-start;
 `;
 
-const Label = styled.div<{ isDarkMode: boolean }>`
+const Label = styled.div<{ $isDarkMode: boolean }>`
   padding: 8px 16px;
-  border: 1px solid ${props => props.isDarkMode ? '#adbac7' : '#d1d5db'};
+  border: 1px solid ${props => props.$isDarkMode ? '#adbac7' : '#d1d5db'};
   border-radius: 6px;
-  background-color: ${props => props.isDarkMode ? 'transparent' : '#f9fafb'};
+  background-color: ${props => props.$isDarkMode ? 'transparent' : '#f9fafb'};
   cursor: pointer;
   user-select: none;
   font-size: 14px;
-  color: ${props => props.isDarkMode ? '#adbac7' : '#374151'};
+  color: ${props => props.$isDarkMode ? '#adbac7' : '#374151'};
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
@@ -118,8 +118,8 @@ const Label = styled.div<{ isDarkMode: boolean }>`
   box-sizing: border-box;
 
   &:hover {
-    filter: ${props => props.isDarkMode ? 'invert(0.5)' : 'none'};
-    background-color: ${props => props.isDarkMode ? 'transparent' : '#e5e7eb'};
+    filter: ${props => props.$isDarkMode ? 'invert(0.5)' : 'none'};
+    background-color: ${props => props.$isDarkMode ? 'transparent' : '#e5e7eb'};
   }
 
   &:active {
@@ -138,13 +138,13 @@ const InfoLabel = styled(Label)`
   position: relative;
 `;
 
-const Tooltip = styled.div<{ isDarkMode: boolean }>`
+const Tooltip = styled.div<{ $isDarkMode: boolean }>`
   position: absolute;
   bottom: 100%;
   left: 50%;
   transform: translateX(-50%);
   background-color: rgba(0, 0, 0, 0.8);
-  color: ${props => props.isDarkMode ? '#adbac7' : 'white'};
+  color: ${props => props.$isDarkMode ? '#adbac7' : 'white'};
   padding: 8px 12px;
   border-radius: 4px;
   font-size: 12px;
@@ -459,7 +459,7 @@ const Chart = forwardRef((props: ChartProps, ref: React.Ref<any>) => {
       <LabelRow>
         <LabelGroup>
           {timeLabels.map((label) => (
-            <Label key={label.name} isDarkMode={isDarkMode} onClick={() => {
+            <Label key={label.name} $isDarkMode={isDarkMode} onClick={() => {
               selectedLabel.current = label;
               updateCharts(label);
             }}>
@@ -469,7 +469,7 @@ const Chart = forwardRef((props: ChartProps, ref: React.Ref<any>) => {
         </LabelGroup>
         <LabelGroup>
           <InfoLabel
-            isDarkMode={isDarkMode}
+            $isDarkMode={isDarkMode}
             onMouseEnter={() => {
               setShowTooltip(true);
               getStorageSize();
@@ -478,12 +478,12 @@ const Chart = forwardRef((props: ChartProps, ref: React.Ref<any>) => {
           >
             <FaInfoCircle size={16} />
             {showTooltip && formattedSize && (
-              <Tooltip isDarkMode={isDarkMode}>
+              <Tooltip $isDarkMode={isDarkMode}>
                 缓存占用: {formattedSize}
               </Tooltip>
             )}
           </InfoLabel>
-          <Label isDarkMode={isDarkMode} onClick={() => window.open('https://github.com/geebos/v2ex-stats', '_blank')}>
+          <Label $isDarkMode={isDarkMode} onClick={() => window.open('https://github.com/geebos/v2ex-stats', '_blank')}>
             <FaGithub size={16} />
           </Label>
         </LabelGroup>

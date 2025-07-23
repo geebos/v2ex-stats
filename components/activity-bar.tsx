@@ -21,18 +21,18 @@ const Container = styled.div`
   gap: 8px;
 `;
 
-const BarContainer = styled.div<{ backgroundColor: string }>`
+const BarContainer = styled.div<{ $backgroundColor: string }>`
   height: 5px;
-  background-color: ${props => props.backgroundColor};
+  background-color: ${props => props.$backgroundColor};
   border-radius: 2.5px;
   flex: 1;
   overflow: hidden;
 `;
 
-const ProgressBar = styled.div<{ width: number; progressColor: string }>`
+const ProgressBar = styled.div<{ $width: number; $progressColor: string }>`
   height: 100%;
-  width: ${props => props.width}%;
-  background-color: ${props => props.progressColor};
+  width: ${props => props.$width}%;
+  background-color: ${props => props.$progressColor};
   border-radius: 2.5px;
   transition: width 0.3s ease;
 `;
@@ -66,10 +66,10 @@ const ActivityBar = (props: ActivityBarProps) => {
   
   return (
     <Container>
-      <BarContainer backgroundColor={props.color.background}>
+      <BarContainer $backgroundColor={props.color.background}>
         <ProgressBar 
-          width={props.percentage} 
-          progressColor={props.color.progress}
+          $width={props.percentage} 
+          $progressColor={props.color.progress}
         />
       </BarContainer>
       <TimeText>{formattedTime}</TimeText>
