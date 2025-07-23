@@ -22,7 +22,7 @@ const Container = styled.div`
 `;
 
 const BarContainer = styled.div<{ $backgroundColor: string }>`
-  height: 5px;
+  height: 3px;
   background-color: ${props => props.$backgroundColor};
   border-radius: 2.5px;
   flex: 1;
@@ -37,42 +37,48 @@ const ProgressBar = styled.div<{ $width: number; $progressColor: string }>`
   transition: width 0.3s ease;
 `;
 
-const TimeText = styled.span`
+const TimeText = styled.a`
   font-size: 12px;
-  color: #999;
+  color: #999!important;
   white-space: nowrap;
+  cursor: pointer;
 `;
 
 // 格式化秒数为 1h10m, 30m 等格式
-export const formatTime = (seconds: number): string => {
-  if (seconds < 60) {
-    return `${seconds}s`;
+export const formatTime = (seconds: number, option?: {hour: string, minute: string, second: string}): string => {
+  if(!option) {
+    option = {hour: 'h', minute: 'm', second: 's'};
   }
-  
+
+  if (seconds < 60) {
+    return `${seconds}${option.second}`;
+  }
+
   const minutes = Math.floor(seconds / 60);
   if (minutes < 60) {
-    return `${minutes}m`;
+    return `${minutes}${option.minute}`;
   }
-  
+
   const hours = Math.floor(minutes / 60);
   const remainingMinutes = minutes % 60;
-  
-  return remainingMinutes === 0 ? `${hours}h` : `${hours}h${remainingMinutes}m`;
+
+  return remainingMinutes === 0 ? `${hours}${option.hour}` : `${hours}${option.hour}${remainingMinutes}${option.minute}`;
 };
 
 // 活动状态条组件
 const ActivityBar = (props: ActivityBarProps) => {
-  const formattedTime = formatTime(props.seconds);
-  
+  const formattedTime = formatTime(props.seconds, {hour: 'h', minute: 'm', second: 's'});
+  const formattedReadableTime = formatTime(props.seconds, {hour: '小时', minute: '分钟', second: '秒'});
+
   return (
     <Container>
       <BarContainer $backgroundColor={props.color.background}>
-        <ProgressBar 
-          $width={props.percentage} 
+        <ProgressBar
+          $width={props.percentage}
           $progressColor={props.color.progress}
         />
       </BarContainer>
-      <TimeText>{formattedTime}</TimeText>
+      <TimeText href={`/member/${props.username}`} title={`今日在线${formattedReadableTime}，点击查看在线详情`} target="_blank">{formattedTime}</TimeText>
     </Container>
   );
 };
@@ -103,7 +109,7 @@ export const tryInitActivityBar = async (username: string) => {
   // 提取样式和数据
   const backgroundColor = getComputedStyle(outerBar).backgroundColor;
   const progressColor = getComputedStyle(innerBar).backgroundColor;
-  const percentage = parseInt(innerBar.style.width.split('%')[0]);
+  const percentage = parseInt(innerBar.style.width) || 0;
   const seconds = await getTodayTotalUsedSeconds(username);
 
   // 构建组件属性
