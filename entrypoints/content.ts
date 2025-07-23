@@ -1,5 +1,5 @@
 import type { PageInfo } from '@/types/types';
-import { initCollect } from '@/service/time/collect';
+import { initCollect } from '@/service/activity/collect';
 import { tryInitActivityBar } from '@/components/activity-bar';
 import { tryInitBalanceChart } from '@/components/balance-chart';
 import { tryInitActivityChart } from '@/components/activity-chart';

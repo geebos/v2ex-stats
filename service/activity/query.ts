@@ -1,5 +1,7 @@
-import { UsedTimeRecord } from "@/types/types";
 import { storage } from "@wxt-dev/storage";
+import { Granularity, UsedTimeRecord } from "@/types/types";
+import { aggreateByTime } from "../data/aggregate";
+import { fillGaps } from "../data/fill";
 
 /*
 数据存储策略：
@@ -21,26 +23,30 @@ const getNearestHour = (timestamp: number) => {
   return date.getTime();
 };
 
+const getCurrentMonthKey = (username: string): StorageItemKey => {
+  return `local:currentMonthTimeRecords:${username}`;
+};
+
 // ==================== 数据更新 ====================
 
 // 更新用户月度时间记录，同一小时累加否则创建新记录
 const updateMonthTimeRecord = async (username: string, record: UsedTimeRecord) => {
-  const lastUpdateTime = await storage.getItem<number>(`local:monthTimeRecords:${username}:version`, { fallback: 0 });
+  const lastUpdateTime = await storage.getItem<number>(`${getCurrentMonthKey(username)}:version`, { fallback: 0 });
   const gap = record.timestamp - lastUpdateTime;
   console.log(`更新版本, 更新前版本 ${lastUpdateTime}, 更新后版本 ${record.timestamp}, 间隔 ${gap / 1000} 秒`);
   if (gap < minimunTimeSpan * 1000) {
     console.log('重复记录，跳过', record);
     return;
   }
-  await storage.setItem(`local:monthTimeRecords:${username}:version`, record.timestamp);
+  await storage.setItem(`${getCurrentMonthKey(username)}:version`, record.timestamp);
 
-  let timeRecords = await storage.getItem<UsedTimeRecord[]>(`local:monthTimeRecords:${username}`);
+  let timeRecords = await storage.getItem<UsedTimeRecord[]>(getCurrentMonthKey(username));
   console.log('更新月记录，查询结果:', timeRecords, '新记录:', record);
 
   // 如果没有历史记录，创建第一条记录
   if (!timeRecords || timeRecords.length === 0) {
     timeRecords = [{ timestamp: getNearestHour(record.timestamp), seconds: record.seconds }];
-    await storage.setItem(`local:monthTimeRecords:${username}`, timeRecords);
+    await storage.setItem(getCurrentMonthKey(username), timeRecords);
     return;
   }
 
@@ -56,14 +62,14 @@ const updateMonthTimeRecord = async (username: string, record: UsedTimeRecord) =
   }
 
   console.log('更新月记录, 更新后', timeRecords);
-  await storage.setItem(`local:monthTimeRecords:${username}`, timeRecords);
+  await storage.setItem(getCurrentMonthKey(username), timeRecords);
 };
 
 // ==================== 数据查询 ====================
 
 // 获取用户今日总使用时间（秒）
 const getTodayTotalUsedSeconds = async (username: string) => {
-  const timeRecords = await storage.getItem<UsedTimeRecord[]>(`local:monthTimeRecords:${username}`);
+  const timeRecords = await storage.getItem<UsedTimeRecord[]>(getCurrentMonthKey(username));
 
   if (!timeRecords || timeRecords.length === 0) {
     return 0;
@@ -82,4 +88,34 @@ const getTodayTotalUsedSeconds = async (username: string) => {
   return todayRecords.reduce((acc, record) => acc + record.seconds, 0);
 };
 
-export { updateMonthTimeRecord, getTodayTotalUsedSeconds };
+const getAggregatedUsedTimeRecords = async (username: string, granularity: Granularity, start: number, end: number): Promise<UsedTimeRecord[]> => {
+  const timeRecords = await storage.getItem<UsedTimeRecord[]>(getCurrentMonthKey(username));
+  if (!timeRecords || timeRecords.length === 0) {
+    return [];
+  }
+
+  const filteredRecords = timeRecords.filter((record) => record.timestamp >= start && record.timestamp <= end);
+  const aggregatedRecords = aggreateByTime(filteredRecords, granularity, (timestamp, group) => {
+    return {
+      timestamp,
+      seconds: group.reduce((acc, record) => acc + record.seconds, 0),
+    };
+  });
+  aggregatedRecords.sort((a, b) => a.timestamp - b.timestamp);
+
+  const result = fillGaps(aggregatedRecords, granularity, start, end, (timestamp, leftRecord) => {
+    return {
+      timestamp,
+      seconds: 0,
+    };
+  });
+
+  return result;
+};
+
+export {
+  updateMonthTimeRecord,
+  getTodayTotalUsedSeconds,
+  getAggregatedUsedTimeRecords,
+  getCurrentMonthKey,
+};

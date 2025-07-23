@@ -11,6 +11,7 @@ vi.mock('@wxt-dev/storage', () => ({
 
 import { storage } from '@wxt-dev/storage';
 import { updateMonthTimeRecord, getTodayTotalUsedSeconds } from './query';
+import { getCurrentMonthKey } from './query';
 
 describe('updateMonthTimeRecord', () => {
   beforeEach(() => {
@@ -45,9 +46,9 @@ describe('updateMonthTimeRecord', () => {
       
       await updateMonthTimeRecord(username, record);
       
-      expect(storage.getItem).toHaveBeenCalledWith('local:monthTimeRecords:testuser');
+      expect(storage.getItem).toHaveBeenCalledWith(getCurrentMonthKey(username));
       expect(storage.setItem).toHaveBeenCalledWith(
-        'local:monthTimeRecords:testuser',
+        getCurrentMonthKey(username),
         [{ timestamp: getNearestHour(record.timestamp), seconds: 300 }]
       );
     });
@@ -62,7 +63,7 @@ describe('updateMonthTimeRecord', () => {
       await updateMonthTimeRecord(username, record);
       
       expect(storage.setItem).toHaveBeenCalledWith(
-        'local:monthTimeRecords:testuser',
+        getCurrentMonthKey(username),
         [{ timestamp: getNearestHour(record.timestamp), seconds: 300 }]
       );
     });
@@ -77,7 +78,7 @@ describe('updateMonthTimeRecord', () => {
       
       const expectedTimestamp = getNearestHour(1609459785000); // 应该是 2021-01-01 00:00:00
       expect(storage.setItem).toHaveBeenCalledWith(
-        'local:monthTimeRecords:testuser',
+        getCurrentMonthKey(username),
         [{ timestamp: expectedTimestamp, seconds: 180 }]
       );
     });
@@ -103,11 +104,11 @@ describe('updateMonthTimeRecord', () => {
       
       // 期望设置版本和数据
       expect(storage.setItem).toHaveBeenCalledWith(
-        `local:monthTimeRecords:${username}:version`,
+        `${getCurrentMonthKey(username)}:version`,
         newRecord.timestamp
       );
       expect(storage.setItem).toHaveBeenCalledWith(
-        'local:monthTimeRecords:testuser',
+        getCurrentMonthKey(username),
         [{ timestamp: baseTimestamp, seconds: 900 }] // 600 + 300 = 900
       );
     });
@@ -132,11 +133,11 @@ describe('updateMonthTimeRecord', () => {
       
       // 期望设置版本和数据
       expect(storage.setItem).toHaveBeenCalledWith(
-        `local:monthTimeRecords:${username}:version`,
+        `${getCurrentMonthKey(username)}:version`,
         newRecord.timestamp
       );
       expect(storage.setItem).toHaveBeenCalledWith(
-        'local:monthTimeRecords:testuser',
+        getCurrentMonthKey(username),
         [
           { timestamp: hour1, seconds: 600 },
           { timestamp: hour2, seconds: 400 }
@@ -166,11 +167,11 @@ describe('updateMonthTimeRecord', () => {
       
       // 期望设置版本和数据
       expect(storage.setItem).toHaveBeenCalledWith(
-        `local:monthTimeRecords:${username}:version`,
+        `${getCurrentMonthKey(username)}:version`,
         newRecord.timestamp
       );
       expect(storage.setItem).toHaveBeenCalledWith(
-        'local:monthTimeRecords:testuser',
+        getCurrentMonthKey(username),
         [
           { timestamp: hour2, seconds: 150 }, // 最早的记录
           { timestamp: hour1, seconds: 300 }, // 中间的记录
@@ -202,11 +203,11 @@ describe('updateMonthTimeRecord', () => {
       
       // 期望设置版本和数据
       expect(storage.setItem).toHaveBeenCalledWith(
-        `local:monthTimeRecords:${username}:version`,
+        `${getCurrentMonthKey(username)}:version`,
         newRecord.timestamp
       );
       expect(storage.setItem).toHaveBeenCalledWith(
-        'local:monthTimeRecords:testuser',
+        getCurrentMonthKey(username),
         [
           { timestamp: hour1, seconds: 100 },
           { timestamp: hour2, seconds: 200 },
@@ -237,11 +238,11 @@ describe('updateMonthTimeRecord', () => {
       
       // 期望设置版本和数据
       expect(storage.setItem).toHaveBeenCalledWith(
-        `local:monthTimeRecords:${username}:version`,
+        `${getCurrentMonthKey(username)}:version`,
         newRecord.timestamp
       );
       expect(storage.setItem).toHaveBeenCalledWith(
-        'local:monthTimeRecords:testuser',
+        getCurrentMonthKey(username),
         [
           { timestamp: day1Hour23, seconds: 480 },
           { timestamp: day2Hour00, seconds: 360 }
@@ -258,7 +259,7 @@ describe('updateMonthTimeRecord', () => {
       await updateMonthTimeRecord(username, record);
       
       expect(storage.setItem).toHaveBeenCalledWith(
-        'local:monthTimeRecords:testuser',
+        getCurrentMonthKey(username),
         [{ timestamp: getNearestHour(record.timestamp), seconds: 0 }]
       );
     });
@@ -280,11 +281,11 @@ describe('updateMonthTimeRecord', () => {
       
       // 期望设置版本和数据
       expect(storage.setItem).toHaveBeenCalledWith(
-        `local:monthTimeRecords:${username}:version`,
+        `${getCurrentMonthKey(username)}:version`,
         record.timestamp
       );
       expect(storage.setItem).toHaveBeenCalledWith(
-        'local:monthTimeRecords:testuser',
+        getCurrentMonthKey(username),
         [{ timestamp: getNearestHour(record.timestamp), seconds: 10800 }] // 3600 + 7200 = 10800
       );
     });
@@ -368,7 +369,7 @@ describe('getTodayTotalUsedSeconds', () => {
     const result = await getTodayTotalUsedSeconds(username);
     
     expect(result).toBe(0);
-    expect(storage.getItem).toHaveBeenCalledWith('local:monthTimeRecords:testuser');
+    expect(storage.getItem).toHaveBeenCalledWith(getCurrentMonthKey(username));
   });
 
   it('应该在空记录数组时返回0', async () => {

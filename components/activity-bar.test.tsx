@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { formatTime, tryInitActivityBar } from './activity-bar';
 
 // Mock 依赖模块
-vi.mock('@/service/time/query', () => ({
+vi.mock('@/service/activity/query', () => ({
   getTodayTotalUsedSeconds: vi.fn(),
 }));
 
@@ -14,7 +14,7 @@ vi.mock('react-dom/client', () => ({
   createRoot: vi.fn(),
 }));
 
-import { getTodayTotalUsedSeconds } from '@/service/time/query';
+import { getTodayTotalUsedSeconds } from '@/service/activity/query';
 import { createElement } from 'react';
 import { createRoot } from 'react-dom/client';
 

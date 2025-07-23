@@ -1,4 +1,4 @@
-import { getTodayTotalUsedSeconds } from "@/service/time/query";
+import { getTodayTotalUsedSeconds } from "@/service/activity/query";
 import { createElement, useMemo } from "react";
 import { createRoot } from "react-dom/client";
 import styled from 'styled-components';

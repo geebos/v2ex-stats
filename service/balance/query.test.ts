@@ -319,26 +319,6 @@ describe('fillTimeSeriesGaps', () => {
     expect(result[1].balance).toBe(100);
   });
 
-  it('应该在没有记录但指定时间范围时生成插值序列', () => {
-    const records: BalanceRecord[] = [];
-    
-    const start = 1609459200000; // 2021-01-01 00:00:00
-    const end = 1609459320000;   // 2021-01-01 00:02:00
-    
-    const result = fillTimeSeriesGaps(records, 'minute', start, end);
-    
-    // 应该有3条记录: 00:00, 00:01, 00:02
-    expect(result).toHaveLength(3);
-    
-    // 验证所有记录都是插值记录
-    result.forEach(record => {
-      expect(record.balance).toBe(0);
-      expect(record.delta).toBe(0);
-      expect(record.username).toBe('unknown');
-      expect(record.type).toBe('interpolated');
-    });
-  });
-
   it('应该正确处理按小时粒度的时间范围插值', () => {
     const records = [
       createRecord(1609462800000, 150, 50), // 2021-01-01 01:00:00

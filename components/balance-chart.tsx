@@ -22,6 +22,7 @@ import { BalanceRecord, BalanceRecordQuery, Granularity } from "@/types/types";
 import { parseBalanceMaxPage, parseBalanceRecord, parseBalanceRecords, startCrawler } from "@/service/balance/crawler";
 import { alignBanlanceRecordsTimeSeries } from "@/service/balance/query";
 import { createRoot } from "react-dom/client";
+import { adjustChartDarkMode, formatTimestamp, getIsDarkMode } from "@/service/utils";
 
 // 注册 ECharts 组件
 echarts.use([
@@ -65,21 +66,6 @@ const timeLabels: LabelProps[] = [
   { name: '1月', granularity: 'day', start: () => Date.now() - 1000 * 60 * 60 * 24 * 30, end: () => Date.now() },
   { name: '1周', granularity: 'hour', start: () => Date.now() - 1000 * 60 * 60 * 24 * 7, end: () => Date.now() },
 ];
-
-const chartsBackgroundColor = 'transparent';
-const chartsColors = [
-  '#dd6b66',
-  '#759aa0',
-  '#e69d87',
-  '#8dc1a9',
-  '#ea7e53',
-  '#eedd78',
-  '#73a373',
-  '#73b9bc',
-  '#7289ab',
-  '#91ca8c',
-  '#f49f42'
-]
 
 // ==================== 样式组件 ====================
 const Container = styled.div`
@@ -206,23 +192,7 @@ const cumulativeSum = (numbers: number[]): number[] => {
 
 const transformRecordsToChartData = (records: BalanceRecord[], value: (record: BalanceRecord) => number, granularity: Granularity) => {
   records.reverse();
-  const xAxis = records.map(record => {
-    const date = new Date(record.timestamp);
-
-    // 使用 UTC 时间并根据 granularity 格式化
-    switch (granularity) {
-      case 'year':
-        return date.getUTCFullYear().toString();
-      case 'month':
-        return `${date.getUTCFullYear()}/${String(date.getUTCMonth() + 1).padStart(2, '0')}`;
-      case 'day':
-        return `${date.getUTCFullYear()}/${String(date.getUTCMonth() + 1).padStart(2, '0')}/${String(date.getUTCDate()).padStart(2, '0')}`;
-      case 'hour':
-        return `${String(date.getUTCMonth() + 1).padStart(2, '0')}/${String(date.getUTCDate()).padStart(2, '0')} ${String(date.getUTCHours()).padStart(2, '0')}`;
-      default:
-        return date.toISOString();
-    }
-  });
+  const xAxis = records.map(record => formatTimestamp(record.timestamp, granularity));
   const series = records.map(record => value(record));
   return { xAxis, series };
 };
@@ -247,37 +217,7 @@ function formatBytes(bytes: number): string {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 }
 
-// ==================== 图表配置函数 ====================
-const getIsDarkMode = () => {
-  // 检查 V2EX Polish 扩展的暗色模式类名
-  for (const c of document.body.classList) {
-    if (c.toLowerCase().includes('dark')) {
-      console.log('V2EX Polish dark mode');
-      return true;
-    }
-  }
-
-  // 检查原生 V2EX 的暗色模式切换按钮状态
-  const lightToggle = document.querySelector('.light-toggle img');
-  if (lightToggle) {
-    console.log('V2EX original dark mode');
-    return lightToggle.getAttribute('alt')?.toLowerCase() === 'dark';
-  }
-
-  // 默认返回浅色模式
-  console.log('isDarkMode', false, [...document.body.classList]);
-  return false;
-}
-
-const adjustDarkMode = (option: echarts.EChartsCoreOption) => {
-  if (!getIsDarkMode()) {
-    return option;
-  }
-  option.backgroundColor = chartsBackgroundColor;
-  option.color = chartsColors;
-  return option;
-}
-
+// ==================== 图表配置函数 ===================
 const getLineChartOption = (allRecords: BalanceRecord[], incomeRecords: BalanceRecord[], expenseRecords: BalanceRecord[], granularity: Granularity) => {
   const { xAxis, series: allSeries } = transformRecordsToChartData(allRecords, (record) => record.balance, granularity);
   const { series: incomeSeries } = transformRecordsToChartData(incomeRecords, (record) => record.delta, granularity);
@@ -285,7 +225,7 @@ const getLineChartOption = (allRecords: BalanceRecord[], incomeRecords: BalanceR
   const cumulativeIncomeSeries = cumulativeSum(incomeSeries);
   const cumulativeExpenseSeries = cumulativeSum(expenseSeries);
 
-  return adjustDarkMode({
+  return adjustChartDarkMode({
     legend: {
       orient: 'horizontal',
       right: 10,
@@ -326,7 +266,7 @@ const getLineChartOption = (allRecords: BalanceRecord[], incomeRecords: BalanceR
 };
 
 const getPieChartOption = (source: any[][]) => {
-  return adjustDarkMode({
+  return adjustChartDarkMode({
     grid: {
       left: '0%',
       right: '0%',
