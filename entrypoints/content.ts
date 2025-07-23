@@ -7,7 +7,7 @@ import { tryInitActivityBar } from '@/components/activity-bar';
 
 // ==================== 页面检测和信息获取 ====================
 const detectAndGetInfo = (): PageInfo => {
-  const isV2ex = window.location.hostname.endsWith('.v2ex.com');
+  const isV2ex = /\.{0,1}v2ex\.com$/.test(window.location.hostname);
   const isBalancePage = window.location.pathname === '/balance';
 
   const memberLink = Array.from(document.querySelectorAll('a'))
