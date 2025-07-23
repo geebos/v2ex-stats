@@ -34,3 +34,8 @@ export type Granularity = 'minute' | 'hour' | 'day' | 'month' | 'year';
 export type AggType = 'agg_time' | 'agg_type';
 
 export type RecordType = 'all' | 'income' | 'expense';
+
+export interface UsedTimeRecord {
+  timestamp: number;
+  seconds: number;
+}
