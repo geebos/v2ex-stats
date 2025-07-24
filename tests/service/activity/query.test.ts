@@ -9,15 +9,26 @@ vi.mock('@wxt-dev/storage', () => ({
   }
 }));
 
+// Mock service/utils 模块
+vi.mock('@/service/utils', () => ({
+  getMonthStartTimestamp: vi.fn(),
+  getMonthEndTimestamp: vi.fn(),
+  getHourStartTimestamp: vi.fn(),
+}));
+
 import { storage } from '@wxt-dev/storage';
-import { updateMonthTimeRecord, getTodayTotalUsedSeconds } from '../../../service/activity/query';
-import { getCurrentMonthKey } from '../../../service/activity/query';
+import { updateMonthTimeRecord, getTodayTotalUsedSeconds, getCurrentMonthKey } from '@/service/activity/query';
+import { getMonthStartTimestamp } from '@/service/utils';
 
 describe('updateMonthTimeRecord', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // 清理控制台 mock
     vi.spyOn(console, 'log').mockImplementation(() => {});
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    
+    // Mock getMonthStartTimestamp 返回固定值
+    vi.mocked(getMonthStartTimestamp).mockReturnValue(1609459200000); // 2021-01-01 00:00:00
   });
 
   // 测试数据工厂函数
@@ -41,14 +52,20 @@ describe('updateMonthTimeRecord', () => {
       const username = 'testuser';
       const record = createRecord(1609459230000, 300); // 2021-01-01 00:00:30
       
-      // Mock storage.getItem 返回 null
-      vi.mocked(storage.getItem).mockResolvedValueOnce(null);
+      // Mock所有需要的storage调用
+      vi.mocked(storage.getItem)
+        .mockResolvedValueOnce(0) // 版本获取
+        .mockResolvedValueOnce(1609459200000) // currentMonthStart获取 
+        .mockResolvedValueOnce(null); // 数据获取
       
       await updateMonthTimeRecord(username, record);
       
-      expect(storage.getItem).toHaveBeenCalledWith(getCurrentMonthKey(username));
-      expect(storage.setItem).toHaveBeenCalledWith(
-        getCurrentMonthKey(username),
+      // 验证调用顺序
+      expect(storage.getItem).toHaveBeenNthCalledWith(1, `${getCurrentMonthKey(username)}:version`, { fallback: 0 });
+      expect(storage.setItem).toHaveBeenNthCalledWith(1, `${getCurrentMonthKey(username)}:version`, record.timestamp);
+      expect(storage.getItem).toHaveBeenNthCalledWith(2, `local:currentMonthStart:${username}`, { fallback: 0 });
+      expect(storage.getItem).toHaveBeenNthCalledWith(3, getCurrentMonthKey(username));
+      expect(storage.setItem).toHaveBeenNthCalledWith(2, getCurrentMonthKey(username), 
         [{ timestamp: getNearestHour(record.timestamp), seconds: 300 }]
       );
     });
@@ -57,12 +74,15 @@ describe('updateMonthTimeRecord', () => {
       const username = 'testuser';
       const record = createRecord(1609459230000, 300);
       
-      // Mock storage.getItem 返回空数组
-      vi.mocked(storage.getItem).mockResolvedValueOnce([]);
+      // Mock所有需要的storage调用
+      vi.mocked(storage.getItem)
+        .mockResolvedValueOnce(0) // 版本获取
+        .mockResolvedValueOnce(1609459200000) // currentMonthStart获取
+        .mockResolvedValueOnce([]); // 数据获取（空数组）
       
       await updateMonthTimeRecord(username, record);
       
-      expect(storage.setItem).toHaveBeenCalledWith(
+      expect(storage.setItem).toHaveBeenLastCalledWith(
         getCurrentMonthKey(username),
         [{ timestamp: getNearestHour(record.timestamp), seconds: 300 }]
       );
@@ -72,12 +92,16 @@ describe('updateMonthTimeRecord', () => {
       const username = 'testuser';
       const record = createRecord(1609459785000, 180); // 2021-01-01 00:09:45
       
-      vi.mocked(storage.getItem).mockResolvedValueOnce(null);
+      // Mock所有需要的storage调用
+      vi.mocked(storage.getItem)
+        .mockResolvedValueOnce(0) // 版本获取
+        .mockResolvedValueOnce(1609459200000) // currentMonthStart获取
+        .mockResolvedValueOnce(null); // 数据获取
       
       await updateMonthTimeRecord(username, record);
       
       const expectedTimestamp = getNearestHour(1609459785000); // 应该是 2021-01-01 00:00:00
-      expect(storage.setItem).toHaveBeenCalledWith(
+      expect(storage.setItem).toHaveBeenLastCalledWith(
         getCurrentMonthKey(username),
         [{ timestamp: expectedTimestamp, seconds: 180 }]
       );
@@ -95,19 +119,18 @@ describe('updateMonthTimeRecord', () => {
         { timestamp: baseTimestamp, seconds: 600 }
       ];
       
-      // Mock 版本获取和数据获取
+      // Mock所有需要的storage调用
       vi.mocked(storage.getItem)
         .mockResolvedValueOnce(0) // 版本获取
+        .mockResolvedValueOnce(1609459200000) // currentMonthStart获取
         .mockResolvedValueOnce(existingRecords); // 数据获取
       
       await updateMonthTimeRecord(username, newRecord);
       
-      // 期望设置版本和数据
-      expect(storage.setItem).toHaveBeenCalledWith(
-        `${getCurrentMonthKey(username)}:version`,
-        newRecord.timestamp
-      );
-      expect(storage.setItem).toHaveBeenCalledWith(
+      // 验证版本设置
+      expect(storage.setItem).toHaveBeenNthCalledWith(1, `${getCurrentMonthKey(username)}:version`, newRecord.timestamp);
+      // 验证数据更新
+      expect(storage.setItem).toHaveBeenLastCalledWith(
         getCurrentMonthKey(username),
         [{ timestamp: baseTimestamp, seconds: 900 }] // 600 + 300 = 900
       );
@@ -124,19 +147,18 @@ describe('updateMonthTimeRecord', () => {
         { timestamp: hour1, seconds: 600 }
       ];
       
-      // Mock 版本获取和数据获取
+      // Mock所有需要的storage调用
       vi.mocked(storage.getItem)
         .mockResolvedValueOnce(0) // 版本获取
+        .mockResolvedValueOnce(1609459200000) // currentMonthStart获取
         .mockResolvedValueOnce(existingRecords); // 数据获取
       
       await updateMonthTimeRecord(username, newRecord);
       
-      // 期望设置版本和数据
-      expect(storage.setItem).toHaveBeenCalledWith(
-        `${getCurrentMonthKey(username)}:version`,
-        newRecord.timestamp
-      );
-      expect(storage.setItem).toHaveBeenCalledWith(
+      // 验证版本设置
+      expect(storage.setItem).toHaveBeenNthCalledWith(1, `${getCurrentMonthKey(username)}:version`, newRecord.timestamp);
+      // 验证数据更新
+      expect(storage.setItem).toHaveBeenLastCalledWith(
         getCurrentMonthKey(username),
         [
           { timestamp: hour1, seconds: 600 },
@@ -158,19 +180,18 @@ describe('updateMonthTimeRecord', () => {
         { timestamp: hour2, seconds: 150 }
       ];
       
-      // Mock 版本获取和数据获取
+      // Mock所有需要的storage调用
       vi.mocked(storage.getItem)
         .mockResolvedValueOnce(0) // 版本获取
+        .mockResolvedValueOnce(1609459200000) // currentMonthStart获取
         .mockResolvedValueOnce(existingRecords); // 数据获取
       
       await updateMonthTimeRecord(username, newRecord);
       
-      // 期望设置版本和数据
-      expect(storage.setItem).toHaveBeenCalledWith(
-        `${getCurrentMonthKey(username)}:version`,
-        newRecord.timestamp
-      );
-      expect(storage.setItem).toHaveBeenCalledWith(
+      // 验证版本设置
+      expect(storage.setItem).toHaveBeenNthCalledWith(1, `${getCurrentMonthKey(username)}:version`, newRecord.timestamp);
+      // 验证数据更新（按时间排序）
+      expect(storage.setItem).toHaveBeenLastCalledWith(
         getCurrentMonthKey(username),
         [
           { timestamp: hour2, seconds: 150 }, // 最早的记录
@@ -194,19 +215,18 @@ describe('updateMonthTimeRecord', () => {
         { timestamp: hour3, seconds: 300 }
       ];
       
-      // Mock 版本获取和数据获取
+      // Mock所有需要的storage调用
       vi.mocked(storage.getItem)
         .mockResolvedValueOnce(0) // 版本获取
+        .mockResolvedValueOnce(1609459200000) // currentMonthStart获取
         .mockResolvedValueOnce(existingRecords); // 数据获取
       
       await updateMonthTimeRecord(username, newRecord);
       
-      // 期望设置版本和数据
-      expect(storage.setItem).toHaveBeenCalledWith(
-        `${getCurrentMonthKey(username)}:version`,
-        newRecord.timestamp
-      );
-      expect(storage.setItem).toHaveBeenCalledWith(
+      // 验证版本设置
+      expect(storage.setItem).toHaveBeenNthCalledWith(1, `${getCurrentMonthKey(username)}:version`, newRecord.timestamp);
+      // 验证数据更新
+      expect(storage.setItem).toHaveBeenLastCalledWith(
         getCurrentMonthKey(username),
         [
           { timestamp: hour1, seconds: 100 },
@@ -229,19 +249,18 @@ describe('updateMonthTimeRecord', () => {
         { timestamp: day1Hour23, seconds: 480 }
       ];
       
-      // Mock 版本获取和数据获取
+      // Mock所有需要的storage调用
       vi.mocked(storage.getItem)
         .mockResolvedValueOnce(0) // 版本获取
+        .mockResolvedValueOnce(1609459200000) // currentMonthStart获取
         .mockResolvedValueOnce(existingRecords); // 数据获取
       
       await updateMonthTimeRecord(username, newRecord);
       
-      // 期望设置版本和数据
-      expect(storage.setItem).toHaveBeenCalledWith(
-        `${getCurrentMonthKey(username)}:version`,
-        newRecord.timestamp
-      );
-      expect(storage.setItem).toHaveBeenCalledWith(
+      // 验证版本设置
+      expect(storage.setItem).toHaveBeenNthCalledWith(1, `${getCurrentMonthKey(username)}:version`, newRecord.timestamp);
+      // 验证数据更新
+      expect(storage.setItem).toHaveBeenLastCalledWith(
         getCurrentMonthKey(username),
         [
           { timestamp: day1Hour23, seconds: 480 },
@@ -254,11 +273,15 @@ describe('updateMonthTimeRecord', () => {
       const username = 'testuser';
       const record = createRecord(1609459200000, 0);
       
-      vi.mocked(storage.getItem).mockResolvedValueOnce(null);
+      // Mock所有需要的storage调用
+      vi.mocked(storage.getItem)
+        .mockResolvedValueOnce(0) // 版本获取
+        .mockResolvedValueOnce(1609459200000) // currentMonthStart获取
+        .mockResolvedValueOnce(null); // 数据获取
       
       await updateMonthTimeRecord(username, record);
       
-      expect(storage.setItem).toHaveBeenCalledWith(
+      expect(storage.setItem).toHaveBeenLastCalledWith(
         getCurrentMonthKey(username),
         [{ timestamp: getNearestHour(record.timestamp), seconds: 0 }]
       );
@@ -272,22 +295,36 @@ describe('updateMonthTimeRecord', () => {
         { timestamp: getNearestHour(record.timestamp), seconds: 3600 } // 1小时
       ];
       
-      // Mock 版本获取和数据获取
+      // Mock所有需要的storage调用
       vi.mocked(storage.getItem)
         .mockResolvedValueOnce(0) // 版本获取
+        .mockResolvedValueOnce(1609459200000) // currentMonthStart获取
         .mockResolvedValueOnce(existingRecords); // 数据获取
       
       await updateMonthTimeRecord(username, record);
       
-      // 期望设置版本和数据
-      expect(storage.setItem).toHaveBeenCalledWith(
-        `${getCurrentMonthKey(username)}:version`,
-        record.timestamp
-      );
-      expect(storage.setItem).toHaveBeenCalledWith(
+      // 验证版本设置
+      expect(storage.setItem).toHaveBeenNthCalledWith(1, `${getCurrentMonthKey(username)}:version`, record.timestamp);
+      // 验证数据更新
+      expect(storage.setItem).toHaveBeenLastCalledWith(
         getCurrentMonthKey(username),
         [{ timestamp: getNearestHour(record.timestamp), seconds: 10800 }] // 3600 + 7200 = 10800
       );
+    });
+
+    it('应该在时间间隔小于最小值时跳过记录', async () => {
+      const username = 'testuser';
+      const record = createRecord(1609459200000, 300);
+      
+      // Mock版本获取，返回接近的时间戳（间隔 < 30秒）
+      vi.mocked(storage.getItem)
+        .mockResolvedValueOnce(1609459200000 - 10000); // 10秒前的时间戳
+      
+      await updateMonthTimeRecord(username, record);
+      
+      // 验证只调用了版本获取，没有其他操作
+      expect(storage.getItem).toHaveBeenCalledTimes(1);
+      expect(storage.setItem).not.toHaveBeenCalled();
     });
   });
 
@@ -300,13 +337,15 @@ describe('updateMonthTimeRecord', () => {
         { timestamp: getNearestHour(record.timestamp), seconds: 600 }
       ];
       
-      // Mock 版本获取和数据获取
+      // Mock所有需要的storage调用
       vi.mocked(storage.getItem)
         .mockResolvedValueOnce(0) // 版本获取
+        .mockResolvedValueOnce(1609459200000) // currentMonthStart获取
         .mockResolvedValueOnce(existingRecords); // 数据获取
       
       await updateMonthTimeRecord(username, record);
       
+      // 验证日志调用
       expect(console.log).toHaveBeenCalledWith(`更新版本, 更新前版本 0, 更新后版本 ${record.timestamp}, 间隔 ${record.timestamp / 1000} 秒`);
       expect(console.log).toHaveBeenCalledWith('更新月记录，查询结果:', existingRecords, '新记录:', record);
       expect(console.log).toHaveBeenCalledWith('更新月记录, 更新后', [
@@ -318,16 +357,18 @@ describe('updateMonthTimeRecord', () => {
       const username = 'testuser';
       const record = createRecord(1609459230000, 300);
       
-      // Mock 版本获取和数据获取（null 表示首次创建）
+      // Mock所有需要的storage调用
       vi.mocked(storage.getItem)
-        .mockResolvedValueOnce(null) // 版本获取
-        .mockResolvedValueOnce(null); // 数据获取
+        .mockResolvedValueOnce(0) // 版本获取
+        .mockResolvedValueOnce(1609459200000) // currentMonthStart获取
+        .mockResolvedValueOnce(null); // 数据获取（null 表示首次创建）
       
       await updateMonthTimeRecord(username, record);
       
-      expect(console.log).toHaveBeenCalledWith(`更新版本, 更新前版本 null, 更新后版本 ${record.timestamp}, 间隔 ${record.timestamp / 1000} 秒`);
+      // 验证日志调用
+      expect(console.log).toHaveBeenCalledWith(`更新版本, 更新前版本 0, 更新后版本 ${record.timestamp}, 间隔 ${record.timestamp / 1000} 秒`);
       expect(console.log).toHaveBeenCalledWith('更新月记录，查询结果:', null, '新记录:', record);
-      // 首条记录创建时只会调用这两个日志
+      // 首条记录创建时的日志调用数量会多一些（因为有月份检测等逻辑）
       expect(console.log).toHaveBeenCalledTimes(2);
     });
   });

@@ -2,12 +2,15 @@
 import { Granularity } from "@/types/types";
 import * as echarts from 'echarts';
 
+// ==================== 域名检测 ====================
+
 // 检测域名是否为 V2EX
 export const testIsV2EX = (hostname: string) => {
   return /^(?:([a-z0-9-]+\.)*)v2ex\.com$/.test(hostname);
 }
 
-// 图表样式配置
+// ==================== 图表样式配置 ====================
+
 const chartsBackgroundColor = 'transparent';
 const chartsColors = [
   '#dd6b66',
@@ -55,6 +58,8 @@ export const adjustChartDarkMode = (option: echarts.EChartsCoreOption) => {
   return option;
 }
 
+// ==================== 时间格式化 ====================
+
 // 根据粒度格式化时间戳为字符串
 export const formatTimestamp = (timestamp: number, granularity: Granularity) => {
   const date = new Date(timestamp);
@@ -71,3 +76,30 @@ export const formatTimestamp = (timestamp: number, granularity: Granularity) => 
       return date.toISOString();
   }
 };
+
+// ==================== 时间戳工具函数 ====================
+
+// 获取月份开始时间戳（当月第一天00:00:00）
+export const getMonthStartTimestamp = (timestamp: number) => {
+  const date = new Date(timestamp);
+  date.setDate(1);
+  date.setHours(0, 0, 0, 0);
+  return date.getTime();
+}
+
+// 获取月份结束时间戳（当月最后一天23:59:59.999）
+export const getMonthEndTimestamp = (timestamp: number) => {
+  const date = new Date(timestamp);
+  // 设置为下个月的第1天，0点0分0秒0毫秒
+  date.setMonth(date.getMonth() + 1, 1);
+  date.setHours(0, 0, 0, 0);
+  // 减去1毫秒，得到当前月的最后一刻
+  return date.getTime() - 1;
+}
+
+// 获取小时开始时间戳（当前小时的00分00秒）
+export const getHourStartTimestamp = (timestamp: number) => {
+  const date = new Date(timestamp);
+  date.setMinutes(0, 0, 0);
+  return date.getTime();
+}

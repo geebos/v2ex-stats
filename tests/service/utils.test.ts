@@ -3,10 +3,10 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { getIsDarkMode, adjustChartDarkMode, formatTimestamp, testIsV2EX } from '../../service/utils';
+import { getIsDarkMode, adjustChartDarkMode, formatTimestamp, testIsV2EX, getMonthStartTimestamp, getMonthEndTimestamp, getHourStartTimestamp } from '../../service/utils';
 import * as echarts from 'echarts';
 
-// 模拟DOM环境
+// 测试环境初始化
 beforeEach(() => {
   // 重置DOM环境
   document.body.className = '';
@@ -16,6 +16,7 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
+// ==================== 暗色模式检测测试 ====================
 describe('getIsDarkMode', () => {
   it('应该在body包含dark类名时返回true', () => {
     document.body.classList.add('dark-theme');
@@ -91,6 +92,7 @@ describe('getIsDarkMode', () => {
   });
 });
 
+// ==================== 图表暗色主题适配测试 ====================
 describe('adjustChartDarkMode', () => {
   it('应该在暗色模式下添加背景色和颜色配置', () => {
     // 模拟暗色模式
@@ -149,6 +151,7 @@ describe('adjustChartDarkMode', () => {
   });
 });
 
+// ==================== 时间戳格式化测试 ====================
 describe('formatTimestamp', () => {
   // 使用本地时间进行测试
   const testTimestamp = new Date(2024, 2, 15, 14, 30, 45, 123).getTime();
@@ -221,6 +224,7 @@ describe('formatTimestamp', () => {
   });
 });
 
+// ==================== V2EX域名检测测试 ====================
 describe('testIsV2EX', () => {
   describe('有效的 V2EX 域名', () => {
     it('应该正确识别主域名 v2ex.com', () => {
@@ -531,6 +535,445 @@ describe('testIsV2EX', () => {
       // 如果将来要改进正则表达式，可以考虑使用：
       // /^(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)*)v2ex\.com$/
       // 这个正则会确保每个标签以字母数字开头和结尾
+    });
+  });
+});
+
+// ==================== 月份时间戳处理测试 ====================
+describe('getMonthStartTimestamp', () => {
+  it('应该返回月初第一天的00:00:00时间戳', () => {
+    // 2024年3月15日 14:30:45 -> 2024年3月1日 00:00:00
+    const inputTimestamp = new Date(2024, 2, 15, 14, 30, 45, 123).getTime();
+    const expectedTimestamp = new Date(2024, 2, 1, 0, 0, 0, 0).getTime();
+    
+    const result = getMonthStartTimestamp(inputTimestamp);
+    
+    expect(result).toBe(expectedTimestamp);
+  });
+
+  it('应该正确处理1月份', () => {
+    const inputTimestamp = new Date(2024, 0, 15, 10, 30, 0).getTime();
+    const expectedTimestamp = new Date(2024, 0, 1, 0, 0, 0, 0).getTime();
+    
+    const result = getMonthStartTimestamp(inputTimestamp);
+    
+    expect(result).toBe(expectedTimestamp);
+  });
+
+  it('应该正确处理12月份', () => {
+    const inputTimestamp = new Date(2024, 11, 25, 23, 59, 59).getTime();
+    const expectedTimestamp = new Date(2024, 11, 1, 0, 0, 0, 0).getTime();
+    
+    const result = getMonthStartTimestamp(inputTimestamp);
+    
+    expect(result).toBe(expectedTimestamp);
+  });
+
+  it('应该正确处理闰年2月', () => {
+    const inputTimestamp = new Date(2024, 1, 29, 12, 0, 0).getTime(); // 2024年2月29日
+    const expectedTimestamp = new Date(2024, 1, 1, 0, 0, 0, 0).getTime();
+    
+    const result = getMonthStartTimestamp(inputTimestamp);
+    
+    expect(result).toBe(expectedTimestamp);
+  });
+
+  it('应该正确处理平年2月', () => {
+    const inputTimestamp = new Date(2023, 1, 28, 12, 0, 0).getTime(); // 2023年2月28日
+    const expectedTimestamp = new Date(2023, 1, 1, 0, 0, 0, 0).getTime();
+    
+    const result = getMonthStartTimestamp(inputTimestamp);
+    
+    expect(result).toBe(expectedTimestamp);
+  });
+
+  it('应该正确处理月初的时间', () => {
+    // 输入已经是月初，应该返回当天00:00:00
+    const inputTimestamp = new Date(2024, 3, 1, 15, 30, 45).getTime();
+    const expectedTimestamp = new Date(2024, 3, 1, 0, 0, 0, 0).getTime();
+    
+    const result = getMonthStartTimestamp(inputTimestamp);
+    
+    expect(result).toBe(expectedTimestamp);
+  });
+
+  it('应该正确处理跨年边界', () => {
+    const inputTimestamp = new Date(2023, 11, 31, 23, 59, 59).getTime(); // 2023年12月31日
+    const expectedTimestamp = new Date(2023, 11, 1, 0, 0, 0, 0).getTime(); // 2023年12月1日
+    
+    const result = getMonthStartTimestamp(inputTimestamp);
+    
+    expect(result).toBe(expectedTimestamp);
+  });
+});
+
+describe('getMonthEndTimestamp', () => {
+  it('应该返回月末最后一天的23:59:59.999时间戳', () => {
+    // 2024年3月15日 14:30:45 -> 2024年3月31日 23:59:59.999
+    const inputTimestamp = new Date(2024, 2, 15, 14, 30, 45, 123).getTime();
+    const expectedTimestamp = new Date(2024, 2, 31, 23, 59, 59, 999).getTime();
+    
+    const result = getMonthEndTimestamp(inputTimestamp);
+    
+    expect(result).toBe(expectedTimestamp);
+  });
+
+  it('应该正确处理1月份（31天）', () => {
+    const inputTimestamp = new Date(2024, 0, 15, 10, 30, 0).getTime();
+    const expectedTimestamp = new Date(2024, 0, 31, 23, 59, 59, 999).getTime();
+    
+    const result = getMonthEndTimestamp(inputTimestamp);
+    
+    expect(result).toBe(expectedTimestamp);
+  });
+
+  it('应该正确处理4月份（30天）', () => {
+    const inputTimestamp = new Date(2024, 3, 15, 10, 30, 0).getTime();
+    const expectedTimestamp = new Date(2024, 3, 30, 23, 59, 59, 999).getTime();
+    
+    const result = getMonthEndTimestamp(inputTimestamp);
+    
+    expect(result).toBe(expectedTimestamp);
+  });
+
+  it('应该正确处理闰年2月（29天）', () => {
+    const inputTimestamp = new Date(2024, 1, 15, 12, 0, 0).getTime(); // 2024年2月15日
+    const expectedTimestamp = new Date(2024, 1, 29, 23, 59, 59, 999).getTime(); // 2024年2月29日
+    
+    const result = getMonthEndTimestamp(inputTimestamp);
+    
+    expect(result).toBe(expectedTimestamp);
+  });
+
+  it('应该正确处理平年2月（28天）', () => {
+    const inputTimestamp = new Date(2023, 1, 15, 12, 0, 0).getTime(); // 2023年2月15日
+    const expectedTimestamp = new Date(2023, 1, 28, 23, 59, 59, 999).getTime(); // 2023年2月28日
+    
+    const result = getMonthEndTimestamp(inputTimestamp);
+    
+    expect(result).toBe(expectedTimestamp);
+  });
+
+  it('应该正确处理12月份', () => {
+    const inputTimestamp = new Date(2024, 11, 15, 10, 30, 0).getTime();
+    const expectedTimestamp = new Date(2024, 11, 31, 23, 59, 59, 999).getTime();
+    
+    const result = getMonthEndTimestamp(inputTimestamp);
+    
+    expect(result).toBe(expectedTimestamp);
+  });
+
+  it('应该正确处理月末的时间', () => {
+    // 输入已经是月末，应该返回当天23:59:59.999
+    const inputTimestamp = new Date(2024, 2, 31, 15, 30, 45).getTime(); // 3月31日
+    const expectedTimestamp = new Date(2024, 2, 31, 23, 59, 59, 999).getTime();
+    
+    const result = getMonthEndTimestamp(inputTimestamp);
+    
+    expect(result).toBe(expectedTimestamp);
+  });
+
+  it('应该正确处理跨年边界', () => {
+    const inputTimestamp = new Date(2024, 0, 15, 10, 30, 0).getTime(); // 2024年1月15日
+    const expectedTimestamp = new Date(2024, 0, 31, 23, 59, 59, 999).getTime(); // 2024年1月31日
+    
+    const result = getMonthEndTimestamp(inputTimestamp);
+    
+    expect(result).toBe(expectedTimestamp);
+  });
+});
+
+// 月份时间范围综合测试
+describe('getMonthStartTimestamp 和 getMonthEndTimestamp 综合测试', () => {
+  it('应该确保月初和月末时间戳覆盖整个月', () => {
+    const testCases = [
+      { year: 2024, month: 0 }, // 1月 (31天)
+      { year: 2024, month: 1 }, // 2月闰年 (29天)
+      { year: 2023, month: 1 }, // 2月平年 (28天)
+      { year: 2024, month: 3 }, // 4月 (30天)
+      { year: 2024, month: 6 }, // 7月 (31天)
+      { year: 2024, month: 11 }, // 12月 (31天)
+    ];
+
+    testCases.forEach(({ year, month }) => {
+      const someTimeInMonth = new Date(year, month, 15, 12, 30, 45).getTime();
+      
+      const monthStart = getMonthStartTimestamp(someTimeInMonth);
+      const monthEnd = getMonthEndTimestamp(someTimeInMonth);
+      
+      // 月初应该在月末之前
+      expect(monthStart).toBeLessThan(monthEnd);
+      
+      // 验证月初是该月第一天的00:00:00
+      const startDate = new Date(monthStart);
+      expect(startDate.getFullYear()).toBe(year);
+      expect(startDate.getMonth()).toBe(month);
+      expect(startDate.getDate()).toBe(1);
+      expect(startDate.getHours()).toBe(0);
+      expect(startDate.getMinutes()).toBe(0);
+      expect(startDate.getSeconds()).toBe(0);
+      expect(startDate.getMilliseconds()).toBe(0);
+      
+      // 验证月末是该月最后一天的23:59:59.999
+      const endDate = new Date(monthEnd);
+      expect(endDate.getFullYear()).toBe(year);
+      expect(endDate.getMonth()).toBe(month);
+      expect(endDate.getHours()).toBe(23);
+      expect(endDate.getMinutes()).toBe(59);
+      expect(endDate.getSeconds()).toBe(59);
+      expect(endDate.getMilliseconds()).toBe(999);
+    });
+  });
+
+  it('应该正确处理不同月份的天数', () => {
+    const monthDays = [
+      { month: 0, days: 31 }, // 1月
+      { month: 1, days: 29 }, // 2月（闰年2024）
+      { month: 2, days: 31 }, // 3月
+      { month: 3, days: 30 }, // 4月
+      { month: 4, days: 31 }, // 5月
+      { month: 5, days: 30 }, // 6月
+      { month: 6, days: 31 }, // 7月
+      { month: 7, days: 31 }, // 8月
+      { month: 8, days: 30 }, // 9月
+      { month: 9, days: 31 }, // 10月
+      { month: 10, days: 30 }, // 11月
+      { month: 11, days: 31 }, // 12月
+    ];
+
+    monthDays.forEach(({ month, days }) => {
+      const testTimestamp = new Date(2024, month, 15).getTime();
+      const monthEnd = getMonthEndTimestamp(testTimestamp);
+      const endDate = new Date(monthEnd);
+      
+      expect(endDate.getDate()).toBe(days);
+    });
+  });
+});
+
+// ==================== 小时时间戳处理测试 ====================
+describe('getHourStartTimestamp', () => {
+  it('应该返回小时开始的时间戳', () => {
+    // 2024年3月15日 14:30:45.123 -> 2024年3月15日 14:00:00.000
+    const inputTimestamp = new Date(2024, 2, 15, 14, 30, 45, 123).getTime();
+    const expectedTimestamp = new Date(2024, 2, 15, 14, 0, 0, 0).getTime();
+    
+    const result = getHourStartTimestamp(inputTimestamp);
+    
+    expect(result).toBe(expectedTimestamp);
+  });
+
+  it('应该正确处理整点时间', () => {
+    // 输入已经是整点，应该返回相同的时间戳
+    const inputTimestamp = new Date(2024, 2, 15, 10, 0, 0, 0).getTime();
+    const expectedTimestamp = new Date(2024, 2, 15, 10, 0, 0, 0).getTime();
+    
+    const result = getHourStartTimestamp(inputTimestamp);
+    
+    expect(result).toBe(expectedTimestamp);
+  });
+
+  it('应该正确处理午夜时间', () => {
+    const inputTimestamp = new Date(2024, 2, 15, 0, 30, 45, 123).getTime();
+    const expectedTimestamp = new Date(2024, 2, 15, 0, 0, 0, 0).getTime();
+    
+    const result = getHourStartTimestamp(inputTimestamp);
+    
+    expect(result).toBe(expectedTimestamp);
+  });
+
+  it('应该正确处理23点的时间', () => {
+    const inputTimestamp = new Date(2024, 2, 15, 23, 59, 59, 999).getTime();
+    const expectedTimestamp = new Date(2024, 2, 15, 23, 0, 0, 0).getTime();
+    
+    const result = getHourStartTimestamp(inputTimestamp);
+    
+    expect(result).toBe(expectedTimestamp);
+  });
+
+  it('应该正确处理不同分钟的时间', () => {
+    const testCases = [
+      { minute: 1 },
+      { minute: 15 },
+      { minute: 30 },
+      { minute: 45 },
+      { minute: 59 }
+    ];
+
+    testCases.forEach(({ minute }) => {
+      const inputTimestamp = new Date(2024, 2, 15, 14, minute, 30, 500).getTime();
+      const expectedTimestamp = new Date(2024, 2, 15, 14, 0, 0, 0).getTime();
+      
+      const result = getHourStartTimestamp(inputTimestamp);
+      
+      expect(result).toBe(expectedTimestamp);
+    });
+  });
+
+  it('应该正确处理不同秒数的时间', () => {
+    const testCases = [
+      { second: 1 },
+      { second: 15 },
+      { second: 30 },
+      { second: 45 },
+      { second: 59 }
+    ];
+
+    testCases.forEach(({ second }) => {
+      const inputTimestamp = new Date(2024, 2, 15, 14, 30, second, 500).getTime();
+      const expectedTimestamp = new Date(2024, 2, 15, 14, 0, 0, 0).getTime();
+      
+      const result = getHourStartTimestamp(inputTimestamp);
+      
+      expect(result).toBe(expectedTimestamp);
+    });
+  });
+
+  it('应该正确处理不同毫秒的时间', () => {
+    const testCases = [
+      { millisecond: 1 },
+      { millisecond: 100 },
+      { millisecond: 500 },
+      { millisecond: 999 }
+    ];
+
+    testCases.forEach(({ millisecond }) => {
+      const inputTimestamp = new Date(2024, 2, 15, 14, 30, 45, millisecond).getTime();
+      const expectedTimestamp = new Date(2024, 2, 15, 14, 0, 0, 0).getTime();
+      
+      const result = getHourStartTimestamp(inputTimestamp);
+      
+      expect(result).toBe(expectedTimestamp);
+    });
+  });
+
+  it('应该正确处理跨天边界的时间', () => {
+    // 测试从23:59到次日00:00的情况
+    const inputTimestamp = new Date(2024, 2, 15, 23, 59, 59, 999).getTime();
+    const expectedTimestamp = new Date(2024, 2, 15, 23, 0, 0, 0).getTime();
+    
+    const result = getHourStartTimestamp(inputTimestamp);
+    
+    expect(result).toBe(expectedTimestamp);
+    
+    // 验证结果确实是23点而不是次日00点
+    const resultDate = new Date(result);
+    expect(resultDate.getDate()).toBe(15);
+    expect(resultDate.getHours()).toBe(23);
+  });
+
+  it('应该正确处理月末边界的时间', () => {
+    // 3月31日 23:45:30
+    const inputTimestamp = new Date(2024, 2, 31, 23, 45, 30, 500).getTime();
+    const expectedTimestamp = new Date(2024, 2, 31, 23, 0, 0, 0).getTime();
+    
+    const result = getHourStartTimestamp(inputTimestamp);
+    
+    expect(result).toBe(expectedTimestamp);
+    
+    // 验证日期没有改变
+    const resultDate = new Date(result);
+    expect(resultDate.getMonth()).toBe(2); // 3月
+    expect(resultDate.getDate()).toBe(31);
+    expect(resultDate.getHours()).toBe(23);
+  });
+
+  it('应该正确处理年末边界的时间', () => {
+    // 12月31日 23:45:30
+    const inputTimestamp = new Date(2024, 11, 31, 23, 45, 30, 500).getTime();
+    const expectedTimestamp = new Date(2024, 11, 31, 23, 0, 0, 0).getTime();
+    
+    const result = getHourStartTimestamp(inputTimestamp);
+    
+    expect(result).toBe(expectedTimestamp);
+    
+    // 验证年份和日期没有改变
+    const resultDate = new Date(result);
+    expect(resultDate.getFullYear()).toBe(2024);
+    expect(resultDate.getMonth()).toBe(11); // 12月
+    expect(resultDate.getDate()).toBe(31);
+    expect(resultDate.getHours()).toBe(23);
+  });
+
+  it('应该正确处理闰年2月29日的时间', () => {
+    const inputTimestamp = new Date(2024, 1, 29, 15, 30, 45, 123).getTime();
+    const expectedTimestamp = new Date(2024, 1, 29, 15, 0, 0, 0).getTime();
+    
+    const result = getHourStartTimestamp(inputTimestamp);
+    
+    expect(result).toBe(expectedTimestamp);
+    
+    // 验证闰年日期正确处理
+    const resultDate = new Date(result);
+    expect(resultDate.getFullYear()).toBe(2024);
+    expect(resultDate.getMonth()).toBe(1); // 2月
+    expect(resultDate.getDate()).toBe(29);
+    expect(resultDate.getHours()).toBe(15);
+  });
+
+  it('应该正确处理所有24小时的时间', () => {
+    for (let hour = 0; hour < 24; hour++) {
+      const inputTimestamp = new Date(2024, 2, 15, hour, 30, 45, 123).getTime();
+      const expectedTimestamp = new Date(2024, 2, 15, hour, 0, 0, 0).getTime();
+      
+      const result = getHourStartTimestamp(inputTimestamp);
+      
+      expect(result).toBe(expectedTimestamp);
+      
+      // 验证小时数正确
+      const resultDate = new Date(result);
+      expect(resultDate.getHours()).toBe(hour);
+      expect(resultDate.getMinutes()).toBe(0);
+      expect(resultDate.getSeconds()).toBe(0);
+      expect(resultDate.getMilliseconds()).toBe(0);
+    }
+  });
+
+  it('应该确保结果时间戳小于等于输入时间戳', () => {
+    const testCases = [
+      new Date(2024, 2, 15, 10, 0, 0, 0).getTime(), // 整点时间
+      new Date(2024, 2, 15, 10, 30, 45, 123).getTime(), // 普通时间
+      new Date(2024, 2, 15, 23, 59, 59, 999).getTime(), // 接近午夜
+      new Date(2024, 1, 29, 12, 30, 0, 0).getTime(), // 闰年
+    ];
+
+    testCases.forEach(inputTimestamp => {
+      const result = getHourStartTimestamp(inputTimestamp);
+      
+      expect(result).toBeLessThanOrEqual(inputTimestamp);
+      
+      // 验证结果确实是整点时间
+      const resultDate = new Date(result);
+      expect(resultDate.getMinutes()).toBe(0);
+      expect(resultDate.getSeconds()).toBe(0);
+      expect(resultDate.getMilliseconds()).toBe(0);
+    });
+  });
+
+  it('应该与输入时间在同一小时内', () => {
+    const testCases = [
+      { year: 2024, month: 2, day: 15, hour: 10, minute: 30, second: 45, ms: 123 },
+      { year: 2024, month: 0, day: 1, hour: 0, minute: 59, second: 59, ms: 999 },
+      { year: 2024, month: 11, day: 31, hour: 23, minute: 1, second: 1, ms: 1 },
+    ];
+
+    testCases.forEach(({ year, month, day, hour, minute, second, ms }) => {
+      const inputTimestamp = new Date(year, month, day, hour, minute, second, ms).getTime();
+      const result = getHourStartTimestamp(inputTimestamp);
+      
+      const inputDate = new Date(inputTimestamp);
+      const resultDate = new Date(result);
+      
+      // 验证年、月、日、小时都相同
+      expect(resultDate.getFullYear()).toBe(inputDate.getFullYear());
+      expect(resultDate.getMonth()).toBe(inputDate.getMonth());
+      expect(resultDate.getDate()).toBe(inputDate.getDate());
+      expect(resultDate.getHours()).toBe(inputDate.getHours());
+      
+      // 验证分、秒、毫秒都是0
+      expect(resultDate.getMinutes()).toBe(0);
+      expect(resultDate.getSeconds()).toBe(0);
+      expect(resultDate.getMilliseconds()).toBe(0);
     });
   });
 }); 
