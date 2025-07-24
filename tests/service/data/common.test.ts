@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getGroupTimestamp, getNextTimestamp } from './common';
+import { getGroupTimestamp, getNextTimestamp } from '../../../service/data/common';
 import { Granularity } from '@/types/types';
 
 describe('getGroupTimestamp', () => {

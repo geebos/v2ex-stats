@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { formatTime, tryInitActivityBar } from './activity-bar';
+import { formatTime, tryInitActivityBar } from '@/components/activity-bar';
 
 // Mock 依赖模块
 vi.mock('@/service/activity/query', () => ({

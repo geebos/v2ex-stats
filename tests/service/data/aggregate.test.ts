@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { aggreateByTime, aggregateByKey } from './aggregate';
-import { TimeSeriesRecord } from './types';
+import { aggreateByTime, aggregateByKey } from '../../../service/data/aggregate';
+import { TimeSeriesRecord } from '../../../service/data/types';
 import { BalanceRecord, Granularity } from '@/types/types';
 
 // 测试数据接口

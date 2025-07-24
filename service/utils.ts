@@ -2,6 +2,11 @@
 import { Granularity } from "@/types/types";
 import * as echarts from 'echarts';
 
+// 检测域名是否为 V2EX
+export const testIsV2EX = (hostname: string) => {
+  return /^(?:([a-z0-9-]+\.)*)v2ex\.com$/.test(hostname);
+}
+
 // 图表样式配置
 const chartsBackgroundColor = 'transparent';
 const chartsColors = [

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { BalanceRecord, CompactBalanceRecord } from '@/types/types';
-import { aggregateBalanceRecordsByTime, fillTimeSeriesGaps, aggregateBalanceRecordsByType, alignBanlanceRecordsTimeSeries, getBalanceRecords, setBalanceRecords } from './query';
+import { aggregateBalanceRecordsByTime, fillTimeSeriesGaps, aggregateBalanceRecordsByType, alignBanlanceRecordsTimeSeries, getBalanceRecords, setBalanceRecords } from '../../../service/balance/query';
 
 describe('aggregateBalanceRecords', () => {
   // 测试数据工厂函数

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { fillGaps } from './fill';
-import { TimeSeriesRecord } from './types';
+import { fillGaps } from '../../../service/data/fill';
+import { TimeSeriesRecord } from '../../../service/data/types';
 import { Granularity } from '@/types/types';
 
 // 测试数据接口

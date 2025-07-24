@@ -3,11 +3,9 @@ import { initCollect } from '@/service/activity/collect';
 import { tryInitActivityBar } from '@/components/activity-bar';
 import { tryInitBalanceChart } from '@/components/balance-chart';
 import { tryInitActivityChart } from '@/components/activity-chart';
+import { testIsV2EX } from '@/service/utils';
 
 // ==================== 页面检测和信息获取 ====================
-const testIsV2EX = (hostname: string) => {
-  return /^(?:([a-z0-9-]+\.)*)v2ex\.com$/.test(hostname);
-}
 
 export const detectAndGetInfo = (): PageInfo => {
   const isV2ex = testIsV2EX(window.location.hostname);

@@ -10,8 +10,8 @@ vi.mock('@wxt-dev/storage', () => ({
 }));
 
 import { storage } from '@wxt-dev/storage';
-import { updateMonthTimeRecord, getTodayTotalUsedSeconds } from './query';
-import { getCurrentMonthKey } from './query';
+import { updateMonthTimeRecord, getTodayTotalUsedSeconds } from '../../../service/activity/query';
+import { getCurrentMonthKey } from '../../../service/activity/query';
 
 describe('updateMonthTimeRecord', () => {
   beforeEach(() => {

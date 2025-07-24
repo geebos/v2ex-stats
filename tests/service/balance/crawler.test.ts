@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 // 导入需要测试的函数和类型
-import { parseBalanceRecord, withRetry } from './crawler.ts';
+import { parseBalanceRecord, withRetry } from '../../../service/balance/crawler';
 
 describe('parseBalanceRecord', () => {
   it('应该正确解析标准日期格式', () => {
