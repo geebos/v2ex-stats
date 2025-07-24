@@ -60,13 +60,13 @@ export const formatTimestamp = (timestamp: number, granularity: Granularity) => 
   const date = new Date(timestamp);
   switch (granularity) {
     case 'year':
-      return date.getUTCFullYear().toString();
+      return date.getFullYear().toString();
     case 'month':
-      return `${date.getUTCFullYear()}/${String(date.getUTCMonth() + 1).padStart(2, '0')}`;
+      return `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}`;
     case 'day':
-      return `${date.getUTCFullYear()}/${String(date.getUTCMonth() + 1).padStart(2, '0')}/${String(date.getUTCDate()).padStart(2, '0')}`;
+      return `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`;
     case 'hour':
-      return `${String(date.getUTCMonth() + 1).padStart(2, '0')}/${String(date.getUTCDate()).padStart(2, '0')} ${String(date.getUTCHours()).padStart(2, '0')}`;
+      return `${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}`;
     default:
       return date.toISOString();
   }

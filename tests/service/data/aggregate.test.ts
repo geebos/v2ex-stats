@@ -63,75 +63,75 @@ describe('aggreateByTime', () => {
 
   it('应该按天粒度聚合记录', () => {
     const records: TestTimeRecord[] = [
-      { timestamp: new Date('2024-01-01T08:30:00Z').getTime(), value: 10 },
-      { timestamp: new Date('2024-01-01T15:45:00Z').getTime(), value: 20 },
-      { timestamp: new Date('2024-01-02T10:20:00Z').getTime(), value: 30 },
+      { timestamp: new Date(2024, 0, 1, 8, 30, 0).getTime(), value: 10 },
+      { timestamp: new Date(2024, 0, 1, 15, 45, 0).getTime(), value: 20 },
+      { timestamp: new Date(2024, 0, 2, 10, 20, 0).getTime(), value: 30 },
     ];
 
     const result = aggreateByTime(records, 'day', sumAggregator);
 
     expect(result).toHaveLength(2);
     expect(result[0]).toEqual({
-      timestamp: new Date('2024-01-01T00:00:00Z').getTime(),
+      timestamp: new Date(2024, 0, 1, 0, 0, 0, 0).getTime(),
       value: 30, // 10 + 20
     });
     expect(result[1]).toEqual({
-      timestamp: new Date('2024-01-02T00:00:00Z').getTime(),
+      timestamp: new Date(2024, 0, 2, 0, 0, 0, 0).getTime(),
       value: 30,
     });
   });
 
   it('应该按月粒度聚合记录', () => {
     const records: TestTimeRecord[] = [
-      { timestamp: new Date('2024-01-15T10:30:00Z').getTime(), value: 10 },
-      { timestamp: new Date('2024-01-28T15:45:00Z').getTime(), value: 20 },
-      { timestamp: new Date('2024-02-10T08:20:00Z').getTime(), value: 30 },
+      { timestamp: new Date(2024, 0, 15, 10, 30, 0).getTime(), value: 10 },
+      { timestamp: new Date(2024, 0, 28, 15, 45, 0).getTime(), value: 20 },
+      { timestamp: new Date(2024, 1, 10, 8, 20, 0).getTime(), value: 30 },
     ];
 
     const result = aggreateByTime(records, 'month', sumAggregator);
 
     expect(result).toHaveLength(2);
     expect(result[0]).toEqual({
-      timestamp: new Date('2024-01-01T00:00:00Z').getTime(),
+      timestamp: new Date(2024, 0, 1, 0, 0, 0, 0).getTime(),
       value: 30, // 10 + 20
     });
     expect(result[1]).toEqual({
-      timestamp: new Date('2024-02-01T00:00:00Z').getTime(),
+      timestamp: new Date(2024, 1, 1, 0, 0, 0, 0).getTime(),
       value: 30,
     });
   });
 
   it('应该按年粒度聚合记录', () => {
     const records: TestTimeRecord[] = [
-      { timestamp: new Date('2024-03-15T10:30:00Z').getTime(), value: 10 },
-      { timestamp: new Date('2024-08-28T15:45:00Z').getTime(), value: 20 },
-      { timestamp: new Date('2025-02-10T08:20:00Z').getTime(), value: 30 },
+      { timestamp: new Date(2024, 2, 15, 10, 30, 0).getTime(), value: 10 },
+      { timestamp: new Date(2024, 7, 28, 15, 45, 0).getTime(), value: 20 },
+      { timestamp: new Date(2025, 1, 10, 8, 20, 0).getTime(), value: 30 },
     ];
 
     const result = aggreateByTime(records, 'year', sumAggregator);
 
     expect(result).toHaveLength(2);
     expect(result[0]).toEqual({
-      timestamp: new Date('2024-01-01T00:00:00Z').getTime(),
+      timestamp: new Date(2024, 0, 1, 0, 0, 0, 0).getTime(),
       value: 30, // 10 + 20
     });
     expect(result[1]).toEqual({
-      timestamp: new Date('2025-01-01T00:00:00Z').getTime(),
+      timestamp: new Date(2025, 0, 1, 0, 0, 0, 0).getTime(),
       value: 30,
     });
   });
 
-  it('应该正确处理跨时区的时间', () => {
+  it('应该正确处理本地时间的不同时间点', () => {
     const records: TestTimeRecord[] = [
-      { timestamp: new Date('2024-01-01T23:30:00Z').getTime(), value: 10 },
-      { timestamp: new Date('2024-01-02T00:30:00Z').getTime(), value: 20 },
+      { timestamp: new Date(2024, 0, 1, 23, 30, 0).getTime(), value: 10 },
+      { timestamp: new Date(2024, 0, 2, 0, 30, 0).getTime(), value: 20 },
     ];
 
     const result = aggreateByTime(records, 'day', sumAggregator);
 
     expect(result).toHaveLength(2);
-    expect(result[0].timestamp).toBe(new Date('2024-01-01T00:00:00Z').getTime());
-    expect(result[1].timestamp).toBe(new Date('2024-01-02T00:00:00Z').getTime());
+    expect(result[0].timestamp).toBe(new Date(2024, 0, 1, 0, 0, 0, 0).getTime());
+    expect(result[1].timestamp).toBe(new Date(2024, 0, 2, 0, 0, 0, 0).getTime());
   });
 
   it('应该处理BalanceRecord类型的聚合', () => {

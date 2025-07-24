@@ -150,8 +150,8 @@ describe('adjustChartDarkMode', () => {
 });
 
 describe('formatTimestamp', () => {
-  // 使用固定的UTC时间进行测试
-  const testTimestamp = new Date('2024-03-15T14:30:45.123Z').getTime();
+  // 使用本地时间进行测试
+  const testTimestamp = new Date(2024, 2, 15, 14, 30, 45, 123).getTime();
 
   it('应该正确格式化年粒度时间戳', () => {
     const result = formatTimestamp(testTimestamp, 'year');
@@ -180,7 +180,7 @@ describe('formatTimestamp', () => {
   });
 
   it('应该正确处理月份和日期的零填充', () => {
-    const timestamp = new Date('2024-01-05T08:30:45.123Z').getTime();
+    const timestamp = new Date(2024, 0, 5, 8, 30, 45, 123).getTime();
     
     expect(formatTimestamp(timestamp, 'month')).toBe('2024/01');
     expect(formatTimestamp(timestamp, 'day')).toBe('2024/01/05');
@@ -188,7 +188,7 @@ describe('formatTimestamp', () => {
   });
 
   it('应该正确处理12月的时间', () => {
-    const timestamp = new Date('2024-12-25T23:30:45.123Z').getTime();
+    const timestamp = new Date(2024, 11, 25, 23, 30, 45, 123).getTime();
     
     expect(formatTimestamp(timestamp, 'month')).toBe('2024/12');
     expect(formatTimestamp(timestamp, 'day')).toBe('2024/12/25');
@@ -196,7 +196,7 @@ describe('formatTimestamp', () => {
   });
 
   it('应该正确处理年初的时间', () => {
-    const timestamp = new Date('2024-01-01T00:00:00.000Z').getTime();
+    const timestamp = new Date(2024, 0, 1, 0, 0, 0, 0).getTime();
     
     expect(formatTimestamp(timestamp, 'year')).toBe('2024');
     expect(formatTimestamp(timestamp, 'month')).toBe('2024/01');
@@ -205,7 +205,7 @@ describe('formatTimestamp', () => {
   });
 
   it('应该正确处理年末的时间', () => {
-    const timestamp = new Date('2024-12-31T23:59:59.999Z').getTime();
+    const timestamp = new Date(2024, 11, 31, 23, 59, 59, 999).getTime();
     
     expect(formatTimestamp(timestamp, 'year')).toBe('2024');
     expect(formatTimestamp(timestamp, 'month')).toBe('2024/12');
@@ -214,7 +214,7 @@ describe('formatTimestamp', () => {
   });
 
   it('应该正确处理闰年2月29日', () => {
-    const timestamp = new Date('2024-02-29T12:00:00.000Z').getTime();
+    const timestamp = new Date(2024, 1, 29, 12, 0, 0, 0).getTime();
     
     expect(formatTimestamp(timestamp, 'day')).toBe('2024/02/29');
     expect(formatTimestamp(timestamp, 'hour')).toBe('02/29 12');

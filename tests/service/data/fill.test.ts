@@ -132,54 +132,54 @@ describe('fillGaps', () => {
 
     it('应该正确处理天粒度', () => {
       const records: TestRecord[] = [
-        { timestamp: new Date('2024-01-01T00:00:00.000Z').getTime(), value: 10 },
-        { timestamp: new Date('2024-01-03T00:00:00.000Z').getTime(), value: 30 },
+        { timestamp: new Date(2024, 0, 1, 0, 0, 0, 0).getTime(), value: 10 },
+        { timestamp: new Date(2024, 0, 3, 0, 0, 0, 0).getTime(), value: 30 },
       ];
 
-      const start = new Date('2024-01-01T00:00:00.000Z').getTime();
-      const end = new Date('2024-01-03T00:00:00.000Z').getTime();
+      const start = new Date(2024, 0, 1, 0, 0, 0, 0).getTime();
+      const end = new Date(2024, 0, 3, 0, 0, 0, 0).getTime();
 
       const result = fillGaps(records, 'day', start, end, copyLeftRecordGenerator);
 
       expect(result).toHaveLength(3); // 01-01, 01-02, 01-03
       expect(result[0].value).toBe(10);
-      expect(result[1].timestamp).toBe(new Date('2024-01-02T00:00:00.000Z').getTime());
+      expect(result[1].timestamp).toBe(new Date(2024, 0, 2, 0, 0, 0, 0).getTime());
       expect(result[1].type).toBe('generated');
       expect(result[2].value).toBe(30);
     });
 
     it('应该正确处理月粒度', () => {
       const records: TestRecord[] = [
-        { timestamp: new Date('2024-01-01T00:00:00.000Z').getTime(), value: 100 },
-        { timestamp: new Date('2024-03-01T00:00:00.000Z').getTime(), value: 300 },
+        { timestamp: new Date(2024, 0, 1, 0, 0, 0, 0).getTime(), value: 100 },
+        { timestamp: new Date(2024, 2, 1, 0, 0, 0, 0).getTime(), value: 300 },
       ];
 
-      const start = new Date('2024-01-01T00:00:00.000Z').getTime();
-      const end = new Date('2024-03-01T00:00:00.000Z').getTime();
+      const start = new Date(2024, 0, 1, 0, 0, 0, 0).getTime();
+      const end = new Date(2024, 2, 1, 0, 0, 0, 0).getTime();
 
       const result = fillGaps(records, 'month', start, end, copyLeftRecordGenerator);
 
       expect(result).toHaveLength(3); // 2024-01, 2024-02, 2024-03
       expect(result[0].value).toBe(100);
-      expect(result[1].timestamp).toBe(new Date('2024-02-01T00:00:00.000Z').getTime());
+      expect(result[1].timestamp).toBe(new Date(2024, 1, 1, 0, 0, 0, 0).getTime());
       expect(result[1].type).toBe('generated');
       expect(result[2].value).toBe(300);
     });
 
     it('应该正确处理年粒度', () => {
       const records: TestRecord[] = [
-        { timestamp: new Date('2024-01-01T00:00:00.000Z').getTime(), value: 2024 },
-        { timestamp: new Date('2026-01-01T00:00:00.000Z').getTime(), value: 2026 },
+        { timestamp: new Date(2024, 0, 1, 0, 0, 0, 0).getTime(), value: 2024 },
+        { timestamp: new Date(2026, 0, 1, 0, 0, 0, 0).getTime(), value: 2026 },
       ];
 
-      const start = new Date('2024-01-01T00:00:00.000Z').getTime();
-      const end = new Date('2026-01-01T00:00:00.000Z').getTime();
+      const start = new Date(2024, 0, 1, 0, 0, 0, 0).getTime();
+      const end = new Date(2026, 0, 1, 0, 0, 0, 0).getTime();
 
       const result = fillGaps(records, 'year', start, end, copyLeftRecordGenerator);
 
       expect(result).toHaveLength(3); // 2024, 2025, 2026
       expect(result[0].value).toBe(2024);
-      expect(result[1].timestamp).toBe(new Date('2025-01-01T00:00:00.000Z').getTime());
+      expect(result[1].timestamp).toBe(new Date(2025, 0, 1, 0, 0, 0, 0).getTime());
       expect(result[1].type).toBe('generated');
       expect(result[2].value).toBe(2026);
     });
@@ -310,12 +310,12 @@ describe('fillGaps', () => {
 
     it('应该处理跨越多个时间单位的大范围', () => {
       const records: TestRecord[] = [
-        { timestamp: new Date('2024-01-01T00:00:00.000Z').getTime(), value: 1 },
-        { timestamp: new Date('2024-01-05T00:00:00.000Z').getTime(), value: 5 },
+        { timestamp: new Date(2024, 0, 1, 0, 0, 0, 0).getTime(), value: 1 },
+        { timestamp: new Date(2024, 0, 5, 0, 0, 0, 0).getTime(), value: 5 },
       ];
 
-      const start = new Date('2024-01-01T00:00:00.000Z').getTime();
-      const end = new Date('2024-01-05T00:00:00.000Z').getTime();
+      const start = new Date(2024, 0, 1, 0, 0, 0, 0).getTime();
+      const end = new Date(2024, 0, 5, 0, 0, 0, 0).getTime();
 
       const result = fillGaps(records, 'day', start, end, copyLeftRecordGenerator);
 
@@ -328,18 +328,18 @@ describe('fillGaps', () => {
 
     it('应该正确处理闰年的2月', () => {
       const records: TestRecord[] = [
-        { timestamp: new Date('2024-02-01T00:00:00.000Z').getTime(), value: 200 },
-        { timestamp: new Date('2024-04-01T00:00:00.000Z').getTime(), value: 400 },
+        { timestamp: new Date(2024, 1, 1, 0, 0, 0, 0).getTime(), value: 200 },
+        { timestamp: new Date(2024, 3, 1, 0, 0, 0, 0).getTime(), value: 400 },
       ];
 
-      const start = new Date('2024-02-01T00:00:00.000Z').getTime();
-      const end = new Date('2024-04-01T00:00:00.000Z').getTime();
+      const start = new Date(2024, 1, 1, 0, 0, 0, 0).getTime();
+      const end = new Date(2024, 3, 1, 0, 0, 0, 0).getTime();
 
       const result = fillGaps(records, 'month', start, end, copyLeftRecordGenerator);
 
       expect(result).toHaveLength(3); // 2024-02, 2024-03, 2024-04
       expect(result[0].value).toBe(200);
-      expect(result[1].timestamp).toBe(new Date('2024-03-01T00:00:00.000Z').getTime());
+      expect(result[1].timestamp).toBe(new Date(2024, 2, 1, 0, 0, 0, 0).getTime());
       expect(result[1].type).toBe('generated');
       expect(result[2].value).toBe(400);
     });
