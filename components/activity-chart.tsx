@@ -129,7 +129,7 @@ const ActivityChartApp = (props: { username: string }) => {
   const getCurrentMonthRecordsData = async () => {
     const today = new Date();
     const start = new Date(today.getFullYear(), today.getMonth(), 1, 0, 0, 0, 0).getTime();
-    const end = new Date(today.getFullYear(), today.getMonth() + 1, 0, 0, 0, 0).getTime();
+    const end = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59, 999).getTime();
     const records = await getAggregatedUsedTimeRecords(props.username, 'day', start, end);
     console.log('月维度原始数据', records);
     const xAxis = records.map(record => formatTimestamp(record.timestamp, 'day'));

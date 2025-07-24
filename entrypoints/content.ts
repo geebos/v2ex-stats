@@ -5,8 +5,12 @@ import { tryInitBalanceChart } from '@/components/balance-chart';
 import { tryInitActivityChart } from '@/components/activity-chart';
 
 // ==================== 页面检测和信息获取 ====================
-const detectAndGetInfo = (): PageInfo => {
-  const isV2ex = /\.{0,1}v2ex\.com$/.test(window.location.hostname);
+const testIsV2EX = (hostname: string) => {
+  return /^(?:([a-z0-9-]+\.)*)v2ex\.com$/.test(hostname);
+}
+
+export const detectAndGetInfo = (): PageInfo => {
+  const isV2ex = testIsV2EX(window.location.hostname);
 
   const memberLink = Array.from(document.querySelectorAll('a'))
     .find(a => /^\/member\/[\w-]+$/.test(a.getAttribute('href') || ''));
