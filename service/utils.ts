@@ -114,3 +114,27 @@ export const formatBytes = (bytes: number): string => {
 
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 }
+
+export const xpath = (path: string, root: Node = document): Node[] | string | number | boolean | null => {
+  const result = document.evaluate(path, root, null, XPathResult.ANY_TYPE, null);
+
+  switch (result.resultType) {
+    case XPathResult.STRING_TYPE:
+      return result.stringValue;
+    case XPathResult.NUMBER_TYPE:
+      return result.numberValue;
+    case XPathResult.BOOLEAN_TYPE:
+      return result.booleanValue;
+    case XPathResult.UNORDERED_NODE_ITERATOR_TYPE:
+    case XPathResult.ORDERED_NODE_ITERATOR_TYPE:
+      const nodes: Node[] = [];
+      let node = result.iterateNext();
+      while (node) {
+        nodes.push(node);
+        node = result.iterateNext();
+      }
+      return nodes;
+    default:
+      return null;
+  }
+};

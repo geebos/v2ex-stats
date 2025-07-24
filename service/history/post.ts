@@ -12,7 +12,7 @@ export const updatePostStatus = async (username: string, postStatus: PostStatus)
   await storage.setItem(`local:postStatus:${username}`, postStatusMap);
 };
 
-export const getPostStatus = async (username: string, postId: string): Promise<PostStatus> => {
+export const getPostStatus = async (username: string, postId: string): Promise<PostStatus | undefined > => {
   const postStatusMap = await storage.getItem<Record<string, PostStatus>>(`local:postStatus:${username}`, { fallback: {} });
-  return postStatusMap[postId] ?? { postId, replyCount: 0, timestamp: 0 };
+  return postStatusMap[postId];
 };

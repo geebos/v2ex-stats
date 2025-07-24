@@ -66,5 +66,6 @@ export default defineContentScript({
     }
 
     await collectPostInfo(info.username); 
+    await tryInitPostsLabel(info.username);
   }
 }); 
