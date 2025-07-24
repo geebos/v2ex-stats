@@ -8,7 +8,7 @@ import {
   getAllBalanceRecords,
   getLatestBalanceRecord,
   queryBalanceRecords
-} from "@/service/query";
+} from "@/service/balance/query";
 import { getStorageSize } from "@/service/storage";
 import { browser } from 'wxt/browser';
 

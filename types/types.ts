@@ -7,10 +7,10 @@ export interface BalanceRecord {
 }
 
 export interface PageInfo {
-  username: string;
-  isLoggedIn: boolean;
-  isBalancePage: boolean;
   isV2ex: boolean;
+  isLoggedIn: boolean;
+  username: string;
+  pathname: string;
 }
 
 export interface BalanceRecordQuery {
@@ -34,3 +34,8 @@ export type Granularity = 'minute' | 'hour' | 'day' | 'month' | 'year';
 export type AggType = 'agg_time' | 'agg_type';
 
 export type RecordType = 'all' | 'income' | 'expense';
+
+export interface UsedTimeRecord {
+  timestamp: number;
+  seconds: number;
+}

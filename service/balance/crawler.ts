@@ -1,4 +1,4 @@
-import type { BalanceRecord } from '../types/types';
+import type { BalanceRecord } from '@/types/types';
 
 // ==================== 页面解析工具 ====================
 // 解析余额页面的最大页数

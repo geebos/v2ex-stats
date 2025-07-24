@@ -1,11 +1,19 @@
 import { defineConfig } from 'vitest/config';
+import path from 'path';
 
 export default defineConfig({
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, '.'),
+      '@/*': path.resolve(__dirname, './*'),
+    }
+  },
   test: {
     // 指定测试文件目录
     include: [
       'service/**/*.test.{ts,js}',
       'entrypoints/**/*.test.{ts,js}',
+      'components/**/*.test.{ts,tsx}',
       'tests/**/*.test.{ts,js}'
     ],
     // 排除目录

@@ -1,5 +1,7 @@
 import type { BalanceRecord, BalanceRecordType, CompactBalanceRecord, Granularity, RecordType } from "@/types/types";
 import { storage } from "@wxt-dev/storage";
+import { aggreateByTime, aggregateByKey } from "../data/aggregate";
+import { fillGaps } from "../data/fill";
 
 // ==================== 常量定义 ====================
 // 预定义的余额记录类型，避免频繁查询存储
@@ -104,39 +106,6 @@ const getUniqueBalanceRecords = (records: BalanceRecord[]): BalanceRecord[] => {
   return Array.from(uniqueMap.values()).sort((a, b) => descSort(a.timestamp, b.timestamp));
 };
 
-// ==================== 时间处理工具 ====================
-// 根据粒度将时间戳标准化到时间段开始
-const getGroupTimestamp = (timestamp: number, granularity: Granularity): number => {
-  const date = new Date(timestamp);
-  const year = date.getUTCFullYear();
-  const month = date.getUTCMonth();
-  const day = date.getUTCDate();
-  const hour = date.getUTCHours();
-  const minute = date.getUTCMinutes();
-
-  switch (granularity) {
-    case 'minute': return new Date(Date.UTC(year, month, day, hour, minute, 0, 0)).getTime();
-    case 'hour': return new Date(Date.UTC(year, month, day, hour, 0, 0, 0)).getTime();
-    case 'day': return new Date(Date.UTC(year, month, day, 0, 0, 0, 0)).getTime();
-    case 'month': return new Date(Date.UTC(year, month, 1, 0, 0, 0, 0)).getTime();
-    case 'year': return new Date(Date.UTC(year, 0, 1, 0, 0, 0, 0)).getTime();
-  }
-};
-
-// 计算下一个时间段的起始时间戳
-const getNextTimestamp = (timestamp: number, granularity: Granularity): number => {
-  const date = new Date(timestamp);
-
-  switch (granularity) {
-    case 'minute': return timestamp + 60 * 1000;
-    case 'hour': return timestamp + 60 * 60 * 1000;
-    case 'day': return timestamp + 24 * 60 * 60 * 1000;
-    case 'month': return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 1, 0, 0, 0, 0)).getTime();
-    case 'year': return new Date(Date.UTC(date.getUTCFullYear() + 1, 0, 1, 0, 0, 0, 0)).getTime();
-    default: return timestamp;
-  }
-};
-
 // ==================== 数据存储操作 ====================
 // 追加新记录到存储中，使用分片策略
 const appendBalanceRecords = async (records: BalanceRecord[]): Promise<void> => {
@@ -234,58 +203,31 @@ const getLatestBalanceRecord = async (username: string): Promise<BalanceRecord |
 // ==================== 数据聚合操作 ====================
 // 按时间粒度聚合记录：同一时间段内的记录合并
 const aggregateBalanceRecordsByTime = (records: BalanceRecord[], granularity: Granularity): BalanceRecord[] => {
-  if (records.length === 0) return [];
-
-  // 按标准化时间戳分组
-  const groups = new Map<number, BalanceRecord[]>();
-  records.forEach(record => {
-    const groupTimestamp = getGroupTimestamp(record.timestamp, granularity);
-    const group = groups.get(groupTimestamp) ?? [];
-    group.push(record);
-    groups.set(groupTimestamp, group);
-  });
-
-  // 生成聚合记录：使用最新记录的余额，累加delta
-  const aggregated: BalanceRecord[] = [];
-  for (const [groupTimestamp, group] of groups.entries()) {
+  const aggregated = aggreateByTime(records, granularity, (timestamp, group) => {
     const latest = group.sort((a, b) => b.timestamp - a.timestamp)[0];
-    aggregated.push({
+    return {
       username: latest.username,
-      timestamp: groupTimestamp,
+      timestamp,
       balance: latest.balance,
       type: latest.type,
       delta: group.reduce((sum, record) => sum + record.delta, 0),
-    });
-  }
+    };
+  });
 
   return aggregated.sort((a, b) => descSort(a.timestamp, b.timestamp));
 };
 
 // 按操作类型聚合记录：相同类型的记录合并为统计数据
 const aggregateBalanceRecordsByType = (records: BalanceRecord[]): BalanceRecord[] => {
-  if (records.length === 0) return [];
-
-  // 按操作类型分组
-  const groups = new Map<string, BalanceRecord[]>();
-  records.forEach(record => {
-    const group = groups.get(record.type) ?? [];
-    group.push(record);
-    groups.set(record.type, group);
-  });
-
-  // 生成统计记录：累加同类型的delta值
-  const aggregated: BalanceRecord[] = [];
-  for (const [groupType, group] of groups.entries()) {
-    aggregated.push({
+  return aggregateByKey(records, record => record.type, (type, group) => {
+    return {
       username: group[0].username,
       timestamp: 0,
       balance: 0,
-      type: groupType,
+      type,
       delta: group.reduce((sum, record) => sum + record.delta, 0),
-    });
-  }
-
-  return aggregated;
+    };
+  });
 };
 
 // 填充时间序列空缺，生成完整的时间序列数据
@@ -295,64 +237,15 @@ const fillTimeSeriesGaps = (
   start: number,
   end: number
 ): BalanceRecord[] => {
-  if (aggregatedRecords.length === 0 && start === 0 && end === 0) return [];
-
-  const sortedRecords = aggregatedRecords.sort((a, b) => a.timestamp - b.timestamp);
-
-  // 确定实际的时间范围
-  let actualStart: number, actualEnd: number;
-  if (start !== 0 && end !== 0) {
-    actualStart = getGroupTimestamp(start, granularity);
-    actualEnd = getGroupTimestamp(end, granularity);
-  } else if (start !== 0) {
-    actualStart = getGroupTimestamp(start, granularity);
-    actualEnd = sortedRecords.length > 0 ? sortedRecords[sortedRecords.length - 1].timestamp : actualStart;
-  } else if (end !== 0) {
-    actualStart = sortedRecords.length > 0 ? sortedRecords[0].timestamp : getGroupTimestamp(end, granularity);
-    actualEnd = getGroupTimestamp(end, granularity);
-  } else {
-    if (sortedRecords.length === 0) return [];
-    actualStart = sortedRecords[0].timestamp;
-    actualEnd = sortedRecords[sortedRecords.length - 1].timestamp;
-  }
-
-  // 构建时间戳到记录的映射
-  const recordMap = new Map<number, BalanceRecord>();
-  sortedRecords.forEach(record => recordMap.set(record.timestamp, record));
-
-  // 生成完整的时间序列
-  const result: BalanceRecord[] = [];
-  let currentTimestamp = actualStart;
-  let lastBalance = 0;
-  let defaultRecord: Partial<BalanceRecord> = {};
-
-  if (sortedRecords.length > 0) {
-    const firstRecord = sortedRecords[0];
-    defaultRecord = { username: firstRecord.username, type: firstRecord.type };
-    lastBalance = firstRecord.balance;
-  }
-
-  while (currentTimestamp <= actualEnd) {
-    if (recordMap.has(currentTimestamp)) {
-      // 使用实际记录
-      const actualRecord = recordMap.get(currentTimestamp)!;
-      result.push(actualRecord);
-      lastBalance = actualRecord.balance;
-      defaultRecord.username = actualRecord.username;
-      defaultRecord.type = actualRecord.type;
-    } else {
-      // 生成插值记录
-      result.push({
-        username: defaultRecord.username || 'unknown',
-        timestamp: currentTimestamp,
-        balance: lastBalance,
-        type: defaultRecord.type || 'interpolated',
-        delta: 0,
-      });
-    }
-
-    currentTimestamp = getNextTimestamp(currentTimestamp, granularity);
-  }
+  const result = fillGaps(aggregatedRecords, granularity, start, end, (currentTimestamp, leftRecord) => {
+    return {
+      username: leftRecord.username,
+      timestamp: currentTimestamp,
+      balance: leftRecord.balance,
+      type: leftRecord.type,
+      delta: 0,
+    };
+  });
 
   return result.sort((a, b) => descSort(a.timestamp, b.timestamp));
 };

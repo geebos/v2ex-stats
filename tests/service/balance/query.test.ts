@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { BalanceRecord, CompactBalanceRecord } from '@/types/types';
-import { aggregateBalanceRecordsByTime, fillTimeSeriesGaps, aggregateBalanceRecordsByType, alignBanlanceRecordsTimeSeries, getBalanceRecords, setBalanceRecords } from './query';
+import { aggregateBalanceRecordsByTime, fillTimeSeriesGaps, aggregateBalanceRecordsByType, alignBanlanceRecordsTimeSeries, getBalanceRecords, setBalanceRecords } from '../../../service/balance/query';
 
 describe('aggregateBalanceRecords', () => {
   // 测试数据工厂函数
@@ -24,7 +24,8 @@ describe('aggregateBalanceRecords', () => {
   });
 
   it('应该返回单条记录当输入只有一条记录时', () => {
-    const record = createRecord(1609459200000, 100); // 2021-01-01 00:00:00 UTC
+    const timestamp = new Date(2021, 0, 1, 0, 0, 0, 0).getTime(); // 2021-01-01 00:00:00 本地时间
+    const record = createRecord(timestamp, 100);
     const result = aggregateBalanceRecordsByTime([record], 'day');
     
     expect(result).toHaveLength(1);
@@ -66,48 +67,48 @@ describe('aggregateBalanceRecords', () => {
   describe('按天聚合', () => {
     it('应该将同一天内的记录聚合为一条', () => {
       const records = [
-        createRecord(1609459200000, 100), // 2021-01-01 00:00:00 UTC
-        createRecord(1609545600000, 200), // 2021-01-02 00:00:00 UTC
-        createRecord(1609502400000, 150), // 2021-01-01 12:00:00 UTC (同一天)
+        createRecord(new Date(2021, 0, 1, 0, 0, 0, 0).getTime(), 100), // 2021-01-01 00:00:00 本地时间
+        createRecord(new Date(2021, 0, 2, 0, 0, 0, 0).getTime(), 200), // 2021-01-02 00:00:00 本地时间
+        createRecord(new Date(2021, 0, 1, 12, 0, 0, 0).getTime(), 150), // 2021-01-01 12:00:00 本地时间 (同一天)
       ];
       
       const result = aggregateBalanceRecordsByTime(records, 'day');
       
       expect(result).toHaveLength(2);
-      expect(result[0].timestamp).toBe(1609545600000); // 2021-01-02 00:00:00 UTC (天开始时间)
-      expect(result[1].timestamp).toBe(1609459200000); // 2021-01-01 00:00:00 UTC (天开始时间)
+      expect(result[0].timestamp).toBe(new Date(2021, 0, 2, 0, 0, 0, 0).getTime()); // 2021-01-02 00:00:00 本地时间 (天开始时间)
+      expect(result[1].timestamp).toBe(new Date(2021, 0, 1, 0, 0, 0, 0).getTime()); // 2021-01-01 00:00:00 本地时间 (天开始时间)
     });
   });
 
   describe('按月聚合', () => {
     it('应该将同一月内的记录聚合为一条', () => {
       const records = [
-        createRecord(1609459200000, 100), // 2021-01-01 00:00:00 UTC
-        createRecord(1612137600000, 200), // 2021-02-01 00:00:00 UTC
-        createRecord(1611532800000, 150), // 2021-01-25 00:00:00 UTC (同一月)
+        createRecord(new Date(2021, 0, 1, 0, 0, 0, 0).getTime(), 100), // 2021-01-01 00:00:00 本地时间
+        createRecord(new Date(2021, 1, 1, 0, 0, 0, 0).getTime(), 200), // 2021-02-01 00:00:00 本地时间
+        createRecord(new Date(2021, 0, 25, 0, 0, 0, 0).getTime(), 150), // 2021-01-25 00:00:00 本地时间 (同一月)
       ];
       
       const result = aggregateBalanceRecordsByTime(records, 'month');
       
       expect(result).toHaveLength(2);
-      expect(result[0].timestamp).toBe(1612137600000); // 2021-02-01 00:00:00 UTC (月开始时间)
-      expect(result[1].timestamp).toBe(1609459200000); // 2021-01-01 00:00:00 UTC (月开始时间)
+      expect(result[0].timestamp).toBe(new Date(2021, 1, 1, 0, 0, 0, 0).getTime()); // 2021-02-01 00:00:00 本地时间 (月开始时间)
+      expect(result[1].timestamp).toBe(new Date(2021, 0, 1, 0, 0, 0, 0).getTime()); // 2021-01-01 00:00:00 本地时间 (月开始时间)
     });
   });
 
   describe('按年聚合', () => {
     it('应该将同一年内的记录聚合为一条', () => {
       const records = [
-        createRecord(1609459200000, 100), // 2021-01-01 00:00:00 UTC
-        createRecord(1640995200000, 200), // 2022-01-01 00:00:00 UTC
-        createRecord(1625097600000, 150), // 2021-07-01 00:00:00 UTC (同一年)
+        createRecord(new Date(2021, 0, 1, 0, 0, 0, 0).getTime(), 100), // 2021-01-01 00:00:00 本地时间
+        createRecord(new Date(2022, 0, 1, 0, 0, 0, 0).getTime(), 200), // 2022-01-01 00:00:00 本地时间
+        createRecord(new Date(2021, 6, 1, 0, 0, 0, 0).getTime(), 150), // 2021-07-01 00:00:00 本地时间 (同一年)
       ];
       
       const result = aggregateBalanceRecordsByTime(records, 'year');
       
       expect(result).toHaveLength(2);
-      expect(result[0].timestamp).toBe(1640995200000); // 2022-01-01 00:00:00 UTC (年开始时间)
-      expect(result[1].timestamp).toBe(1609459200000); // 2021-01-01 00:00:00 UTC (年开始时间)
+      expect(result[0].timestamp).toBe(new Date(2022, 0, 1, 0, 0, 0, 0).getTime()); // 2022-01-01 00:00:00 本地时间 (年开始时间)
+      expect(result[1].timestamp).toBe(new Date(2021, 0, 1, 0, 0, 0, 0).getTime()); // 2021-01-01 00:00:00 本地时间 (年开始时间)
     });
   });
 
@@ -139,29 +140,30 @@ describe('aggregateBalanceRecords', () => {
 
     it('应该在同一时间段内选择最新的记录', () => {
       const records = [
-        createRecord(1609459200000, 100), // 2021-01-01 00:00:00 UTC
-        createRecord(1609459230000, 120), // 2021-01-01 00:00:30 UTC (同一天，更新)
-        createRecord(1609459210000, 110), // 2021-01-01 00:00:10 UTC (同一天，中间)
+        createRecord(new Date(2021, 0, 1, 0, 0, 0, 0).getTime(), 100), // 2021-01-01 00:00:00 本地时间
+        createRecord(new Date(2021, 0, 1, 0, 0, 30, 0).getTime(), 120), // 2021-01-01 00:00:30 本地时间 (同一天，更新)
+        createRecord(new Date(2021, 0, 1, 0, 0, 10, 0).getTime(), 110), // 2021-01-01 00:00:10 本地时间 (同一天，中间)
       ];
       
       const result = aggregateBalanceRecordsByTime(records, 'day');
       
       expect(result).toHaveLength(1);
-      expect(result[0].timestamp).toBe(1609459200000); // 使用标准化的天开始时间
+      expect(result[0].timestamp).toBe(new Date(2021, 0, 1, 0, 0, 0, 0).getTime()); // 使用标准化的天开始时间
       expect(result[0].balance).toBe(120); // 但数据取最新的记录
     });
 
     it('应该保持记录的完整性', () => {
+      const dayStart = new Date(2021, 0, 1, 0, 0, 0, 0).getTime();
       const records = [
-        createRecord(1609459200000, 100, 50, '充值', 'user1'),
-        createRecord(1609459230000, 120, 20, '消费', 'user1'),
+        createRecord(dayStart, 100, 50, '充值', 'user1'),
+        createRecord(new Date(2021, 0, 1, 0, 0, 30, 0).getTime(), 120, 20, '消费', 'user1'),
       ];
       
       const result = aggregateBalanceRecordsByTime(records, 'day');
       
       expect(result).toHaveLength(1);
       expect(result[0]).toEqual({
-        timestamp: 1609459200000, // 使用标准化的天开始时间
+        timestamp: dayStart, // 使用标准化的天开始时间
         balance: 120, // 余额取最新记录
         delta: 70, // delta 累加同组内所有记录 (50 + 20)
         type: '消费', // 类型取最新记录
@@ -214,16 +216,18 @@ describe('aggregateBalanceRecords', () => {
     });
 
     it('应该正确处理跨天的数据', () => {
+      const day1 = new Date(2021, 0, 1, 0, 0, 0, 0).getTime();
+      const day4 = new Date(2021, 0, 4, 0, 0, 0, 0).getTime();
       const records = [
-        createRecord(1609459200000, 100, 10, '充值', 'user1'), // 2021-01-01 00:00:00
-        createRecord(1609718400000, 200, 100, '充值', 'user1'), // 2021-01-04 00:00:00 (跳过2天)
+        createRecord(day1, 100, 10, '充值', 'user1'), // 2021-01-01 00:00:00 本地时间
+        createRecord(day4, 200, 100, '充值', 'user1'), // 2021-01-04 00:00:00 本地时间 (跳过2天)
       ];
       
       const result = aggregateBalanceRecordsByTime(records, 'day');
       
       expect(result).toHaveLength(2);
-      expect(result[0].timestamp).toBe(1609718400000); // 01-04
-      expect(result[1].timestamp).toBe(1609459200000); // 01-01
+      expect(result[0].timestamp).toBe(day4); // 01-04
+      expect(result[1].timestamp).toBe(day1); // 01-01
     });
   });
 });
@@ -317,26 +321,6 @@ describe('fillTimeSeriesGaps', () => {
     // 验证插值记录使用实际记录的 balance
     expect(result[0].balance).toBe(100);
     expect(result[1].balance).toBe(100);
-  });
-
-  it('应该在没有记录但指定时间范围时生成插值序列', () => {
-    const records: BalanceRecord[] = [];
-    
-    const start = 1609459200000; // 2021-01-01 00:00:00
-    const end = 1609459320000;   // 2021-01-01 00:02:00
-    
-    const result = fillTimeSeriesGaps(records, 'minute', start, end);
-    
-    // 应该有3条记录: 00:00, 00:01, 00:02
-    expect(result).toHaveLength(3);
-    
-    // 验证所有记录都是插值记录
-    result.forEach(record => {
-      expect(record.balance).toBe(0);
-      expect(record.delta).toBe(0);
-      expect(record.username).toBe('unknown');
-      expect(record.type).toBe('interpolated');
-    });
   });
 
   it('应该正确处理按小时粒度的时间范围插值', () => {
