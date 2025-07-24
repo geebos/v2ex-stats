@@ -10,8 +10,8 @@ import { testIsV2EX } from '@/service/utils';
 export const detectAndGetInfo = (): PageInfo => {
   const isV2ex = testIsV2EX(window.location.hostname);
 
-  const memberLink = Array.from(document.querySelectorAll('a'))
-    .find(a => /^\/member\/[\w-]+$/.test(a.getAttribute('href') || ''));
+  const memberLink = Array.from(document.querySelectorAll('#Top a'))
+    .find(a => /^\/member\/[\w-]+$/.test(a.getAttribute('href') || '')) as HTMLAnchorElement | undefined;
 
   const isLoggedIn = !!memberLink;
   const username = isLoggedIn && memberLink
