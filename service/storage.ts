@@ -30,4 +30,30 @@ async function getStorageSize(): Promise<number> {
   }
 }
 
-export { getStorageSize };
+const getIsInited = async (username: string) => {
+  const isInited = await storage.getItem<boolean>(`local:isInited:${username}`);
+  console.log('getIsInited', isInited);
+  return isInited ?? false;
+};
+
+const setIsInited = async (username: string, isInited: boolean) => {
+  console.log('setIsInited', isInited);
+  await storage.setItem(`local:isInited:${username}`, isInited);
+};
+
+const getLatestCrawlerPage = async (username: string) => {
+  const latestCrawlerPage = await storage.getItem<number>(`local:latestCrawlerPage:${username}`);
+  return latestCrawlerPage ?? 1;
+};
+
+const setLatestCrawlerPage = async (username: string, page: number) => {
+  await storage.setItem(`local:latestCrawlerPage:${username}`, page);
+};
+
+export {
+  getIsInited,
+  setIsInited,
+  getLatestCrawlerPage,
+  setLatestCrawlerPage,
+  getStorageSize,
+};
