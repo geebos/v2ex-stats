@@ -1,8 +1,8 @@
 // ==================== 第三方库 ====================
 import { createElement, forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
+import { createRoot } from "react-dom/client";
 import styled from "styled-components";
 import { FaGithub, FaInfoCircle } from "react-icons/fa";
-import { sendMessage } from "webext-bridge/content-script";
 
 // ==================== ECharts ====================
 import * as echarts from 'echarts/core';
@@ -18,11 +18,14 @@ import {
 import { SVGRenderer } from 'echarts/renderers';
 
 // ==================== 项目模块 ====================
-import { BalanceRecord, BalanceRecordQuery, Granularity } from "@/types/types";
+// 类型定义
+import { BalanceRecord, Granularity } from "@/types/types";
+
+// 服务模块
 import { parseBalanceMaxPage, parseBalanceRecord, parseBalanceRecords, startCrawler } from "@/service/balance/crawler";
-import { alignBanlanceRecordsTimeSeries } from "@/service/balance/query";
-import { createRoot } from "react-dom/client";
-import { adjustChartDarkMode, formatTimestamp, getIsDarkMode } from "@/service/utils";
+import { alignBanlanceRecordsTimeSeries, appendBalanceRecords, getLatestBalanceRecord, queryAggBalanceRecords } from "@/service/balance/query";
+import { getIsInited, getLatestCrawlerPage, getStorageSize, setIsInited, setLatestCrawlerPage } from "@/service/storage";
+import { adjustChartDarkMode, formatBytes, formatTimestamp, getIsDarkMode } from "@/service/utils";
 
 // 注册 ECharts 组件
 echarts.use([
@@ -53,7 +56,6 @@ export interface CrawlerProgress {
 
 interface ChartProps {
   username: string;
-  query: (query: BalanceRecordQuery) => Promise<BalanceRecord[]>;
   crawlerProgress: CrawlerProgress;
 }
 
@@ -206,17 +208,6 @@ const transformRecordsToPieChartSource = (records: any[]) => {
   return [['type', 'delta', 'kind'], ...source];
 };
 
-// 格式化字节数为人类可读格式
-function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 B';
-
-  const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-}
-
 // ==================== 图表配置函数 ===================
 const getLineChartOption = (allRecords: BalanceRecord[], incomeRecords: BalanceRecord[], expenseRecords: BalanceRecord[], granularity: Granularity) => {
   const { xAxis, series: allSeries } = transformRecordsToChartData(allRecords, (record) => record.balance, granularity);
@@ -352,10 +343,10 @@ const Chart = forwardRef((props: ChartProps, ref: React.Ref<any>) => {
 
     // 并行查询时间和类型数据
     const [typeRecords, allRecords, incomeRecords, expenseRecords] = await Promise.all([
-      props.query({ ...baseQuery, aggType: 'agg_type', recordType: 'all' }),
-      props.query({ ...baseQuery, aggType: 'agg_time', recordType: 'all' }),
-      props.query({ ...baseQuery, aggType: 'agg_time', recordType: 'income' }),
-      props.query({ ...baseQuery, aggType: 'agg_time', recordType: 'expense' })
+      queryAggBalanceRecords(props.username, 'agg_type', 'all', baseQuery.start, baseQuery.end, params.granularity),
+      queryAggBalanceRecords(props.username, 'agg_time', 'all', baseQuery.start, baseQuery.end, params.granularity),
+      queryAggBalanceRecords(props.username, 'agg_time', 'income', baseQuery.start, baseQuery.end, params.granularity),
+      queryAggBalanceRecords(props.username, 'agg_time', 'expense', baseQuery.start, baseQuery.end, params.granularity)
     ]);
     const [alignedAllRecords, alignedIncomeRecords, alignedExpenseRecords] = alignBanlanceRecordsTimeSeries([allRecords, incomeRecords, expenseRecords]);
     console.log('typeRecords', typeRecords);
@@ -372,9 +363,9 @@ const Chart = forwardRef((props: ChartProps, ref: React.Ref<any>) => {
   };
 
   // 获取存储容量
-  const getStorageSize = async () => {
+  const setStorageSize = async () => {
     try {
-      const size = await sendMessage('getStorageSize', undefined);
+      const size = await getStorageSize();
       console.log('storage size', size);
       setFormattedSize(formatBytes(size)); // 格式化字节数
     } catch (error) {
@@ -413,7 +404,7 @@ const Chart = forwardRef((props: ChartProps, ref: React.Ref<any>) => {
             $isDarkMode={isDarkMode}
             onMouseEnter={() => {
               setShowTooltip(true);
-              getStorageSize();
+              setStorageSize();
             }}
             onMouseLeave={() => setShowTooltip(false)}
           >
@@ -442,10 +433,7 @@ const Chart = forwardRef((props: ChartProps, ref: React.Ref<any>) => {
   );
 })
 
-// 查询余额记录
-async function queryBalanceRecords(query: BalanceRecordQuery) {
-  return await sendMessage('queryBalanceRecords', query, 'background');
-}
+
 
 // V2EX 余额图表应用组件
 function ChartApp(props: { username: string }) {
@@ -458,15 +446,15 @@ function ChartApp(props: { username: string }) {
 
   // 初始化余额历史数据（首次抓取）
   const initBalanceRecords = async (maxPage: number) => {
-    const startPage = await sendMessage('getLatestCrawlerPage', { username: props.username }, 'background');
+    const startPage = await getLatestCrawlerPage(props.username);
     console.log('开始初始化余额历史数据, 最大页数:', maxPage, '开始页数:', startPage);
 
     setCrawlerProgress({ isLoading: true, currentPage: 0, totalPages: maxPage });
 
     await startCrawler(startPage, maxPage, props.username, async (page, records) => {
       console.log(`抓取第${page}页:`, records.length, '条记录', records);
-      await sendMessage('appendBalanceRecords', { records }, 'background');
-      await sendMessage('setLatestCrawlerPage', { username: props.username, page: page }, 'background');
+      await appendBalanceRecords(records);
+      await setLatestCrawlerPage(props.username, page);
 
       setCrawlerProgress({ isLoading: true, currentPage: page, totalPages: maxPage });
 
@@ -474,7 +462,7 @@ function ChartApp(props: { username: string }) {
       return true;
     });
 
-    await sendMessage('setIsInited', { username: props.username, isInited: true }, 'background');
+    await setIsInited(props.username, true);
     console.log('初始化余额历史数据完成');
 
     setCrawlerProgress({ isLoading: false, currentPage: 0, totalPages: 0 });
@@ -483,7 +471,7 @@ function ChartApp(props: { username: string }) {
   // 增量抓取新的余额记录
   const initNewBalanceRecords = async (maxPage: number) => {
     // 获取最新的余额记录时间戳
-    const latestRecord = await sendMessage('getLatestBalanceRecord', { username: props.username }, 'background');
+    const latestRecord = await getLatestBalanceRecord(props.username);
     const latestTimestamp = latestRecord?.timestamp ?? 0;
 
     console.log('开始增量抓取, 最新时间戳:', latestTimestamp);
@@ -495,7 +483,7 @@ function ChartApp(props: { username: string }) {
 
       if (newRecords.length > 0) {
         console.log(`抓取第${page}页: 新增${newRecords.length}/${records.length}条记录`, newRecords);
-        await sendMessage('appendBalanceRecords', { records: newRecords }, 'background');
+        await appendBalanceRecords(newRecords);
         // 如果新记录数量等于页面记录数量，说明这页都是新记录，继续抓取
         return newRecords.length === records.length;
       }
@@ -528,7 +516,7 @@ function ChartApp(props: { username: string }) {
     const maxPage = parseBalanceMaxPage(document);
 
     // 检查是否已经初始化过
-    const isInited = await sendMessage('getIsInited', { username: props.username }, 'background');
+    const isInited = await getIsInited(props.username);
 
     if (!isInited) {
       // 首次初始化，抓取所有历史数据
@@ -545,7 +533,7 @@ function ChartApp(props: { username: string }) {
   }, []);
 
   return <>
-    <Chart username={props.username} query={queryBalanceRecords} ref={chartRef} crawlerProgress={crawlerProgress} />
+    <Chart username={props.username} ref={chartRef} crawlerProgress={crawlerProgress} />
   </>;
 }
 

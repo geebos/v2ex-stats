@@ -1,4 +1,4 @@
-import type { BalanceRecord, BalanceRecordType, CompactBalanceRecord, Granularity, RecordType } from "@/types/types";
+import type { AggType, BalanceRecord, BalanceRecordType, CompactBalanceRecord, Granularity, RecordType } from "@/types/types";
 import { storage } from "@wxt-dev/storage";
 import { aggreateByTime, aggregateByKey } from "../data/aggregate";
 import { fillGaps } from "../data/fill";
@@ -200,6 +200,33 @@ const getLatestBalanceRecord = async (username: string): Promise<BalanceRecord |
   return null;
 };
 
+// 查询指定时间范围内的余额记录，并按时间或类型维度聚合
+const queryAggBalanceRecords = async (username: string, aggType: AggType, recordType: RecordType, start: number, end: number, granularity: Granularity) => {
+  console.log(`queryBalanceRecords: ${username}, ${granularity}, ${aggType}, ${recordType}, ${start}-${end}`);
+
+  // 查询指定时间范围内的余额记录
+  const balanceRecords = await queryBalanceRecords(username, recordType, start, end);
+
+  // 按时间维度聚合
+  if (aggType === 'agg_time') {
+    const aggregatedRecords = aggregateBalanceRecordsByTime(balanceRecords, granularity);
+    const filledRecords = fillTimeSeriesGaps(aggregatedRecords, granularity, start, end);
+    console.log('queryBalanceRecords (agg_time)', filledRecords);
+    return filledRecords ?? [];
+  }
+
+  // 按类型维度聚合
+  if (aggType === 'agg_type') {
+    const aggregatedRecords = aggregateBalanceRecordsByType(balanceRecords);
+    console.log('queryBalanceRecords (agg_type)', aggregatedRecords);
+    return aggregatedRecords ?? [];
+  }
+
+  // 未知的聚合类型，返回空数组
+  console.error('queryBalanceRecords: unknown aggType', aggType);
+  return [];
+};
+
 // ==================== 数据聚合操作 ====================
 // 按时间粒度聚合记录：同一时间段内的记录合并
 const aggregateBalanceRecordsByTime = (records: BalanceRecord[], granularity: Granularity): BalanceRecord[] => {
@@ -299,6 +326,7 @@ export {
   appendBalanceRecords,
   getAllBalanceRecords,
   getLatestBalanceRecord,
+  queryAggBalanceRecords,
   queryBalanceRecords,
   aggregateBalanceRecordsByTime,
   fillTimeSeriesGaps,
