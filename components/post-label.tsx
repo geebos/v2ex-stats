@@ -2,10 +2,11 @@ import { getPostStatus, updatePostStatus } from "@/service/history/post";
 import { getPostInfo } from "@/service/history/collect";
 import { xpath } from "@/service/utils";
 import { getIsDarkMode } from "@/service/utils";
-import debounce from "lodash.debounce";
+import { debounce, once } from "lodash";
 import type { PostStatus } from "@/service/history/post";
 
 const globalData: {
+  // 进入帖子页面时的帖子状态，只给 updateCommentsLabel 使用，其他地方用可能没初始化
   currentPostStatus?: PostStatus
   newCommentsLabel: Element[]
 } = {
@@ -16,32 +17,44 @@ const globalData: {
 
 // 初始化帖子标签功能，设置页面事件监听
 export const tryInitPostsLabel = async (username: string): Promise<void> => {
-  // 初始化帖子信息，防止 mutationObserver 多次触发导致被最新数据覆盖
-  const { postId } = getPostInfo(window.location.href, document);
-  globalData.currentPostStatus = await getPostStatus(username, postId);
-  console.log('初始化帖子信息', globalData.currentPostStatus);
+  const { isIndexPage, isPostPage } = detectPageInfo();
 
   // 注入CSS样式
   injectStyle();
 
   // 监听页面变化，更新帖子标签
   const observer = new MutationObserver(debounce(async () => {
-    // 更新帖子标签
-    await updatePostsLable(username);
-    await updateCommentsLabel(username);
-    // 滚动到第一个新评论
-    scrollToNewComments(0);
+    if (isIndexPage) {
+      console.log('检测到主页，更新帖子列表标签');
+      await updatePostsLable(username);
+    }
+    if (isPostPage) {
+      console.log('检测到帖子页，更新帖子评论标签');
+      await updateCommentsLabel(username);
+      // 滚动到第一个新评论
+      scrollToNewComments(0);
+    }
   }, 50, { leading: false, trailing: true }));
 
   const mainContainer = document.querySelector('#Main');
   if (mainContainer) {
     observer.observe(mainContainer, { childList: true, subtree: true });
+    // 至少触发一次 MutationObserver
+    mainContainer.appendChild(document.createTextNode(''));
+  } else {
+    console.error('没有找到主容器，无法监听页面变化');
   }
 
   if (import.meta.env.DEV) {
     console.log('开发环境，注入updatePostStatus');
     (window as any).updatePostStatus = updatePostStatus;
   }
+}
+
+const detectPageInfo = () => {
+  const isIndexPage = window.location.pathname === '/';
+  const isPostPage = /\/t\/\d+/.test(window.location.pathname);
+  return { isIndexPage, isPostPage };
 }
 
 // ===== 帖子列表标签更新逻辑 =====
@@ -73,11 +86,9 @@ const updatePostsLable = async (username: string) => {
       // 有新回复：显示增量标签
       const newCount = replyCount - postStatus.replyCount;
       applyLabel(anchor, `+${newCount}`);
-      console.log('有新回复', postId, replyCount, postStatus);
     } else {
       // 没有新回复：清除标签样式
       clearLabel(anchor);
-      console.log('没有新回复', postId, replyCount, postStatus);
     }
   });
 }
@@ -86,18 +97,26 @@ const updatePostsLable = async (username: string) => {
 
 // 更新帖子页面中的新评论标签
 const updateCommentsLabel = async (username: string) => {
+  await once(async () => {
+    // 初始化帖子信息，防止 mutationObserver 多次触发导致被最新数据覆盖
+    const { postId } = getPostInfo(window.location.href, document);
+    globalData.currentPostStatus = await getPostStatus(username, postId);
+    console.log('初始化帖子信息', globalData.currentPostStatus);
+  })();
+
+  if (!globalData.currentPostStatus) {
+    console.log('帖子之前没访问过，不高亮');
+    return;
+  }
+  const { postId, viewedCount } = globalData.currentPostStatus;
+
   // 获取所有评论编号元素
   const spanList = xpath('//div[@id="Main"]//div[@class="box"][2]//div[starts-with(@id, "r_")]//span[@class="no"]', document) as Node[];
   console.log('帖子评论数标签', spanList);
 
   if (spanList.length === 0) {
-    return;
-  }
-
-  // 获取当前帖子ID
-  const { postId } = getPostInfo(window.location.href, document);
-  if (!postId) {
-    console.error('没有找到帖子ID', window.location.href);
+    console.log('帖子没有评论，更新帖子状态');
+    await updatePostStatus(username, { postId, viewedCount: 0, timestamp: Date.now() });
     return;
   }
 
@@ -113,12 +132,12 @@ const updateCommentsLabel = async (username: string) => {
     }
 
     // 检查是否为新评论
-    if (!globalData.currentPostStatus?.viewedCount) {
+    if (!viewedCount) {
       console.log('帖子之前没访问过，不高亮', postId);
       return;
     }
 
-    if (currentNo > globalData.currentPostStatus?.viewedCount) {
+    if (currentNo > viewedCount) {
       // 新评论：应用高亮标签
       applyLabel(spanElement, 'new');
       globalData.newCommentsLabel.push(spanElement);
