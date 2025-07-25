@@ -3,6 +3,8 @@ import { getPostInfo } from "@/service/history/collect";
 import { xpath } from "@/service/utils";
 import { getIsDarkMode } from "@/service/utils";
 
+const newCommentsLabel = new Array<Element>();
+
 // ===== 主要导出函数 =====
 
 // 初始化帖子标签功能，设置页面事件监听
@@ -11,9 +13,11 @@ export const tryInitPostsLabel = async (username: string): Promise<void> => {
   injectStyle();
   
   // 监听页面显示事件，页面恢复时重新更新标签
-  window.addEventListener('pageshow', () => {
+  window.addEventListener('pageshow', async () => {
     updatePostsLable(username);
-    updateCommentsLabel(username);
+    await updateCommentsLabel(username);
+    // 滚动到第一个新评论
+    scrollToNewComments(0);
   });
 }
 
@@ -102,14 +106,25 @@ const updateCommentsLabel = async (username: string) => {
     if (currentNo > postStatus.viewedCount) {
       // 新评论：应用高亮标签
       applyLabel(spanElement, 'new');
+      newCommentsLabel.push(spanElement);
     } else {
       // 已读评论：清除标签
       clearLabel(spanElement);
     }
   });
+  console.log('新评论标签', newCommentsLabel);
   
   // 更新用户已查看的评论数
   await updatePostStatus(username, { postId, viewedCount: maxNo, timestamp: Date.now() });
+}
+
+const scrollToNewComments = (index: number) => {
+  if (index >= newCommentsLabel.length) {
+    console.log('index范围错误，没有新评论');
+    return;
+  }
+  console.log('滚动到新评论', index, newCommentsLabel[index]);
+  newCommentsLabel[index].scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
 // ===== 样式操作辅助函数 =====
