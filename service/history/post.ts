@@ -3,7 +3,7 @@ import { storage } from "@wxt-dev/storage";
 // ===== 类型定义 =====
 
 // 帖子状态完整数据结构
-interface PostStatus {
+export interface PostStatus {
   postId: string;
   replyCount: number;
   viewedCount?: number; // 用户已查看的评论数
@@ -11,7 +11,7 @@ interface PostStatus {
 }
 
 // 帖子状态更新数据结构（部分字段可选）
-interface UpdatePostStatus {
+export interface UpdatePostStatus {
   postId: string;
   replyCount?: number;
   viewedCount?: number;
