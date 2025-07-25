@@ -116,7 +116,7 @@ const updateCommentsLabel = async (username: string) => {
   const { postId, viewedCount } = globalData.currentPostStatus;
 
   // 获取所有评论编号元素
-  const spanList = xpath('//div[@id="Main"]//div[@class="box"][2]//div[starts-with(@id, "r_")]//span[@class="no"]', document) as Node[];
+  const spanList = findAllCommentsElement();
   console.log('帖子评论数标签', spanList);
 
   if (spanList.length === 0) {
@@ -160,7 +160,7 @@ const updateCommentsLabel = async (username: string) => {
 // 滚动到指定楼层的评论
 const scrollToComments = (floor: number) => {
   // 查找所有评论编号元素
-  const commentElements = xpath(`//div[@id="Main"]//div[@class="box"][2]//div[starts-with(@id, "r_")]//span[@class="no" or @class="no v-stats-count-label"]`, document) as Node[];
+  const commentElements = findAllCommentsElement();
   
   if (commentElements.length === 0) {
     console.log('没有找到评论', floor);
@@ -198,6 +198,10 @@ const clearLabel = (element: HTMLElement) => {
   element.classList.remove('v-stats-count-label');
   element.removeAttribute('data-new');
 }
+
+const findAllCommentsElement = () => {
+  return xpath(`//div[@id="Main"]//div[@class="box"][2]//div[starts-with(@id, "r_")]//span[@class="no" or @class="no v-stats-count-label"]`, document) as Node[];
+};
 
 // ===== CSS样式注入 =====
 
