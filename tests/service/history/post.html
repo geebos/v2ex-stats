@@ -1,0 +1,1289 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta name="Content-Type" content="text/html;charset=utf-8">
+    <meta name="Referrer" content="unsafe-url">
+    <meta content="True" name="HandheldFriendly">
+    
+    <meta name="theme-color" content="#ffffff">
+    
+    
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="detectify-verification" content="d0264f228155c7a1f72c3d91c17ce8fb" />
+<meta name="p:domain_verify" content="b87e3b55b409494aab88c1610b05a5f0"/>
+<meta name="alexaVerifyID" content="OFc8dmwZo7ttU4UCnDh1rKDtLlY" />
+<meta name="baidu-site-verification" content="D00WizvYyr" />
+<meta name="msvalidate.01" content="D9B08FEA08E3DA402BF07ABAB61D77DE" />
+<meta property="wb:webmaster" content="f2f4cb229bda06a4" />
+<meta name="google-site-verification" content="LM_cJR94XJIqcYJeOCscGVMWdaRUvmyz6cVOqkFplaU" />
+<meta name="wwads-cn-verify" content="c8ffe9a587b126f152ed3d89a146b445" />
+<script type="text/javascript" src="https://cdn.wwads.cn/js/makemoney.js" async></script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5060390720525238"
+     crossorigin="anonymous"></script>
+    
+    <title>重磅更新！ Claude Code 引入大杀器 sub-agents - V2EX</title>
+    <link rel="dns-prefetch" href="https://static.v2ex.com/" />
+<link rel="dns-prefetch" href="https://cdn.v2ex.com/" />
+<link rel="dns-prefetch" href="https://i.v2ex.co/" />
+<link rel="dns-prefetch" href="https://www.google-analytics.com/" />    
+    <style>
+        body {
+            min-width: 820px;
+            font-family: "Helvetica Neue", "Luxi Sans", "Segoe UI", "Hiragino Sans GB", "Microsoft Yahei", sans-serif, "Apple Logo";
+        }
+    </style>
+    <link rel="stylesheet" type="text/css" media="screen" href="/assets/0fcd51c79c8cddab8b6217fbd31d01054e32b754-combo.css?t=1753416600">
+    
+    <script>
+        const SITE_NIGHT = 0;
+    </script>
+    <link rel="stylesheet" href="/static/css/vendor/tomorrow.css?v=3c006808236080a5d98ba4e64b8f323f" type="text/css">
+    
+    <link rel="icon" sizes="192x192" href="/static/icon-192.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon-180.png?v=91e795b8b5d9e2cbf2d886c3d4b7d63c">
+    
+    <link rel="shortcut icon" href="/static/favicon.ico" type="image/png">
+    
+    
+    <link rel="manifest" href="/manifest.webmanifest">
+    <script>
+        const LANG = 'zhcn';
+        const FEATURES = ['search', 'favorite-nodes-sort'];
+    </script>
+    <script src="/assets/b52366437ece08ff19b9cdc923b91fc7347b972f-combo.js?t=1753416600" defer></script>
+    <meta name="description" content="程序员 - @terryso - 今天，我们要聊一个激动人心的话题——Anthropic 为其 AI 编程助手 Claude Code 推出了一个强大的新功能：**sub-agents （子智能体）**。这项功能可不仅仅是简单">
+    
+    
+    <link rel="canonical" href="https://www.v2ex.com/t/1147555">
+    
+    
+
+<meta property="og:locale" content="zh_CN" />
+<meta property="og:type" content="article" />
+<meta property="og:title" content="重磅更新！ Claude Code 引入大杀器 sub-agents - V2EX" />
+<meta property="og:description" content="程序员 - @terryso - 今天，我们要聊一个激动人心的话题——Anthropic 为其 AI 编程助手 Claude Code 推出了一个强大的新功能：**sub-agents （子智能体）**。这项功能可不仅仅是简单" />
+<meta property="og:url" content="https://www.v2ex.com/t/1147555" />
+<meta property="og:site_name" content="V2EX" />
+
+<meta property="article:tag" content="programmer" />
+<meta property="article:section" content="程序员" />
+<meta property="article:published_time" content="2025-07-25T01:30:53Z" />
+
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:description" content="程序员 - @terryso - 今天，我们要聊一个激动人心的话题——Anthropic 为其 AI 编程助手 Claude Code 推出了一个强大的新功能：**sub-agents （子智能体）**。这项功能可不仅仅是简单" />
+<meta name="twitter:title" content="重磅更新！ Claude Code 引入大杀器 sub-agents - V2EX" />
+<meta name="twitter:image" content="https://cdn.v2ex.com/avatar/bc2b/a673/25122_xlarge.png?m=1753254259" />
+<meta name="twitter:site" content="@V2EX" />
+<meta name="twitter:creator" content="@V2EX" />
+<link rel="top" title="回到顶部" href="#">
+
+
+<link rel="amphtml" href="https://www.v2ex.com/amp/t/1147555" />
+<script>
+const topicId = 1147555;
+var once = "84538";
+
+document.addEventListener("DOMContentLoaded", () => {
+    protectTraffic();
+
+    const observer = new IntersectionObserver(
+        ([e]) => e.target.toggleAttribute('stuck', e.intersectionRatio < 1),
+        {threshold: [1]}
+    );
+
+    observer.observe(document.getElementById('reply-box'));
+
+    
+    hljs.initHighlightingOnLoad();
+    
+
+    $('#Main').on('click', '.no, .ago', function () {
+        location.hash = $(this).parents('.cell').prop('id');
+    });
+
+    
+
+    autosize($('#reply_content'));
+
+    $("#reply_content").textcomplete([{
+        match: /(^|\s)@(\w*)$/,
+        search: function (term, callback) {
+            term = term.toLowerCase();
+            var words = ['AEDaydreamer', 'Akikiki', 'CEBBCAT', 'Dogxi', 'Grin1024', 'JRay', 'SWALLOWW', 'billzhuang', 'duuu', 'maolon', 'otakustay', 'ouou0701', 'sampeng', 'samzong', 'terryso', 'yh7gdiaYW'];
+            callback($.map(words, function (word) {
+                return word.toLowerCase().indexOf(term) === 0 ? word : null;
+            }));
+        },
+        replace: function (value) {
+            return '$1@' + value + ' ';;
+        }
+    }]);
+
+    
+
+    
+
+    
+
+    loadReplyDraft(1147555, 459703);
+
+    $("#reply_content").on('input', function(e) {
+        saveReplyDraft(1147555, 459703);
+    });
+
+    var keyPressed = 0;
+
+    $("#reply_content").keydown(function(e) {
+        keyPressed = keyPressed + 1;
+
+        if ((e.ctrlKey || e.metaKey) && e.which === 13) {
+            e.preventDefault();
+            $("#reply_content").parent().submit();
+        }
+    });
+
+    
+
+    // refresh once
+    document.addEventListener('visibilitychange', e => {
+        if (document.visibilityState === 'visible') {
+            fetchOnce().then(once => {
+                $('#once').val(once);
+            });
+        }
+    });
+
+    if (location.search.indexOf('p=') > -1) {
+    const p = Number(location.search.split('p=')[1].split('&')[0]);
+    if (p) {
+        const key = 'tp1147555';
+        if (lscache.set(key, p, 60 * 24 * 30)) { // 30 days
+            console.log(`Saved topic page number to ${key}: ` + p);
+        }
+    }
+}
+});
+</script>
+<script type="text/javascript">
+function format(tpl) {
+    var index = 1, items = arguments;
+    return (tpl || '').replace(/{(\w*)}/g, function(match, p1) {
+        return items[index++] || p1 || match;
+    });
+}
+function loadCSS(url, callback) {
+    return $('<link type="text/css" rel="stylesheet"/>')
+        .attr({ href: url })
+        .on('load', callback)
+        .appendTo(document.head);
+}
+function lazyGist(element) {
+    var $btn = $(element);
+    var $self = $(element).parent();
+    var $link = $self.find('a');
+    $btn.prop('disabled', 'disabled').text('Loading...');
+    $.getJSON(format('{}.json?callback=?', $link.prop('href').replace($link.prop('hash'), '')))
+        .done(function(data) {
+            loadCSS(data.stylesheet, function() {
+                $self.replaceWith(data.div);
+                $('.gist .gist-file .gist-meta a').filter(function() { return this.href === $link.prop('href'); }).parents('.gist-file').siblings().remove();
+            });
+        })
+        .fail(function() { $self.replaceWith($('<a>').attr('href', url).text(url)); });
+}
+</script>
+
+    
+</head>
+<body>
+    
+    
+    <div id="Top">
+        <div class="content">
+            <div class="site-nav">
+                <a href="/" name="top" title="way to explore"><div id="Logo"></div></a>
+                <div id="search-container">
+                    <input id="search" type="text" maxlength="128" autocomplete="off" tabindex="1">
+                    <div id="search-result" class="box"></div>
+                </div>
+                <div class="tools" >
+                
+                    <a href="/" class="top">首页</a>
+                    <a href="/member/geebos" class="top">geebos</a>
+                    
+                    <a href="/notes" class="top">记事本</a>
+                    <!--<a href="/t" class="top">时间轴</a>-->
+                    <a href="/planet" class="top">Planet</a>
+                    
+                    <a href="/settings" class="top">设置</a>
+                    
+                    <a href="#;" onclick="if (confirm('确定要从 V2EX 登出？')) { location.href= '/signout?once=84538'; }" class="top">登出</a>
+                
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="Wrapper">
+        <div class="content">
+            
+            <div id="Leftbar"></div>
+            <div id="Rightbar">
+                <div class="sep20"></div>
+                
+                    
+                    <div class="box">
+                        <div class="cell">
+                            <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                                <tr>
+                                    <td width="48" valign="top"><a href="/member/geebos"><img src="https://cdn.v2ex.com/avatar/ac7e/2215/459703_xlarge.png?m=1753405796" class="avatar" border="0" align="default" width="48" style="width: 48px; max-height: 48px;" alt="geebos" /></a></td>
+                                    <td width="10" valign="top"></td>
+                                    <td width="auto" align="left"><div class="fr"><a href="/settings/night/toggle?once=84538" class="light-toggle"><img src="/static/img/toggle-light.png" align="absmiddle" height="10" alt="Light" /></a></div><span class="bigger"><a href="/member/geebos">geebos</a></span>
+                                        
+                                    </td>
+                                </tr>
+                            </table>
+                            <div class="sep10"></div>
+                            <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                                <tr>
+                                    <td width="33%" align="center"><a href="/my/nodes" class="dark" style="display: block;"><span class="bigger">0</span><div class="sep3"></div><span class="fade">节点收藏</span></a></td>
+                                    <td width="34%" style="border-left: 1px solid rgba(100, 100, 100, 0.4); border-right: 1px solid rgba(100, 100, 100, 0.4);" align="center"><a href="/my/topics" class="dark" style="display: block;"><span class="bigger">19</span><div class="sep3"></div><span class="fade">主题收藏</span></a></td>
+                                    <td width="33%" align="center"><a href="/my/following" class="dark" style="display: block;"><span class="bigger">0</span><div class="sep3"></div><span class="fade">特别关注</span></a></td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="cell" id="member-activity">
+                            <div class="member-activity-bar">
+                                <div class="member-activity-done" style="width: 100%;"></div>
+                            </div>
+                        </div>
+                        <div class="cell flex-one-row" style="padding: 7px 10px;">
+                            
+                            <a href="/notifications" class="fade">0 未读提醒</a>
+                            
+                            
+                            <div class="flex-one-row">
+                                <div id="money"><a href="/balance" class="balance_area" style="">2 <img src="/static/img/gold@2x.png" height="16" alt="G" border="0" /> 3 <img src="/static/img/silver@2x.png" height="16" alt="S" border="0" /> </a></div>&nbsp;&nbsp;
+                                <a href="/help/currency"><li class="fa fa-question-circle gray"></li></a>
+                            </div>
+                            
+                        </div>
+                        
+                    </div>
+                    <div class="sep"></div>
+                    <div class="box">
+                        
+                        
+                        
+                        <div class="cell" style="padding: 8px; line-height: 100%;">
+                            <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                                <tr>
+                                    <td width="28"><a href="/write"><img src="/static/img/essentials/compose.png?v=b9e1f045f4ad639733bf9f6dbc62ed4c" width="28" border="0" style="vertical-align: bottom;" /></a></td>
+                                    <td width="10"></td>
+                                    <td width="auto" valign="middle" align="left"><a href="/write">创作新主题</a></td>
+                                </tr>
+                            </table>
+                        </div>
+                        
+                        
+                        
+                        <div class="cell" style="padding: 8px; line-height: 100%;">
+                            <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                                <tr>
+                                    <td width="28"><a href="/solana/hodl"><img src="/static/img/solana/solana.png?v=0d8e9a185773da474955639b5fc82808" width="28" border="0" style="vertical-align: bottom;" /></a></td>
+                                    <td width="10"></td>
+                                    <td width="auto" valign="middle" align="left"><a href="/solana/hodl">Solana HODL</a></td>
+                                    
+                                    <td width="10"></td>
+                                    <td valign="middle" align="right"><a href="/solana/tips">打赏记录</a></td>
+                                    
+                                </tr>
+                            </table>
+                        </div>
+                        
+                        
+                    </div>
+                    
+                    
+
+
+    
+    <div class="sep20"></div>
+    <div class="box">
+        <div class="inner" id="node_sidebar">
+            • 请不要在回答技术问题时复制粘贴 AI 生成的内容
+
+<style type="text/css">
+  #Wrapper {
+    background-color: #e2e2e2;
+    background-image: url("/static/img/shadow_light.png"), url("//cdn.v2ex.com/assets/bgs/circuit.png");
+    background-repeat: repeat-x, repeat-x;
+  }
+  #Wrapper.Night {
+  	background-color: #1f2e3d;
+	background-image: url("/static/img/shadow.png"), url("//cdn.v2ex.com/assets/bgs/circuit_night.png");
+	background-repeat: repeat-x, repeat-x;
+  	background-size: 20px 20px, 162.5px 162.5px;
+  }
+</style>
+            
+        </div>
+        
+    </div>
+    
+
+
+                    
+                    <div class="sep20"></div>
+                    <div class="box" id="pro-campaign-container">
+    <!-- Campaign content will be loaded here -->
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Function to escape HTML entities
+    function escapeHtml(text) {
+        if (!text) return '';
+        var div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // Function to render campaign based on display format
+    function renderCampaign(campaign) {
+        let html = '';
+        let displayFormat = campaign.display_format || 'text-only';
+        let title = escapeHtml(campaign.title);
+        let description = escapeHtml(campaign.description);
+        let callToAction = escapeHtml(campaign.call_to_action);
+        let link = escapeHtml(campaign.link);
+
+        // Check if required image URL is available for the display format, fallback to text-only if not
+        if (displayFormat === 'small-with-description' && !campaign.img_small_url) {
+            displayFormat = 'text-only';
+        } else if (displayFormat === 'banner-only' && !campaign.img_banner_url) {
+            displayFormat = 'text-only';
+        } else if ((displayFormat === 'big-only' || displayFormat === 'big-with-description' || displayFormat === 'big-with-title-description-button') && !campaign.img_big_url) {
+            displayFormat = 'text-only';
+        }
+
+        html = `<div class="pro-unit-title">${title}</div>`;
+        switch(displayFormat) {
+            case 'text-only':
+                html += `
+                    <div class="pro-unit">
+                    <div class="pro-unit-description flex-one-row gap10">
+                        <div onclick="window.open('${link}', '_blank')">${description}</div>
+                        <div><a href="${link}" class="pro-unit-go" target="_blank">›</a>
+                        </div>
+                    </div>
+                    </div>
+                `;
+                break;
+
+            case 'small-with-description':
+                html += `<div class="pro-unit flex-one-row">
+                    ${campaign.img_small_cid ? `<div class="pro-unit-small-image">
+                        <a href="${link}" target="_blank"><img src="${campaign.img_small_url}" class="pro-unit-img" style="max-width: 130px; max-height: 100px;" /></a>
+                    </div>` : ''}
+                    <div onclick="window.open('${link}', '_blank')" class="pro-unit-description">${description}</div>
+                </div>`;
+                break;
+
+            case 'banner-only':
+                html += `<div class="cell"><a href="${link}" target="_blank"><img src="${campaign.img_banner_url}" class="pro-unit-img" style="max-width: 250px; max-height: 60px; display: block; vertical-align: bottom;" /></a></div>`;
+                break;
+
+            case 'big-only':
+                html += `<div class="cell"><a href="${link}" target="_blank"><img src="${campaign.img_big_url}" class="pro-unit-img" style="max-width: 500px; max-height: 500px; width: 100%; display: block; vertical-align: bottom;" /></a></div>`;
+                break;
+
+            case 'big-with-description':
+                html += `<div class="inner" style="padding-bottom: 0px;"><a href="${link}" target="_blank"><img src="${campaign.img_big_url}" class="pro-unit-img" style="max-width: 500px; max-height: 500px; width: 100%; display: block; vertical-align: bottom;" /></a></div>`;
+                html += `<div class="pro-unit-description flex-one-row gap10">
+                    <div onclick="window.open('${link}', '_blank')">${description}</div>
+                    <div><a href="${link}" class="pro-unit-go" target="_blank">›</a></div></div>`;
+                break;
+
+            case 'big-with-title-description-button':
+                html += `<div class="inner" style="padding-bottom: 0px;"><a href="${link}" target="_blank"><img src="${campaign.img_big_url}" class="pro-unit-img" style="max-width: 500px; max-height: 500px; width: 100%; display: block; vertical-align: bottom;" /></a></div>`;
+                html += `<div class="pro-unit-description">
+                    <div style="text-align: center" onclick="window.open('${link}', '_blank')">${description}</div>
+                    </div>`;
+                html += `<div class="pro-unit-cta-container"><a href="${link}" target="_blank" class="pro-unit-cta">${callToAction}</a></div>`;
+                break;
+
+            default:
+                html += `
+                    <div class="pro-unit-description flex-one-row gap10">
+                        <div onclick="window.open('${link}', '_blank')">${description}</div>
+                        <div><a href="${link}" class="pro-unit-go" target="_blank">›</a></div>
+                    </div>
+                `;
+        }
+
+        html += `<div class="pro-unit-from flex-one-row gap10">
+        <div>Promoted by <a href="/member/${campaign.member.username}" target="_blank">${campaign.member.username}</a></div>
+        <div><a href="/pro/about" target="_blank" class="fade"><i class="fa fa-question-circle fade"></i> <span style="font-size: 12px; color: var(--color-fade)">PRO</span></a></div>
+        </div>`
+
+        return html;
+    }
+
+    // Load campaign from emitter
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', '/pro/emitter', true);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4) {
+            if (xhr.status === 200) {
+                try {
+                    var campaign = JSON.parse(xhr.responseText);
+                    if (campaign && campaign.id) {
+                        var html = renderCampaign(campaign);
+                        document.getElementById('pro-campaign-container').innerHTML = html;
+                    } else {
+                        // No campaign to display, hide the container
+                        document.getElementById('pro-campaign-container').style.display = 'none';
+                    }
+                } catch (e) {
+                    // Parse error, hide the container
+                    document.getElementById('pro-campaign-container').style.display = 'none';
+                    console.log('Error parsing campaign data: ' + e.message);
+                }
+            } else {
+                // HTTP error, hide the container
+                document.getElementById('pro-campaign-container').style.display = 'none';
+                console.log('Error loading campaign: HTTP ' + xhr.status);
+            }
+        }
+    };
+
+    xhr.send();
+});
+</script>
+                    <div class="sep20"></div>
+                    
+                    
+                    
+                
+            </div>
+            <div id="Main">
+                <div class="sep20"></div>
+                
+<div class="box" style="border-bottom: 0px;">
+    
+    <div class="header"><div class="fr"><a href="/member/terryso"><img src="https://cdn.v2ex.com/avatar/bc2b/a673/25122_xlarge.png?m=1753254259" class="avatar" border="0" align="default" width="73" style="width: 73px; max-height: 73px;" alt="terryso" /></a></div>
+    <a href="/">V2EX</a> <span class="chevron">&nbsp;›&nbsp;</span> <a href="/go/programmer">程序员</a>
+    <div class="sep10"></div>
+    <h1>重磅更新！ Claude Code 引入大杀器 sub-agents</h1>
+    <div id="topic_1147555_votes" class="votes">
+<a href="javascript:" onclick="upVoteTopic(1147555);" class="vote"><li class="fa fa-chevron-up"></li> &nbsp;2</a> &nbsp;<a href="javascript:" onclick="downVoteTopic(1147555);" class="vote"><li class="fa fa-chevron-down"></li></a></div> &nbsp; <small class="gray"><a href="/member/terryso">terryso</a> · <div style="vertical-align: text-bottom; width: 14px; height: 14px; display: inline-block; background-image: url('/static/img/social_github.png'); background-size: 14px 14px; margin-right: 5px;"></div><a href="https://github.com/terryso" target="_blank">terryso</a> · <span title="2025-07-25 09:30:53 +08:00">2 小时 46 分钟前</span> · 1929 次点击 &nbsp; </small>
+    </div>
+    
+    
+    
+    <div class="cell">
+        
+        <div class="topic_content"><div class="markdown_body"><p>今天，我们要聊一个激动人心的话题——Anthropic 为其 AI 编程助手 Claude Code 推出了一个强大的新功能：<strong>sub-agents （子智能体）</strong>。</p>
+<p>这项功能可不仅仅是简单的升级，它可能会彻底改变我们与 AI 协作编程的方式。准备好了吗？让我们一探究竟！</p>
+<h4>什么是 sub-agents ？</h4>
+<p>简单来说，sub-agents 是<strong>特种兵式</strong>的 AI 助手。</p>
+<p>你可以把 Claude Code 看作一个项目经理，当它遇到一个具体、专业的任务时（比如，“检查这段代码是否符合我们的编码规范”或“将这个组件的文档翻译成日文”），它不再需要事事亲为，而是可以“召唤”一个专门负责这项任务的 sub-agent 来处理。</p>
+<p>每个 sub-agent 都拥有自己独立的<strong>上下文窗口</strong>、一套专属的<strong>工具集</strong>和独特的**系统提示 (System Prompt)**，这让它们成为了特定领域的高效专家。</p>
+<p>完成任务后，sub-agent 会将结果交还给主对话线程，而不会用繁杂的执行过程干扰你的主工作流程。</p>
+<h4>为什么要使用 sub-agents ？</h4>
+<p>你可能会问，这听起来不错，但它具体好在哪里？</p>
+<ul>
+<li><strong>上下文“减负” (Context Preservation):</strong> 这是最核心的优势之一。通过将特定任务隔离出去，sub-agents 可以防止主对话的上下文窗口被无关信息填满，让你的主会话始终聚焦于更高层次的战略目标。再也不用担心“聊着聊着 AI 就忘了前面说过啥”了！</li>
+<li><strong>专业的人做专业的事 (Specialized Expertise):</strong> 你可以为 sub-agents 精心设计非常具体的指令和系统提示，让它们在特定任务上表现得远超通用模型。例如，你可以创建一个只负责数据库迁移脚本生成的 sub-agent ，并为它提供所有相关的背景知识和规范。</li>
+<li><strong>可复用与团队共享 (Reusability &amp; Collaboration):</strong> 一旦你创建了一个高效的 sub-agent ，它就可以在不同的项目中重复使用。更棒的是，你可以将项目级的 sub-agents 纳入版本控制（如 Git ），与团队成员共享，确保整个团队工作流的一致性和高效性。</li>
+<li><strong>灵活的权限控制 (Flexible Permissions):</strong> 你可以精确控制每个 sub-agent 能访问哪些工具。比如，你可以只授权给“代码审查” sub-agent 读取文件的权限，而不给它执行代码的权限，从而实现更精细化的安全管理。</li>
+</ul>
+<h4>如何创建和使用 sub-agents ？</h4>
+<p>创建和管理 sub-agents 非常灵活，主要有两种方式：</p>
+<ol>
+<li><strong>使用 <code>/agents</code> 命令 (推荐):</strong> 在 Claude Code 中输入 <code>/agents</code>，会弹出一个交互式界面。你可以在这里轻松地查看、创建、编辑和删除 sub-agents ，整个过程都有引导，非常方便。</li>
+<li>
+<strong>直接管理文件:</strong> sub-agents 本质上是存储在特定目录下的 Markdown 文件（带有 YAML frontmatter ）。<ul>
+<li><strong>项目级 sub-agents:</strong> 存储在项目目录的 <code>.claude/agents/</code> 下，仅对该项目有效。</li>
+<li><strong>用户级 sub-agents:</strong> 存储在 <code>~/.claude/agents/</code> 下，对你的所有项目都有效。</li>
+</ul>
+</li>
+</ol>
+<p><strong>一个 sub-agent 的配置文件大概长这样：</strong></p>
+<pre><code class="language-yaml">---
+name: code-reviewer
+description: Expert code review specialist. Proactively reviews code for quality, security, and maintainability. Use immediately after writing or modifying code.
+tools: Read, Grep, Glob, Bash
+---
+
+You are a senior code reviewer ensuring high standards of code quality and security.
+
+When invoked:
+1. Run git diff to see recent changes
+2. Focus on modified files
+3. Begin review immediately
+
+Review checklist:
+- Code is simple and readable
+- Functions and variables are well-named
+- No duplicated code
+- Proper error handling
+- No exposed secrets or API keys
+- Input validation implemented
+- Good test coverage
+- Performance considerations addressed
+
+Provide feedback organized by priority:
+- Critical issues (must fix)
+- Warnings (should fix)
+- Suggestions (consider improving)
+
+Include specific examples of how to fix issues.
+</code></pre>
+<p>使用时，Claude Code 会根据你的指令<strong>自动</strong>判断是否需要委派任务给某个 sub-agent 。当然，你也可以<strong>明确指定</strong>：<code>&gt; 让 code-reviewer 检查我最近的提交</code>。</p>
+<h4>最佳实践</h4>
+<ul>
+<li><strong>从生成开始:</strong> 让 Claude Code 帮你生成第一个 sub-agent ，然后在此基础上进行修改和完善。</li>
+<li><strong>保持专注:</strong> 设计功能单一、职责明确的 sub-agent 。</li>
+<li><strong>详细的指令:</strong> 系统提示写得越详细、越清晰，sub-agent 的表现就越好。</li>
+<li><strong>限制工具:</strong> 按需授权，只给 sub-agent 完成任务所必需的工具。</li>
+<li><strong>拥抱版本控制:</strong> 将项目级的 sub-agents 加入 Git ，与团队一起维护和迭代。</li>
+</ul>
+<h4>总结</h4>
+<p>sub-agents 功能的推出，标志着 AI 编程助手正从一个“无所不知的通才”向一个“由众多专家组成的协作团队”转变。</p>
+<p>这不仅提升了 AI 处理复杂任务的能力和效率，也为我们开发者提供了前所未有的灵活性和控制力。我们可以像组建一个真实的开发团队一样，去“搭建”和“管理”我们的 AI 助手团队。</p>
+<p>AI 编程的未来，正朝着更模块化、更专业化、更智能化的方向大步迈进。快去试试 Claude Code 的 sub-agents 功能，亲自感受一下这场正在发生的变革吧！</p>
+<hr/>
+<p>官方文档: <a href="https://docs.anthropic.com/en/docs/claude-code/sub-agents" rel="nofollow">https://docs.anthropic.com/en/docs/claude-code/sub-agents</a></p>
+</div></div>
+        
+    </div>
+    
+    
+    
+    <div class="topic_buttons"><div class="fr topic_stats" style="padding-top: 4px;">1929 次点击 &nbsp;∙&nbsp; 7 人收藏 &nbsp; </div><a href="/favorite/topic/1147555?once=84538" class="tb">加入收藏</a> &nbsp;<a href="#;" onclick="window.open('https://twitter.com/share?url=https://www.v2ex.com/t/1147555?r=geebos&related=v2ex&hashtags=programmer&text=重磅更新！ Claude Code 引入大杀器 sub-agents', '_blank', 'width=550,height=370'); recordOutboundLink(this, 'Share', 'twitter.com');" class="tb">Tweet</a> &nbsp;<a href="#;" onclick="if (confirm('确定不想再看到这个主题？')) { location.href = '/ignore/topic/1147555?once=84538'; }" class="tb">忽略主题</a> &nbsp;<div id="topic_thank"><a href="#;" onclick="if (confirm('你确定要向本主题创建者发送谢意？')) { thankTopic(1147555, '84538'); }" class="tb">感谢</a></div></div>
+</div>
+
+<div class="sep20"></div>
+
+
+<div class="box">
+    <div class="cell"><div class="fr" style="margin: -3px -5px 0px 0px;"><a href="/tag/sub-agents" class="tag"><li class="fa fa-tag"></li> sub-agents</a><a href="/tag/claude code" class="tag"><li class="fa fa-tag"></li> claude code</a><a href="/tag/anthropic" class="tag"><li class="fa fa-tag"></li> anthropic</a></div><span class="gray">29 条回复 &nbsp;<strong class="snow">•</strong> &nbsp;2025-07-25 11:52:22 +08:00</span>
+    </div>
+    
+
+    
+        
+        <div id="r_16532903" class="cell">
+        
+        <table cellpadding="0" cellspacing="0" border="0" width="100%">
+            <tr>
+                <td width="48" valign="top" align="center"><img src="https://cdn.v2ex.com/avatar/e710/a166/234316_large.png?m=1748184226" class="avatar" border="0" align="default" width="48" style="width: 48px; max-height: 48px;" alt="samzong" /></td>
+                <td width="10" valign="top"></td>
+                <td width="auto" valign="top" align="left"><div class="fr"><div id="thank_area_16532903" class="thank_area"><a href="#;" onclick="if (confirm('确认要不再显示来自 @samzong 的这条回复？')) { ignoreReply(16532903, '84538'); }" class="thank" style="color: #ccc;">隐藏</a> &nbsp; &nbsp; <a href="#;" onclick="if (confirm('确认花费 10 个铜币向 @samzong 的这条回复发送感谢？')) { thankReply(16532903); }" class="thank">感谢回复者</a></div> &nbsp; <a href="#;" onclick="replyOne('samzong');"><img src="/static/img/reply_neue.png" align="absmiddle" border="0" alt="Reply" width="20" /></a> &nbsp;&nbsp; <span class="no">1</span></div>
+                    <div class="sep3"></div>
+                    <strong><a href="/member/samzong" class="dark">samzong</a></strong> &nbsp; <div class="badges"></div>&nbsp; &nbsp;<span class="ago" title="2025-07-25 09:34:14 +08:00">2 小时 43 分钟前</span> 
+                    <div class="sep5"></div>
+                    <div class="reply_content">这个感觉是 cursor 的自定义模式？</div>
+                </td>
+            </tr>
+        </table>
+        </div>
+    
+    
+
+    
+        
+        <div id="r_16532957" class="cell">
+        
+        <table cellpadding="0" cellspacing="0" border="0" width="100%">
+            <tr>
+                <td width="48" valign="top" align="center"><img src="https://cdn.v2ex.com/avatar/bc2b/a673/25122_large.png?m=1753254259" class="avatar" border="0" align="default" width="48" style="width: 48px; max-height: 48px;" alt="terryso" /></td>
+                <td width="10" valign="top"></td>
+                <td width="auto" valign="top" align="left"><div class="fr"><div id="thank_area_16532957" class="thank_area"><a href="#;" onclick="if (confirm('确认要不再显示来自 @terryso 的这条回复？')) { ignoreReply(16532957, '84538'); }" class="thank" style="color: #ccc;">隐藏</a> &nbsp; &nbsp; <a href="#;" onclick="if (confirm('确认花费 10 个铜币向 @terryso 的这条回复发送感谢？')) { thankReply(16532957); }" class="thank">感谢回复者</a></div> &nbsp; <a href="#;" onclick="replyOne('terryso');"><img src="/static/img/reply_neue.png" align="absmiddle" border="0" alt="Reply" width="20" /></a> &nbsp;&nbsp; <span class="no">2</span></div>
+                    <div class="sep3"></div>
+                    <strong><a href="/member/terryso" class="dark">terryso</a></strong> &nbsp; <div class="badges"><div class="badge op">OP</div></div>&nbsp; &nbsp;<span class="ago" title="2025-07-25 09:36:48 +08:00">2 小时 40 分钟前</span> 
+                    <div class="sep5"></div>
+                    <div class="reply_content">@<a href="/member/samzong">samzong</a> 很不一样, 子代理能有自己的上下文. 并且 cc 能根据你的提示词在执行过程自动判断要不要交给子代理去处理, 这里面的想象空间大很多</div>
+                </td>
+            </tr>
+        </table>
+        </div>
+    
+    
+
+    
+        
+        <div id="r_16533014" class="cell">
+        
+        <table cellpadding="0" cellspacing="0" border="0" width="100%">
+            <tr>
+                <td width="48" valign="top" align="center"><img src="https://cdn.v2ex.com/avatar/b9b1/7c6a/261032_large.png?m=1715413507" class="avatar" border="0" align="default" width="48" style="width: 48px; max-height: 48px;" alt="JRay" /></td>
+                <td width="10" valign="top"></td>
+                <td width="auto" valign="top" align="left"><div class="fr"><div id="thank_area_16533014" class="thank_area"><a href="#;" onclick="if (confirm('确认要不再显示来自 @JRay 的这条回复？')) { ignoreReply(16533014, '84538'); }" class="thank" style="color: #ccc;">隐藏</a> &nbsp; &nbsp; <a href="#;" onclick="if (confirm('确认花费 10 个铜币向 @JRay 的这条回复发送感谢？')) { thankReply(16533014); }" class="thank">感谢回复者</a></div> &nbsp; <a href="#;" onclick="replyOne('JRay');"><img src="/static/img/reply_neue.png" align="absmiddle" border="0" alt="Reply" width="20" /></a> &nbsp;&nbsp; <span class="no">3</span></div>
+                    <div class="sep3"></div>
+                    <strong><a href="/member/JRay" class="dark">JRay</a></strong> &nbsp; <div class="badges"></div>&nbsp; &nbsp;<span class="ago" title="2025-07-25 09:39:15 +08:00">2 小时 38 分钟前</span> 
+                    <div class="sep5"></div>
+                    <div class="reply_content">舒服了，多角色协调配合</div>
+                </td>
+            </tr>
+        </table>
+        </div>
+    
+    
+
+    
+        
+        <div id="r_16533147" class="cell">
+        
+        <table cellpadding="0" cellspacing="0" border="0" width="100%">
+            <tr>
+                <td width="48" valign="top" align="center"><img src="https://cdn.v2ex.com/avatar/bc2b/a673/25122_large.png?m=1753254259" class="avatar" border="0" align="default" width="48" style="width: 48px; max-height: 48px;" alt="terryso" /></td>
+                <td width="10" valign="top"></td>
+                <td width="auto" valign="top" align="left"><div class="fr"><div id="thank_area_16533147" class="thank_area"><a href="#;" onclick="if (confirm('确认要不再显示来自 @terryso 的这条回复？')) { ignoreReply(16533147, '84538'); }" class="thank" style="color: #ccc;">隐藏</a> &nbsp; &nbsp; <a href="#;" onclick="if (confirm('确认花费 10 个铜币向 @terryso 的这条回复发送感谢？')) { thankReply(16533147); }" class="thank">感谢回复者</a></div> &nbsp; <a href="#;" onclick="replyOne('terryso');"><img src="/static/img/reply_neue.png" align="absmiddle" border="0" alt="Reply" width="20" /></a> &nbsp;&nbsp; <span class="no">4</span></div>
+                    <div class="sep3"></div>
+                    <strong><a href="/member/terryso" class="dark">terryso</a></strong> &nbsp; <div class="badges"><div class="badge op">OP</div></div>&nbsp; &nbsp;<span class="ago" title="2025-07-25 09:45:48 +08:00">2 小时 31 分钟前</span> 
+                    <div class="sep5"></div>
+                    <div class="reply_content">@<a href="/member/JRay">JRay</a> 是阿, 关键子代理能有自己的独立上下文这个爽</div>
+                </td>
+            </tr>
+        </table>
+        </div>
+    
+    
+
+    
+        
+        <div id="r_16533182" class="cell">
+        
+        <table cellpadding="0" cellspacing="0" border="0" width="100%">
+            <tr>
+                <td width="48" valign="top" align="center"><img src="https://cdn.v2ex.com/avatar/b9b1/7c6a/261032_large.png?m=1715413507" class="avatar" border="0" align="default" width="48" style="width: 48px; max-height: 48px;" alt="JRay" /></td>
+                <td width="10" valign="top"></td>
+                <td width="auto" valign="top" align="left"><div class="fr"><div id="thank_area_16533182" class="thank_area"><a href="#;" onclick="if (confirm('确认要不再显示来自 @JRay 的这条回复？')) { ignoreReply(16533182, '84538'); }" class="thank" style="color: #ccc;">隐藏</a> &nbsp; &nbsp; <a href="#;" onclick="if (confirm('确认花费 10 个铜币向 @JRay 的这条回复发送感谢？')) { thankReply(16533182); }" class="thank">感谢回复者</a></div> &nbsp; <a href="#;" onclick="replyOne('JRay');"><img src="/static/img/reply_neue.png" align="absmiddle" border="0" alt="Reply" width="20" /></a> &nbsp;&nbsp; <span class="no">5</span></div>
+                    <div class="sep3"></div>
+                    <strong><a href="/member/JRay" class="dark">JRay</a></strong> &nbsp; <div class="badges"></div>&nbsp; &nbsp;<span class="ago" title="2025-07-25 09:47:41 +08:00">2 小时 29 分钟前</span> 
+                    <div class="sep5"></div>
+                    <div class="reply_content">@<a href="/member/terryso">terryso</a> #4 有推荐的角色提示词吗?来几份试试</div>
+                </td>
+            </tr>
+        </table>
+        </div>
+    
+    
+
+    
+        
+        <div id="r_16533325" class="cell">
+        
+        <table cellpadding="0" cellspacing="0" border="0" width="100%">
+            <tr>
+                <td width="48" valign="top" align="center"><img src="https://cdn.v2ex.com/avatar/95ec/01ce/496681_large.png?m=1751598795" class="avatar" border="0" align="default" width="48" style="width: 48px; max-height: 48px;" alt="SWALLOWW" /></td>
+                <td width="10" valign="top"></td>
+                <td width="auto" valign="top" align="left"><div class="fr"><div id="thank_area_16533325" class="thank_area"><a href="#;" onclick="if (confirm('确认要不再显示来自 @SWALLOWW 的这条回复？')) { ignoreReply(16533325, '84538'); }" class="thank" style="color: #ccc;">隐藏</a> &nbsp; &nbsp; <a href="#;" onclick="if (confirm('确认花费 10 个铜币向 @SWALLOWW 的这条回复发送感谢？')) { thankReply(16533325); }" class="thank">感谢回复者</a></div> &nbsp; <a href="#;" onclick="replyOne('SWALLOWW');"><img src="/static/img/reply_neue.png" align="absmiddle" border="0" alt="Reply" width="20" /></a> &nbsp;&nbsp; <span class="no">6</span></div>
+                    <div class="sep3"></div>
+                    <strong><a href="/member/SWALLOWW" class="dark">SWALLOWW</a></strong> &nbsp; <div class="badges"></div>&nbsp; &nbsp;<span class="ago" title="2025-07-25 09:54:51 +08:00">2 小时 22 分钟前</span> 
+                    <div class="sep5"></div>
+                    <div class="reply_content">ok ，我是开多个 chat 来实现这个的，有些问题不应该在主线上</div>
+                </td>
+            </tr>
+        </table>
+        </div>
+    
+    
+
+    
+        
+        <div id="r_16533356" class="cell">
+        
+        <table cellpadding="0" cellspacing="0" border="0" width="100%">
+            <tr>
+                <td width="48" valign="top" align="center"><img src="https://cdn.v2ex.com/avatar/bc2b/a673/25122_large.png?m=1753254259" class="avatar" border="0" align="default" width="48" style="width: 48px; max-height: 48px;" alt="terryso" /></td>
+                <td width="10" valign="top"></td>
+                <td width="auto" valign="top" align="left"><div class="fr"><div id="thank_area_16533356" class="thank_area"><a href="#;" onclick="if (confirm('确认要不再显示来自 @terryso 的这条回复？')) { ignoreReply(16533356, '84538'); }" class="thank" style="color: #ccc;">隐藏</a> &nbsp; &nbsp; <a href="#;" onclick="if (confirm('确认花费 10 个铜币向 @terryso 的这条回复发送感谢？')) { thankReply(16533356); }" class="thank">感谢回复者</a></div> &nbsp; <a href="#;" onclick="replyOne('terryso');"><img src="/static/img/reply_neue.png" align="absmiddle" border="0" alt="Reply" width="20" /></a> &nbsp;&nbsp; <span class="no">7</span></div>
+                    <div class="sep3"></div>
+                    <strong><a href="/member/terryso" class="dark">terryso</a></strong> &nbsp; <div class="badges"><div class="badge op">OP</div></div>&nbsp; &nbsp;<span class="ago" title="2025-07-25 09:56:03 +08:00">2 小时 21 分钟前</span> 
+                    <div class="sep5"></div>
+                    <div class="reply_content">@<a href="/member/JRay">JRay</a> <a target="_blank" href="https://docs.anthropic.com/en/docs/claude-code/sub-agents" rel="nofollow noopener">https://docs.anthropic.com/en/docs/claude-code/sub-agents</a> 官方文档有几个示例, 你可以去看看</div>
+                </td>
+            </tr>
+        </table>
+        </div>
+    
+    
+
+    
+        
+        <div id="r_16533373" class="cell">
+        
+        <table cellpadding="0" cellspacing="0" border="0" width="100%">
+            <tr>
+                <td width="48" valign="top" align="center"><img src="https://cdn.v2ex.com/avatar/bc2b/a673/25122_large.png?m=1753254259" class="avatar" border="0" align="default" width="48" style="width: 48px; max-height: 48px;" alt="terryso" /></td>
+                <td width="10" valign="top"></td>
+                <td width="auto" valign="top" align="left"><div class="fr"><div id="thank_area_16533373" class="thank_area"><a href="#;" onclick="if (confirm('确认要不再显示来自 @terryso 的这条回复？')) { ignoreReply(16533373, '84538'); }" class="thank" style="color: #ccc;">隐藏</a> &nbsp; &nbsp; <a href="#;" onclick="if (confirm('确认花费 10 个铜币向 @terryso 的这条回复发送感谢？')) { thankReply(16533373); }" class="thank">感谢回复者</a></div> &nbsp; <a href="#;" onclick="replyOne('terryso');"><img src="/static/img/reply_neue.png" align="absmiddle" border="0" alt="Reply" width="20" /></a> &nbsp;&nbsp; <span class="no">8</span></div>
+                    <div class="sep3"></div>
+                    <strong><a href="/member/terryso" class="dark">terryso</a></strong> &nbsp; <div class="badges"><div class="badge op">OP</div></div>&nbsp; &nbsp;<span class="ago" title="2025-07-25 09:56:40 +08:00">2 小时 20 分钟前</span> 
+                    <div class="sep5"></div>
+                    <div class="reply_content">@<a href="/member/SWALLOWW">SWALLOWW</a> 多开 chat 没这个想象空间大</div>
+                </td>
+            </tr>
+        </table>
+        </div>
+    
+    
+
+    
+        
+        <div id="r_16533380" class="cell">
+        
+        <table cellpadding="0" cellspacing="0" border="0" width="100%">
+            <tr>
+                <td width="48" valign="top" align="center"><img src="https://cdn.v2ex.com/gravatar/833eebb57e540f8f67581cd0bcded345?s=48&d=retro" class="avatar" border="0" align="default" width="48" style="width: 48px; max-height: 48px;" alt="Grin1024" /></td>
+                <td width="10" valign="top"></td>
+                <td width="auto" valign="top" align="left"><div class="fr"><div id="thank_area_16533380" class="thank_area"><a href="#;" onclick="if (confirm('确认要不再显示来自 @Grin1024 的这条回复？')) { ignoreReply(16533380, '84538'); }" class="thank" style="color: #ccc;">隐藏</a> &nbsp; &nbsp; <a href="#;" onclick="if (confirm('确认花费 10 个铜币向 @Grin1024 的这条回复发送感谢？')) { thankReply(16533380); }" class="thank">感谢回复者</a></div> &nbsp; <a href="#;" onclick="replyOne('Grin1024');"><img src="/static/img/reply_neue.png" align="absmiddle" border="0" alt="Reply" width="20" /></a> &nbsp;&nbsp; <span class="no">9</span></div>
+                    <div class="sep3"></div>
+                    <strong><a href="/member/Grin1024" class="dark">Grin1024</a></strong> &nbsp; <div class="badges"></div>&nbsp; &nbsp;<span class="ago" title="2025-07-25 09:57:06 +08:00">2 小时 20 分钟前</span> 
+                    <div class="sep5"></div>
+                    <div class="reply_content">类似 Roo Code 的多种模式吗</div>
+                </td>
+            </tr>
+        </table>
+        </div>
+    
+    
+
+    
+        
+        <div id="r_16533477" class="cell">
+        
+        <table cellpadding="0" cellspacing="0" border="0" width="100%">
+            <tr>
+                <td width="48" valign="top" align="center"><img src="https://cdn.v2ex.com/avatar/bc2b/a673/25122_large.png?m=1753254259" class="avatar" border="0" align="default" width="48" style="width: 48px; max-height: 48px;" alt="terryso" /></td>
+                <td width="10" valign="top"></td>
+                <td width="auto" valign="top" align="left"><div class="fr"><div id="thank_area_16533477" class="thank_area"><a href="#;" onclick="if (confirm('确认要不再显示来自 @terryso 的这条回复？')) { ignoreReply(16533477, '84538'); }" class="thank" style="color: #ccc;">隐藏</a> &nbsp; &nbsp; <a href="#;" onclick="if (confirm('确认花费 10 个铜币向 @terryso 的这条回复发送感谢？')) { thankReply(16533477); }" class="thank">感谢回复者</a></div> &nbsp; <a href="#;" onclick="replyOne('terryso');"><img src="/static/img/reply_neue.png" align="absmiddle" border="0" alt="Reply" width="20" /></a> &nbsp;&nbsp; <span class="no">10</span></div>
+                    <div class="sep3"></div>
+                    <strong><a href="/member/terryso" class="dark">terryso</a></strong> &nbsp; <div class="badges"><div class="badge op">OP</div></div>&nbsp; &nbsp;<span class="ago" title="2025-07-25 10:02:09 +08:00">2 小时 15 分钟前</span> 
+                    <div class="sep5"></div>
+                    <div class="reply_content">@<a href="/member/Grin1024">Grin1024</a> Roo Code 没用过, 不太了解</div>
+                </td>
+            </tr>
+        </table>
+        </div>
+    
+    
+
+    
+        
+        <div id="r_16533780" class="cell">
+        
+        <table cellpadding="0" cellspacing="0" border="0" width="100%">
+            <tr>
+                <td width="48" valign="top" align="center"><img src="https://cdn.v2ex.com/avatar/56aa/920d/604017_large.png?m=1749523499" class="avatar" border="0" align="default" width="48" style="width: 48px; max-height: 48px;" alt="Dogxi" /></td>
+                <td width="10" valign="top"></td>
+                <td width="auto" valign="top" align="left"><div class="fr"><div id="thank_area_16533780" class="thank_area"><a href="#;" onclick="if (confirm('确认要不再显示来自 @Dogxi 的这条回复？')) { ignoreReply(16533780, '84538'); }" class="thank" style="color: #ccc;">隐藏</a> &nbsp; &nbsp; <a href="#;" onclick="if (confirm('确认花费 10 个铜币向 @Dogxi 的这条回复发送感谢？')) { thankReply(16533780); }" class="thank">感谢回复者</a></div> &nbsp; <a href="#;" onclick="replyOne('Dogxi');"><img src="/static/img/reply_neue.png" align="absmiddle" border="0" alt="Reply" width="20" /></a> &nbsp;&nbsp; <span class="no">11</span></div>
+                    <div class="sep3"></div>
+                    <strong><a href="/member/Dogxi" class="dark">Dogxi</a></strong> &nbsp; <div class="badges"></div>&nbsp; &nbsp;<span class="ago" title="2025-07-25 10:19:12 +08:00">1 小时 58 分钟前</span> 
+                    <div class="sep5"></div>
+                    <div class="reply_content">有点 AI 团队的感觉了 前后端业务都分离</div>
+                </td>
+            </tr>
+        </table>
+        </div>
+    
+    
+
+    
+        
+        <div id="r_16533786" class="cell">
+        
+        <table cellpadding="0" cellspacing="0" border="0" width="100%">
+            <tr>
+                <td width="48" valign="top" align="center"><img src="https://cdn.v2ex.com/avatar/5e37/b76a/119748_large.png?m=1710228712" class="avatar" border="0" align="default" width="48" style="width: 48px; max-height: 48px;" alt="yh7gdiaYW" /></td>
+                <td width="10" valign="top"></td>
+                <td width="auto" valign="top" align="left"><div class="fr"><div id="thank_area_16533786" class="thank_area"><a href="#;" onclick="if (confirm('确认要不再显示来自 @yh7gdiaYW 的这条回复？')) { ignoreReply(16533786, '84538'); }" class="thank" style="color: #ccc;">隐藏</a> &nbsp; &nbsp; <a href="#;" onclick="if (confirm('确认花费 10 个铜币向 @yh7gdiaYW 的这条回复发送感谢？')) { thankReply(16533786); }" class="thank">感谢回复者</a></div> &nbsp; <a href="#;" onclick="replyOne('yh7gdiaYW');"><img src="/static/img/reply_neue.png" align="absmiddle" border="0" alt="Reply" width="20" /></a> &nbsp;&nbsp; <span class="no">12</span></div>
+                    <div class="sep3"></div>
+                    <strong><a href="/member/yh7gdiaYW" class="dark">yh7gdiaYW</a></strong> &nbsp; <div class="badges"></div>&nbsp; &nbsp;<span class="ago" title="2025-07-25 10:20:00 +08:00">1 小时 57 分钟前</span> 
+                    <div class="sep5"></div>
+                    <div class="reply_content">文档举的几个例子毫无吸引力，就是几个不长的 prompot...<br />进阶用法里的"Chaining sub agents"，看起来可以等同于 cli 版本的 workflow ，同样没什么吸引力</div>
+                </td>
+            </tr>
+        </table>
+        </div>
+    
+    
+
+    
+        
+        <div id="r_16533810" class="cell">
+        
+        <table cellpadding="0" cellspacing="0" border="0" width="100%">
+            <tr>
+                <td width="48" valign="top" align="center"><img src="https://cdn.v2ex.com/gravatar/41a4613627e84bfe1fc1e5e1b78ce47a?s=48&d=retro" class="avatar" border="0" align="default" width="48" style="width: 48px; max-height: 48px;" alt="duuu" /></td>
+                <td width="10" valign="top"></td>
+                <td width="auto" valign="top" align="left"><div class="fr"><div id="thank_area_16533810" class="thank_area"><a href="#;" onclick="if (confirm('确认要不再显示来自 @duuu 的这条回复？')) { ignoreReply(16533810, '84538'); }" class="thank" style="color: #ccc;">隐藏</a> &nbsp; &nbsp; <a href="#;" onclick="if (confirm('确认花费 10 个铜币向 @duuu 的这条回复发送感谢？')) { thankReply(16533810); }" class="thank">感谢回复者</a></div> &nbsp; <a href="#;" onclick="replyOne('duuu');"><img src="/static/img/reply_neue.png" align="absmiddle" border="0" alt="Reply" width="20" /></a> &nbsp;&nbsp; <span class="no">13</span></div>
+                    <div class="sep3"></div>
+                    <strong><a href="/member/duuu" class="dark">duuu</a></strong> &nbsp; <div class="badges"></div>&nbsp; &nbsp;<span class="ago" title="2025-07-25 10:21:41 +08:00">1 小时 55 分钟前</span> 
+                    <div class="sep5"></div>
+                    <div class="reply_content">@<a href="/member/Grin1024">Grin1024</a> 听起来就是 roocode 的回旋镖模式</div>
+                </td>
+            </tr>
+        </table>
+        </div>
+    
+    
+
+    
+        
+        <div id="r_16533847" class="cell">
+        
+        <table cellpadding="0" cellspacing="0" border="0" width="100%">
+            <tr>
+                <td width="48" valign="top" align="center"><img src="https://cdn.v2ex.com/avatar/dbf0/f1ab/504831_large.png?m=1674896537" class="avatar" border="0" align="default" width="48" style="width: 48px; max-height: 48px;" alt="AEDaydreamer" /></td>
+                <td width="10" valign="top"></td>
+                <td width="auto" valign="top" align="left"><div class="fr"><div id="thank_area_16533847" class="thank_area"><a href="#;" onclick="if (confirm('确认要不再显示来自 @AEDaydreamer 的这条回复？')) { ignoreReply(16533847, '84538'); }" class="thank" style="color: #ccc;">隐藏</a> &nbsp; &nbsp; <a href="#;" onclick="if (confirm('确认花费 10 个铜币向 @AEDaydreamer 的这条回复发送感谢？')) { thankReply(16533847); }" class="thank">感谢回复者</a></div> &nbsp; <a href="#;" onclick="replyOne('AEDaydreamer');"><img src="/static/img/reply_neue.png" align="absmiddle" border="0" alt="Reply" width="20" /></a> &nbsp;&nbsp; <span class="no">14</span></div>
+                    <div class="sep3"></div>
+                    <strong><a href="/member/AEDaydreamer" class="dark">AEDaydreamer</a></strong> &nbsp; <div class="badges"></div>&nbsp; &nbsp;<span class="ago" title="2025-07-25 10:24:58 +08:00">1 小时 52 分钟前</span> 
+                    <div class="sep5"></div>
+                    <div class="reply_content">感觉有点像完整版的 superclaude 呢, 每个 sub agent 相当于一个 persona.</div>
+                </td>
+            </tr>
+        </table>
+        </div>
+    
+    
+
+    
+        
+        <div id="r_16533881" class="cell">
+        
+        <table cellpadding="0" cellspacing="0" border="0" width="100%">
+            <tr>
+                <td width="48" valign="top" align="center"><img src="https://cdn.v2ex.com/avatar/bc2b/a673/25122_large.png?m=1753254259" class="avatar" border="0" align="default" width="48" style="width: 48px; max-height: 48px;" alt="terryso" /></td>
+                <td width="10" valign="top"></td>
+                <td width="auto" valign="top" align="left"><div class="fr"><div id="thank_area_16533881" class="thank_area"><a href="#;" onclick="if (confirm('确认要不再显示来自 @terryso 的这条回复？')) { ignoreReply(16533881, '84538'); }" class="thank" style="color: #ccc;">隐藏</a> &nbsp; &nbsp; <a href="#;" onclick="if (confirm('确认花费 10 个铜币向 @terryso 的这条回复发送感谢？')) { thankReply(16533881); }" class="thank">感谢回复者</a></div> &nbsp; <a href="#;" onclick="replyOne('terryso');"><img src="/static/img/reply_neue.png" align="absmiddle" border="0" alt="Reply" width="20" /></a> &nbsp;&nbsp; <span class="no">15</span></div>
+                    <div class="sep3"></div>
+                    <strong><a href="/member/terryso" class="dark">terryso</a></strong> &nbsp; <div class="badges"><div class="badge op">OP</div></div>&nbsp; &nbsp;<span class="ago" title="2025-07-25 10:26:51 +08:00">1 小时 50 分钟前</span> 
+                    <div class="sep5"></div>
+                    <div class="reply_content">@<a href="/member/AEDaydreamer">AEDaydreamer</a> 嗯, 每个子代理就相当于一个角色, 我觉得子代理有自己的上下文比较重要</div>
+                </td>
+            </tr>
+        </table>
+        </div>
+    
+    
+
+    
+        
+        <div id="r_16533934" class="cell">
+        
+        <table cellpadding="0" cellspacing="0" border="0" width="100%">
+            <tr>
+                <td width="48" valign="top" align="center"><img src="https://cdn.v2ex.com/avatar/bc2b/a673/25122_large.png?m=1753254259" class="avatar" border="0" align="default" width="48" style="width: 48px; max-height: 48px;" alt="terryso" /></td>
+                <td width="10" valign="top"></td>
+                <td width="auto" valign="top" align="left"><div class="fr"><div id="thank_area_16533934" class="thank_area"><a href="#;" onclick="if (confirm('确认要不再显示来自 @terryso 的这条回复？')) { ignoreReply(16533934, '84538'); }" class="thank" style="color: #ccc;">隐藏</a> &nbsp; &nbsp; <a href="#;" onclick="if (confirm('确认花费 10 个铜币向 @terryso 的这条回复发送感谢？')) { thankReply(16533934); }" class="thank">感谢回复者</a></div> &nbsp; <a href="#;" onclick="replyOne('terryso');"><img src="/static/img/reply_neue.png" align="absmiddle" border="0" alt="Reply" width="20" /></a> &nbsp;&nbsp; <span class="no">16</span></div>
+                    <div class="sep3"></div>
+                    <strong><a href="/member/terryso" class="dark">terryso</a></strong> &nbsp; <div class="badges"><div class="badge op">OP</div></div>&nbsp; &nbsp;<span class="ago" title="2025-07-25 10:30:08 +08:00">1 小时 47 分钟前</span> 
+                    <div class="sep5"></div>
+                    <div class="reply_content">@<a href="/member/yh7gdiaYW">yh7gdiaYW</a> 我觉得关键是子代理的上下文是独立的, 这点很重要</div>
+                </td>
+            </tr>
+        </table>
+        </div>
+    
+    
+
+    
+        
+        <div id="r_16534146" class="cell">
+        
+        <table cellpadding="0" cellspacing="0" border="0" width="100%">
+            <tr>
+                <td width="48" valign="top" align="center"><img src="https://cdn.v2ex.com/avatar/1bdb/e1fb/38153_large.png?m=1479356013" class="avatar" border="0" align="default" width="48" style="width: 48px; max-height: 48px;" alt="otakustay" /></td>
+                <td width="10" valign="top"></td>
+                <td width="auto" valign="top" align="left"><div class="fr"><div id="thank_area_16534146" class="thank_area"><a href="#;" onclick="if (confirm('确认要不再显示来自 @otakustay 的这条回复？')) { ignoreReply(16534146, '84538'); }" class="thank" style="color: #ccc;">隐藏</a> &nbsp; &nbsp; <a href="#;" onclick="if (confirm('确认花费 10 个铜币向 @otakustay 的这条回复发送感谢？')) { thankReply(16534146); }" class="thank">感谢回复者</a></div> &nbsp; <a href="#;" onclick="replyOne('otakustay');"><img src="/static/img/reply_neue.png" align="absmiddle" border="0" alt="Reply" width="20" /></a> &nbsp;&nbsp; <span class="no">17</span></div>
+                    <div class="sep3"></div>
+                    <strong><a href="/member/otakustay" class="dark">otakustay</a></strong> &nbsp; <div class="badges"></div>&nbsp; &nbsp;<span class="ago" title="2025-07-25 10:46:28 +08:00">1 小时 30 分钟前</span> 
+                    <div class="sep5"></div>
+                    <div class="reply_content">但其实 Claude Code 现在的那个 Task 工具也是独立 context 的</div>
+                </td>
+            </tr>
+        </table>
+        </div>
+    
+    
+
+    
+        
+        <div id="r_16534232" class="cell">
+        
+        <table cellpadding="0" cellspacing="0" border="0" width="100%">
+            <tr>
+                <td width="48" valign="top" align="center"><img src="https://cdn.v2ex.com/avatar/bc2b/a673/25122_large.png?m=1753254259" class="avatar" border="0" align="default" width="48" style="width: 48px; max-height: 48px;" alt="terryso" /></td>
+                <td width="10" valign="top"></td>
+                <td width="auto" valign="top" align="left"><div class="fr"><div id="thank_area_16534232" class="thank_area"><a href="#;" onclick="if (confirm('确认要不再显示来自 @terryso 的这条回复？')) { ignoreReply(16534232, '84538'); }" class="thank" style="color: #ccc;">隐藏</a> &nbsp; &nbsp; <a href="#;" onclick="if (confirm('确认花费 10 个铜币向 @terryso 的这条回复发送感谢？')) { thankReply(16534232); }" class="thank">感谢回复者</a></div> &nbsp; <a href="#;" onclick="replyOne('terryso');"><img src="/static/img/reply_neue.png" align="absmiddle" border="0" alt="Reply" width="20" /></a> &nbsp;&nbsp; <span class="no">18</span></div>
+                    <div class="sep3"></div>
+                    <strong><a href="/member/terryso" class="dark">terryso</a></strong> &nbsp; <div class="badges"><div class="badge op">OP</div></div>&nbsp; &nbsp;<span class="ago" title="2025-07-25 10:52:21 +08:00">1 小时 24 分钟前</span> 
+                    <div class="sep5"></div>
+                    <div class="reply_content">@<a href="/member/otakustay">otakustay</a> 嗯, 不过那个控制起来不太方便</div>
+                </td>
+            </tr>
+        </table>
+        </div>
+    
+    
+
+    
+        
+        <div id="r_16534351" class="cell">
+        
+        <table cellpadding="0" cellspacing="0" border="0" width="100%">
+            <tr>
+                <td width="48" valign="top" align="center"><img src="https://cdn.v2ex.com/gravatar/6ed4ee4dd2e384a9d8d47d2e7f43c5c4?s=48&d=retro" class="avatar" border="0" align="default" width="48" style="width: 48px; max-height: 48px;" alt="maolon" /></td>
+                <td width="10" valign="top"></td>
+                <td width="auto" valign="top" align="left"><div class="fr"><div id="thank_area_16534351" class="thank_area"><a href="#;" onclick="if (confirm('确认要不再显示来自 @maolon 的这条回复？')) { ignoreReply(16534351, '84538'); }" class="thank" style="color: #ccc;">隐藏</a> &nbsp; &nbsp; <a href="#;" onclick="if (confirm('确认花费 10 个铜币向 @maolon 的这条回复发送感谢？')) { thankReply(16534351); }" class="thank">感谢回复者</a></div> &nbsp; <a href="#;" onclick="replyOne('maolon');"><img src="/static/img/reply_neue.png" align="absmiddle" border="0" alt="Reply" width="20" /></a> &nbsp;&nbsp; <span class="no">19</span></div>
+                    <div class="sep3"></div>
+                    <strong><a href="/member/maolon" class="dark">maolon</a></strong> &nbsp; <div class="badges"></div>&nbsp; &nbsp;<span class="ago" title="2025-07-25 10:59:36 +08:00">1 小时 17 分钟前</span> 
+                    <div class="sep5"></div>
+                    <div class="reply_content">@<a href="/member/Grin1024">Grin1024</a> 我在想能不能把 roo 的那几个专家移植几个过去</div>
+                </td>
+            </tr>
+        </table>
+        </div>
+    
+    
+
+    
+        
+        <div id="r_16534408" class="cell">
+        
+        <table cellpadding="0" cellspacing="0" border="0" width="100%">
+            <tr>
+                <td width="48" valign="top" align="center"><img src="https://cdn.v2ex.com/avatar/c483/dde7/525483_large.png?m=1721300352" class="avatar" border="0" align="default" width="48" style="width: 48px; max-height: 48px;" alt="ouou0701" /></td>
+                <td width="10" valign="top"></td>
+                <td width="auto" valign="top" align="left"><div class="fr"><div id="thank_area_16534408" class="thank_area"><a href="#;" onclick="if (confirm('确认要不再显示来自 @ouou0701 的这条回复？')) { ignoreReply(16534408, '84538'); }" class="thank" style="color: #ccc;">隐藏</a> &nbsp; &nbsp; <a href="#;" onclick="if (confirm('确认花费 10 个铜币向 @ouou0701 的这条回复发送感谢？')) { thankReply(16534408); }" class="thank">感谢回复者</a></div> &nbsp; <a href="#;" onclick="replyOne('ouou0701');"><img src="/static/img/reply_neue.png" align="absmiddle" border="0" alt="Reply" width="20" /></a> &nbsp;&nbsp; <span class="no">20</span></div>
+                    <div class="sep3"></div>
+                    <strong><a href="/member/ouou0701" class="dark">ouou0701</a></strong> &nbsp; <div class="badges"></div>&nbsp; &nbsp;<span class="ago" title="2025-07-25 11:02:49 +08:00">1 小时 14 分钟前</span> 
+                    <div class="sep5"></div>
+                    <div class="reply_content">是不是可以理解多了几个人,每个人负责不同的东西,例如一个子代理开发了一个背包系统,然后以后都是他负责,每次都要迭代,都找他.开发任务系统,又找另外一个子代理,以后都是他负责这一块的迭代?</div>
+                </td>
+            </tr>
+        </table>
+        </div>
+    
+    
+
+    
+        
+        <div id="r_16534456" class="cell">
+        
+        <table cellpadding="0" cellspacing="0" border="0" width="100%">
+            <tr>
+                <td width="48" valign="top" align="center"><img src="https://cdn.v2ex.com/avatar/f5df/d43c/261172_large.png?m=1665297287" class="avatar" border="0" align="default" width="48" style="width: 48px; max-height: 48px;" alt="Akikiki" /></td>
+                <td width="10" valign="top"></td>
+                <td width="auto" valign="top" align="left"><div class="fr"><div id="thank_area_16534456" class="thank_area"><a href="#;" onclick="if (confirm('确认要不再显示来自 @Akikiki 的这条回复？')) { ignoreReply(16534456, '84538'); }" class="thank" style="color: #ccc;">隐藏</a> &nbsp; &nbsp; <a href="#;" onclick="if (confirm('确认花费 10 个铜币向 @Akikiki 的这条回复发送感谢？')) { thankReply(16534456); }" class="thank">感谢回复者</a></div> &nbsp; <a href="#;" onclick="replyOne('Akikiki');"><img src="/static/img/reply_neue.png" align="absmiddle" border="0" alt="Reply" width="20" /></a> &nbsp;&nbsp; <span class="no">21</span></div>
+                    <div class="sep3"></div>
+                    <strong><a href="/member/Akikiki" class="dark">Akikiki</a></strong> &nbsp; <div class="badges"></div>&nbsp; &nbsp;<span class="ago" title="2025-07-25 11:06:20 +08:00">1 小时 10 分钟前</span> 
+                    <div class="sep5"></div>
+                    <div class="reply_content">谷歌搞的 agent2agent 那套的实际应用吧。每个 agent 里有可以定义自己的一套 mcp 来用</div>
+                </td>
+            </tr>
+        </table>
+        </div>
+    
+    
+
+    
+        
+        <div id="r_16534512" class="cell">
+        
+        <table cellpadding="0" cellspacing="0" border="0" width="100%">
+            <tr>
+                <td width="48" valign="top" align="center"><img src="https://cdn.v2ex.com/avatar/b618/b4dd/20247_large.png?m=1727518330" class="avatar" border="0" align="default" width="48" style="width: 48px; max-height: 48px;" alt="billzhuang" /></td>
+                <td width="10" valign="top"></td>
+                <td width="auto" valign="top" align="left"><div class="fr"><div id="thank_area_16534512" class="thank_area"><a href="#;" onclick="if (confirm('确认要不再显示来自 @billzhuang 的这条回复？')) { ignoreReply(16534512, '84538'); }" class="thank" style="color: #ccc;">隐藏</a> &nbsp; &nbsp; <a href="#;" onclick="if (confirm('确认花费 10 个铜币向 @billzhuang 的这条回复发送感谢？')) { thankReply(16534512); }" class="thank">感谢回复者</a></div> &nbsp; <a href="#;" onclick="replyOne('billzhuang');"><img src="/static/img/reply_neue.png" align="absmiddle" border="0" alt="Reply" width="20" /></a> &nbsp;&nbsp; <span class="no">22</span></div>
+                    <div class="sep3"></div>
+                    <strong><a href="/member/billzhuang" class="dark">billzhuang</a></strong> &nbsp; <div class="badges"></div>&nbsp; &nbsp;<span class="ago" title="2025-07-25 11:09:46 +08:00">1 小时 7 分钟前 via iPhone</span> 
+                    <div class="sep5"></div>
+                    <div class="reply_content">有点意思</div>
+                </td>
+            </tr>
+        </table>
+        </div>
+    
+    
+
+    
+        
+        <div id="r_16534590" class="cell">
+        
+        <table cellpadding="0" cellspacing="0" border="0" width="100%">
+            <tr>
+                <td width="48" valign="top" align="center"><img src="https://cdn.v2ex.com/avatar/bc2b/a673/25122_large.png?m=1753254259" class="avatar" border="0" align="default" width="48" style="width: 48px; max-height: 48px;" alt="terryso" /></td>
+                <td width="10" valign="top"></td>
+                <td width="auto" valign="top" align="left"><div class="fr"><div id="thank_area_16534590" class="thank_area"><a href="#;" onclick="if (confirm('确认要不再显示来自 @terryso 的这条回复？')) { ignoreReply(16534590, '84538'); }" class="thank" style="color: #ccc;">隐藏</a> &nbsp; &nbsp; <a href="#;" onclick="if (confirm('确认花费 10 个铜币向 @terryso 的这条回复发送感谢？')) { thankReply(16534590); }" class="thank">感谢回复者</a></div> &nbsp; <a href="#;" onclick="replyOne('terryso');"><img src="/static/img/reply_neue.png" align="absmiddle" border="0" alt="Reply" width="20" /></a> &nbsp;&nbsp; <span class="no">23</span></div>
+                    <div class="sep3"></div>
+                    <strong><a href="/member/terryso" class="dark">terryso</a></strong> &nbsp; <div class="badges"><div class="badge op">OP</div></div>&nbsp; &nbsp;<span class="ago" title="2025-07-25 11:15:05 +08:00">1 小时 2 分钟前</span> 
+                    <div class="sep5"></div>
+                    <div class="reply_content">@<a href="/member/ouou0701">ouou0701</a> 可以简单理解为通过子代理能创建角色, 比如: 代码 Reivew 子代理, 你里面可以定位 Review 的流程和规范, 当 AI 写完代码, 需要做 code review 的时候, 就会自动调用这个子代理去 review</div>
+                </td>
+            </tr>
+        </table>
+        </div>
+    
+    
+
+    
+        
+        <div id="r_16534609" class="cell">
+        
+        <table cellpadding="0" cellspacing="0" border="0" width="100%">
+            <tr>
+                <td width="48" valign="top" align="center"><img src="https://cdn.v2ex.com/avatar/bc2b/a673/25122_large.png?m=1753254259" class="avatar" border="0" align="default" width="48" style="width: 48px; max-height: 48px;" alt="terryso" /></td>
+                <td width="10" valign="top"></td>
+                <td width="auto" valign="top" align="left"><div class="fr"><div id="thank_area_16534609" class="thank_area"><a href="#;" onclick="if (confirm('确认要不再显示来自 @terryso 的这条回复？')) { ignoreReply(16534609, '84538'); }" class="thank" style="color: #ccc;">隐藏</a> &nbsp; &nbsp; <a href="#;" onclick="if (confirm('确认花费 10 个铜币向 @terryso 的这条回复发送感谢？')) { thankReply(16534609); }" class="thank">感谢回复者</a></div> &nbsp; <a href="#;" onclick="replyOne('terryso');"><img src="/static/img/reply_neue.png" align="absmiddle" border="0" alt="Reply" width="20" /></a> &nbsp;&nbsp; <span class="no">24</span></div>
+                    <div class="sep3"></div>
+                    <strong><a href="/member/terryso" class="dark">terryso</a></strong> &nbsp; <div class="badges"><div class="badge op">OP</div></div>&nbsp; &nbsp;<span class="ago" title="2025-07-25 11:16:03 +08:00">1 小时 1 分钟前</span> 
+                    <div class="sep5"></div>
+                    <div class="reply_content">@<a href="/member/Akikiki">Akikiki</a> a2a 的理想更大一些, 这个子代理只是解决内部问题</div>
+                </td>
+            </tr>
+        </table>
+        </div>
+    
+    
+
+    
+        
+        <div id="r_16534684" class="cell">
+        
+        <table cellpadding="0" cellspacing="0" border="0" width="100%">
+            <tr>
+                <td width="48" valign="top" align="center"><img src="https://cdn.v2ex.com/avatar/bc2b/a673/25122_large.png?m=1753254259" class="avatar" border="0" align="default" width="48" style="width: 48px; max-height: 48px;" alt="terryso" /></td>
+                <td width="10" valign="top"></td>
+                <td width="auto" valign="top" align="left"><div class="fr"><div id="thank_area_16534684" class="thank_area"><a href="#;" onclick="if (confirm('确认要不再显示来自 @terryso 的这条回复？')) { ignoreReply(16534684, '84538'); }" class="thank" style="color: #ccc;">隐藏</a> &nbsp; &nbsp; <a href="#;" onclick="if (confirm('确认花费 10 个铜币向 @terryso 的这条回复发送感谢？')) { thankReply(16534684); }" class="thank">感谢回复者</a></div> &nbsp; <a href="#;" onclick="replyOne('terryso');"><img src="/static/img/reply_neue.png" align="absmiddle" border="0" alt="Reply" width="20" /></a> &nbsp;&nbsp; <span class="no">25</span></div>
+                    <div class="sep3"></div>
+                    <strong><a href="/member/terryso" class="dark">terryso</a></strong> &nbsp; <div class="badges"><div class="badge op">OP</div></div>&nbsp; &nbsp;<span class="ago" title="2025-07-25 11:20:09 +08:00">57 分钟前</span> 
+                    <div class="sep5"></div>
+                    <div class="reply_content">@<a href="/member/billzhuang">billzhuang</a> 可以玩很多东西</div>
+                </td>
+            </tr>
+        </table>
+        </div>
+    
+    
+
+    
+        
+        <div id="r_16534914" class="cell">
+        
+        <table cellpadding="0" cellspacing="0" border="0" width="100%">
+            <tr>
+                <td width="48" valign="top" align="center"><img src="https://cdn.v2ex.com/avatar/b9b1/7c6a/261032_large.png?m=1715413507" class="avatar" border="0" align="default" width="48" style="width: 48px; max-height: 48px;" alt="JRay" /></td>
+                <td width="10" valign="top"></td>
+                <td width="auto" valign="top" align="left"><div class="fr"><div id="thank_area_16534914" class="thank_area"><a href="#;" onclick="if (confirm('确认要不再显示来自 @JRay 的这条回复？')) { ignoreReply(16534914, '84538'); }" class="thank" style="color: #ccc;">隐藏</a> &nbsp; &nbsp; <a href="#;" onclick="if (confirm('确认花费 10 个铜币向 @JRay 的这条回复发送感谢？')) { thankReply(16534914); }" class="thank">感谢回复者</a></div> &nbsp; <a href="#;" onclick="replyOne('JRay');"><img src="/static/img/reply_neue.png" align="absmiddle" border="0" alt="Reply" width="20" /></a> &nbsp;&nbsp; <span class="no">26</span></div>
+                    <div class="sep3"></div>
+                    <strong><a href="/member/JRay" class="dark">JRay</a></strong> &nbsp; <div class="badges"></div>&nbsp; &nbsp;<span class="ago" title="2025-07-25 11:36:44 +08:00">40 分钟前</span> 
+                    <div class="sep5"></div>
+                    <div class="reply_content">我建了几个，但是使用的时候看不出来有没有在工作。你实际操作有对应的提示吗</div>
+                </td>
+            </tr>
+        </table>
+        </div>
+    
+    
+
+    
+        
+        <div id="r_16535025" class="cell">
+        
+        <table cellpadding="0" cellspacing="0" border="0" width="100%">
+            <tr>
+                <td width="48" valign="top" align="center"><img src="https://cdn.v2ex.com/avatar/bc2b/a673/25122_large.png?m=1753254259" class="avatar" border="0" align="default" width="48" style="width: 48px; max-height: 48px;" alt="terryso" /></td>
+                <td width="10" valign="top"></td>
+                <td width="auto" valign="top" align="left"><div class="fr"><div id="thank_area_16535025" class="thank_area"><a href="#;" onclick="if (confirm('确认要不再显示来自 @terryso 的这条回复？')) { ignoreReply(16535025, '84538'); }" class="thank" style="color: #ccc;">隐藏</a> &nbsp; &nbsp; <a href="#;" onclick="if (confirm('确认花费 10 个铜币向 @terryso 的这条回复发送感谢？')) { thankReply(16535025); }" class="thank">感谢回复者</a></div> &nbsp; <a href="#;" onclick="replyOne('terryso');"><img src="/static/img/reply_neue.png" align="absmiddle" border="0" alt="Reply" width="20" /></a> &nbsp;&nbsp; <span class="no">27</span></div>
+                    <div class="sep3"></div>
+                    <strong><a href="/member/terryso" class="dark">terryso</a></strong> &nbsp; <div class="badges"><div class="badge op">OP</div></div>&nbsp; &nbsp;<span class="ago" title="2025-07-25 11:45:29 +08:00">31 分钟前</span> 
+                    <div class="sep5"></div>
+                    <div class="reply_content">@<a href="/member/JRay">JRay</a> 我暂时是主动在提示词里面去说明要用某个子代理, 自动的我还没测试</div>
+                </td>
+            </tr>
+        </table>
+        </div>
+    
+    
+
+    
+        
+        <div id="r_16535062" class="cell">
+        
+        <table cellpadding="0" cellspacing="0" border="0" width="100%">
+            <tr>
+                <td width="48" valign="top" align="center"><img src="https://cdn.v2ex.com/gravatar/3b198446b72d1e5a3b0090f106a75f3c?s=48&d=retro" class="avatar" border="0" align="default" width="48" style="width: 48px; max-height: 48px;" alt="sampeng" /></td>
+                <td width="10" valign="top"></td>
+                <td width="auto" valign="top" align="left"><div class="fr"><div id="thank_area_16535062" class="thank_area"><a href="#;" onclick="if (confirm('确认要不再显示来自 @sampeng 的这条回复？')) { ignoreReply(16535062, '84538'); }" class="thank" style="color: #ccc;">隐藏</a> &nbsp; &nbsp; <a href="#;" onclick="if (confirm('确认花费 10 个铜币向 @sampeng 的这条回复发送感谢？')) { thankReply(16535062); }" class="thank">感谢回复者</a></div> &nbsp; <a href="#;" onclick="replyOne('sampeng');"><img src="/static/img/reply_neue.png" align="absmiddle" border="0" alt="Reply" width="20" /></a> &nbsp;&nbsp; <span class="no">28</span></div>
+                    <div class="sep3"></div>
+                    <strong><a href="/member/sampeng" class="dark">sampeng</a></strong> &nbsp; <div class="badges"></div>&nbsp; &nbsp;<span class="ago" title="2025-07-25 11:48:10 +08:00">29 分钟前</span> 
+                    <div class="sep5"></div>
+                    <div class="reply_content">如果这个工具可以设置使用哪个模型就更好了</div>
+                </td>
+            </tr>
+        </table>
+        </div>
+    
+    
+
+    
+        
+        <div id="r_16535109" class="cell">
+        
+        <table cellpadding="0" cellspacing="0" border="0" width="100%">
+            <tr>
+                <td width="48" valign="top" align="center"><img src="https://cdn.v2ex.com/avatar/b123/8353/120816_large.png?m=1749180112" class="avatar" border="0" align="default" width="48" style="width: 48px; max-height: 48px;" alt="CEBBCAT" /></td>
+                <td width="10" valign="top"></td>
+                <td width="auto" valign="top" align="left"><div class="fr"><div id="thank_area_16535109" class="thank_area"><a href="#;" onclick="if (confirm('确认要不再显示来自 @CEBBCAT 的这条回复？')) { ignoreReply(16535109, '84538'); }" class="thank" style="color: #ccc;">隐藏</a> &nbsp; &nbsp; <a href="#;" onclick="if (confirm('确认花费 10 个铜币向 @CEBBCAT 的这条回复发送感谢？')) { thankReply(16535109); }" class="thank">感谢回复者</a></div> &nbsp; <a href="#;" onclick="replyOne('CEBBCAT');"><img src="/static/img/reply_neue.png" align="absmiddle" border="0" alt="Reply" width="20" /></a> &nbsp;&nbsp; <span class="no">29</span></div>
+                    <div class="sep3"></div>
+                    <strong><a href="/member/CEBBCAT" class="dark">CEBBCAT</a></strong> &nbsp; <div class="badges"></div>&nbsp; &nbsp;<span class="ago" title="2025-07-25 11:52:22 +08:00">24 分钟前</span> 
+                    <div class="sep5"></div>
+                    <div class="reply_content">@<a href="/member/Livid">Livid</a> V2EX 之前规定了不允许 AI 生成的内容作为技术问题的回答，但没有明确可否发布 AI 生成、辅助编辑的文章，不知道有没有规划？</div>
+                </td>
+            </tr>
+        </table>
+        </div>
+    
+    
+
+
+</div>
+<div class="sep20"></div>
+
+
+
+
+
+
+    
+        
+            
+                <div class="box" id="reply-box">
+    <div class="cell flex-one-row">
+        <div>添加新回复</div>
+        <div><a href="javascript:undockReplyBox();" id="undock-button">取消回复框停靠</a> &nbsp; &nbsp; <a href="#" onclick="goTop()">回到顶部</a></div>
+    </div>
+    <div class="cell"><form method="post" action="/t/1147555">
+        <textarea name="content" maxlength="10000" class="mll" id="reply_content" onfocus="setReplyBoxSticky();"></textarea>
+        <div class="flex-one-row" style="margin-top: 10px;">
+            <input type="submit" value="回复" class="super normal button" />
+            <input type="hidden" value="84538" id="once" name="once" />
+            <input type="hidden" value="1" id="return_to_page" name="return_to_page" />
+            <!--<span class="gray">请尽量让自己的回复能够对别人有帮助</span>-->
+            <!--
+            上面的这句话在这个位置存在了很久，在 2024 年 4 月 11 日这天夜里（11:25 PM PDT）被注释掉。
+
+            一个地方如果有太多的标语，去告诉人们应该怎样、不应该怎样，是一件我在现在觉得很可悲的事情，但是在 2010 年左右时，却完全没有意识到。
+
+            如果还有其他这样的标语，接下来也会逐渐去掉，V2EX 界面上的文字应该是尽量少的，我现在这样觉得。
+            -->
+        </div>
+    </form></div>
+    <div class="cell flex-row-end">
+        <a href="/">← V2EX</a>
+    </div>
+</div>
+            
+        
+    
+
+
+
+
+
+<div class="sep20"></div>
+<div class="box">
+<div class="inner">
+<div class="fr">
+
+
+
+
+
+
+
+</div>
+
+    
+        <a href="#;" onclick="if (confirm('你确认需要报告这个主题？')) { location.href = '/report/topic/1147555?once=84538'; }">报告这个主题</a>
+    
+&nbsp;
+</div></div>
+
+
+
+
+
+
+
+
+
+
+            </div>
+            
+            
+        </div>
+        <div class="c"></div>
+        <div class="sep20"></div>
+    </div>
+    <div id="Bottom">
+        <div class="content">
+            <div class="inner">
+                <div class="sep10"></div>
+                    <div class="fr">
+                        <a href="https://www.digitalocean.com/?refcode=1b51f1a7651d" target="_blank"><div id="DigitalOcean"></div></a>
+                    </div>
+                    <strong><a href="/about" class="dark" target="_self">关于</a> &nbsp; <span class="snow">·</span> &nbsp; <a href="/help" class="dark" target="_self">帮助文档</a> &nbsp; <span class="snow">·</span> &nbsp; <a href="/pro/about" class="dark" target="_self">自助推广系统</a> &nbsp; <span class="snow">·</span> &nbsp; <a href="https://blog.v2ex.com/" class="dark" target="_blank">博客</a> &nbsp; <span class="snow">·</span> &nbsp; <a href="/help/api" class="dark" target="_self">API</a> &nbsp; <span class="snow">·</span> &nbsp; <a href="/faq" class="dark" target="_self">FAQ</a> &nbsp; <span class="snow">·</span> &nbsp; <a href="/tools" class="dark" target="_self">实用小工具</a> &nbsp; <span class="snow">·</span> &nbsp; 3528 人在线</strong> &nbsp; <span class="fade">最高记录 6679</span> &nbsp; <span class="snow">·</span> &nbsp; <a href="/select/language" class="f11"><img src="/static/img/language.png?v=6a5cfa731dc71a3769f6daace6784739" width="16" align="absmiddle" id="ico-select-language" /> &nbsp; Select Language</a>
+                    <div class="sep20"></div>
+                    创意工作者们的社区
+                    <div class="sep5"></div>
+                    World is powered by solitude
+                    <div class="sep20"></div>
+                    <span class="small fade">VERSION: 3.9.8.5 · 66ms · <a href="/worldclock#utc">UTC 04:17</a> · <a href="/worldclock#pvg">PVG 12:17</a> · <a href="/worldclock#lax">LAX 21:17</a> · <a href="/worldclock#jfk">JFK 00:17</a><br />Developed with <a href="https://cl.v2ex.pro/" target="_blank">CodeLauncher</a><br />♥ Do have faith in what you're doing.</span>
+                <div class="sep10"></div>
+            </div>
+        </div>
+    </div>
+
+    
+    
+    
+
+    
+
+    
+    <script src="/b/i/1A0F7YjRvHoUKA6PCDTXp2qYU2YKmbjzx3oDa1T4ZlCuugtjeCs3CySo7gbH4f3KzwNRL66yjoH9NhLZQ-szq09yruUvghkmIsU-igD-m-dfDvx2N7RQFTDtCqasJDs27zyXaJVnr66W86WO0soFf9-MCbbvOZjPqBgOHQPIeJcf6rXEVRCARBYRnBTO3laJ"></script>
+    
+
+    
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+      ga('create', 'UA-11940834-2', 'v2ex.com');
+      ga('send', 'pageview');
+      
+
+ga('send', 'event', 'Node', 'topic', 'programmer');
+
+
+
+    </script>
+    
+
+    
+<button class="scroll-top" data-scroll="up" type="button"><span>❯<span></button>
+</body>
+</html>
