@@ -6,12 +6,16 @@ import { debounce, once } from "lodash";
 import type { PostStatus } from "@/service/history/post";
 
 const globalData: {
-  // 进入帖子页面时的帖子状态，只给 updateCommentsLabel 使用，其他地方用可能没初始化
+  // 进入帖子页面时的帖子状态，专用于 updateCommentsLabel 函数  
   currentPostStatus?: PostStatus
-  newCommentsLabel: Element[]
-} = {
-  newCommentsLabel: [],
-};
+} = {};
+
+const initCurrentPostStatus = once(async (username: string) => {
+  // 初始化帖子信息，防止 mutationObserver 多次触发导致被最新数据覆盖
+  const { postId } = getPostInfo(window.location.href, document);
+  globalData.currentPostStatus = await getPostStatus(username, postId);
+  console.log('初始化帖子信息', globalData.currentPostStatus); 
+});
 
 // ===== 主要导出函数 =====
 
@@ -31,8 +35,14 @@ export const tryInitPostsLabel = async (username: string): Promise<void> => {
     if (isPostPage) {
       console.log('检测到帖子页，更新帖子评论标签');
       await updateCommentsLabel(username);
-      // 滚动到第一个新评论
-      scrollToNewComments(0);
+      // 自动滚动到第一个新评论
+      if (globalData.currentPostStatus) {
+        const { viewedCount, replyCount } = globalData.currentPostStatus;
+        if (viewedCount && viewedCount !== replyCount) {
+          // 滚动到用户上次查看位置之后的第一条新评论
+          scrollToComments(viewedCount + 1);
+        }
+      }
     }
   }, 50, { leading: false, trailing: true }));
 
@@ -97,12 +107,7 @@ const updatePostsLable = async (username: string) => {
 
 // 更新帖子页面中的新评论标签
 const updateCommentsLabel = async (username: string) => {
-  await once(async () => {
-    // 初始化帖子信息，防止 mutationObserver 多次触发导致被最新数据覆盖
-    const { postId } = getPostInfo(window.location.href, document);
-    globalData.currentPostStatus = await getPostStatus(username, postId);
-    console.log('初始化帖子信息', globalData.currentPostStatus);
-  })();
+  await initCurrentPostStatus(username);
 
   if (!globalData.currentPostStatus) {
     console.log('帖子之前没访问过，不高亮');
@@ -140,25 +145,43 @@ const updateCommentsLabel = async (username: string) => {
     if (currentNo > viewedCount) {
       // 新评论：应用高亮标签
       applyLabel(spanElement, 'new');
-      globalData.newCommentsLabel.push(spanElement);
     } else {
       // 已读评论：清除标签
       clearLabel(spanElement);
     }
   });
-  console.log('新评论标签', globalData.newCommentsLabel);
 
   // 更新用户已查看的评论数
-  await updatePostStatus(username, { postId, viewedCount: maxNo, timestamp: Date.now() });
+  if (!viewedCount || maxNo > viewedCount) {
+    await updatePostStatus(username, { postId, viewedCount: maxNo, timestamp: Date.now() });
+  }
 }
 
-const scrollToNewComments = (index: number) => {
-  if (index >= globalData.newCommentsLabel.length) {
-    console.log('index范围错误，没有新评论');
+// 滚动到指定楼层的评论
+const scrollToComments = (floor: number) => {
+  // 查找所有评论编号元素
+  const commentElements = xpath(`//div[@id="Main"]//div[@class="box"][2]//div[starts-with(@id, "r_")]//span[@class="no" or @class="no v-stats-count-label"]`, document) as Node[];
+  
+  if (commentElements.length === 0) {
+    console.log('没有找到评论', floor);
     return;
   }
-  console.log('滚动到新评论', index, globalData.newCommentsLabel[index]);
-  globalData.newCommentsLabel[index].scrollIntoView({ behavior: 'auto', block: 'center' });
+  
+  // 查找匹配楼层号的评论元素
+  const targetElement = commentElements.find(element => {
+    const span = element as HTMLSpanElement;
+    const commentNo = parseInt(span.textContent || '0', 10);
+    return commentNo === floor;
+  }) as HTMLElement;
+  
+  if (!targetElement) {
+    console.log('没有找到指定楼层的评论', floor);
+    return;
+  }
+  
+  console.log('滚动到评论', floor, targetElement);
+  // 滚动到目标评论，居中显示
+  targetElement.scrollIntoView({ behavior: 'auto', block: 'center' });
 }
 
 // ===== 样式操作辅助函数 =====
