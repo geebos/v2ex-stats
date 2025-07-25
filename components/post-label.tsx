@@ -10,12 +10,14 @@ const globalData: {
   currentPostStatus?: PostStatus
 } = {};
 
-const initCurrentPostStatus = once(async (username: string) => {
-  // 初始化帖子信息，防止 mutationObserver 多次触发导致被最新数据覆盖
+const initCurrentPostStatus = async (username: string) => {
   const { postId } = getPostInfo(window.location.href, document);
   globalData.currentPostStatus = await getPostStatus(username, postId);
-  console.log('初始化帖子信息', globalData.currentPostStatus); 
-});
+  console.log('初始化帖子信息', globalData.currentPostStatus);
+}
+
+// 初始化帖子信息，防止 mutationObserver 多次触发导致被最新数据覆盖
+let initCurrentPostStatusOnce = once(initCurrentPostStatus);
 
 // ===== 主要导出函数 =====
 
@@ -26,8 +28,7 @@ export const tryInitPostsLabel = async (username: string): Promise<void> => {
   // 注入CSS样式
   injectStyle();
 
-  // 监听页面变化，更新帖子标签
-  const observer = new MutationObserver(debounce(async () => {
+  const processPage = async () => {
     if (isIndexPage) {
       console.log('检测到主页，更新帖子列表标签');
       await updatePostsLable(username);
@@ -44,6 +45,16 @@ export const tryInitPostsLabel = async (username: string): Promise<void> => {
         }
       }
     }
+  }
+
+  // 监听页面显示，刷新帖子信息
+  window.addEventListener('pageshow', async () => {
+    await processPage();
+  });
+
+  // 监听页面变化，更新帖子标签
+  const observer = new MutationObserver(debounce(async () => {
+    await processPage();
   }, 50, { leading: false, trailing: true }));
 
   const mainContainer = document.querySelector('#Main');
@@ -107,7 +118,7 @@ const updatePostsLable = async (username: string) => {
 
 // 更新帖子页面中的新评论标签
 const updateCommentsLabel = async (username: string) => {
-  await initCurrentPostStatus(username);
+  await initCurrentPostStatusOnce(username);
 
   if (!globalData.currentPostStatus) {
     console.log('帖子之前没访问过，不高亮');
@@ -161,24 +172,24 @@ const updateCommentsLabel = async (username: string) => {
 const scrollToComments = (floor: number) => {
   // 查找所有评论编号元素
   const commentElements = findAllCommentsElement();
-  
+
   if (commentElements.length === 0) {
     console.log('没有找到评论', floor);
     return;
   }
-  
+
   // 查找匹配楼层号的评论元素
   const targetElement = commentElements.find(element => {
     const span = element as HTMLSpanElement;
     const commentNo = parseInt(span.textContent || '0', 10);
     return commentNo === floor;
   }) as HTMLElement;
-  
+
   if (!targetElement) {
     console.log('没有找到指定楼层的评论', floor);
     return;
   }
-  
+
   console.log('滚动到评论', floor, targetElement);
   // 滚动到目标评论，居中显示
   targetElement.scrollIntoView({ behavior: 'auto', block: 'center' });
