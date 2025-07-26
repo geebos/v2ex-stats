@@ -5,6 +5,7 @@ import { tryInitBalanceChart } from '@/components/balance-chart';
 import { tryInitActivityChart } from '@/components/activity-chart';
 import { testIsV2EX } from '@/service/utils';
 import { collectPostInfo } from '@/service/history/collect';
+import { tryInitUI } from '@/ui';
 
 // ==================== 页面检测和信息获取 ====================
 
@@ -65,7 +66,7 @@ export default defineContentScript({
       await tryInitActivityChart(info.username);
     }
 
-    await collectPostInfo(info.username); 
-    await tryInitPostsLabel(info.username);
+    await collectPostInfo(info.username);
+    await tryInitUI(info.username);
   }
 }); 
