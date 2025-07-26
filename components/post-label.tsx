@@ -56,10 +56,16 @@ export const tryInitPostsLabel = async (username: string): Promise<void> => {
   const observer = new MutationObserver(debounce(async () => {
     await processPage();
   }, 50, { leading: false, trailing: true }));
+  const loadedObserver = new MutationObserver(debounce(async () => {
+    console.log('页面加载完成，停止监听');
+    observer.disconnect();
+    loadedObserver.disconnect();
+  }, 500, { leading: false, trailing: true })  );
 
   const mainContainer = document.querySelector('#Main');
   if (mainContainer) {
     observer.observe(mainContainer, { childList: true, subtree: true });
+    loadedObserver.observe(mainContainer, { childList: true, subtree: true });
     // 至少触发一次 MutationObserver
     mainContainer.appendChild(document.createTextNode(''));
   } else {
