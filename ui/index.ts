@@ -32,10 +32,12 @@ const registerMutationObserver = async (username: string) => {
     return;
   }
 
+  console.log('注册页面变化监听器');
   // 监听页面内容变化，防抖处理UI更新
   const observer = new MutationObserver(debounce(async () => {
+    console.log('页面变化，处理UI');
     await processUI(username);
-  }, 50, { leading: false, trailing: true }));
+  }, 100, { leading: false, trailing: true }));
   observer.observe(container, { childList: true, subtree: true });
 
   // 监听页面加载完成，执行回调
@@ -43,11 +45,18 @@ const registerMutationObserver = async (username: string) => {
     console.log('页面加载完成，停止监听');
     observer.disconnect();
     loadedObserver.disconnect();
-  }), 500, { leading: false, trailing: true }));
+    // 监听页面显示事件
+    window.addEventListener('pageshow', async () => {
+      await processUI(username);
+    });
+  }), 2000, { leading: false, trailing: true }));
   loadedObserver.observe(container, { childList: true, subtree: true });
 
   // 手动触发一次监听器，确保初始化执行
-  container.appendChild(document.createTextNode(''));
+  setTimeout(() => {
+    console.log('手动触发一次监听器，确保初始化执行');
+    container.appendChild(document.createTextNode(''));
+  }, 50);
 }
 
 // ======================== 样式和标签操作相关 ========================
@@ -94,11 +103,6 @@ export const clearLabel = (element: HTMLElement) => {
 export const tryInitUI = async (username: string): Promise<void> => {
   // 注入CSS样式
   injectStyle();
-
-  // 监听页面显示事件
-  window.addEventListener('pageshow', async () => {
-    await processUI(username);
-  });
 
   // 注册页面变化监听器
   await registerMutationObserver(username);
