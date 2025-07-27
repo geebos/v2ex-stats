@@ -1,6 +1,6 @@
 import { getPostInfo } from "@/service/history/collect";
 import { getPostStatus, PostStatus, updatePostStatus } from "@/service/history/post";
-import { xpath } from "@/service/utils";
+import xpath from "@/service/xpath";
 import { applyLabel, clearLabel } from "@/ui/index";
 import { once } from "lodash";
 
@@ -8,28 +8,27 @@ import { once } from "lodash";
 
 // 帖子页面全局数据
 const globalData: {
-  // 进入帖子页面时的帖子状态，专用于 updateCommentsLabel 函数  
-  currentPostStatus?: PostStatus
+  currentPostStatus?: PostStatus // 进入帖子页面时的帖子状态，专用于 updateCommentsLabel 函数  
 } = {};
 
+// 防止 mutationObserver 多次触发导致被最新数据覆盖
+let initCurrentPostStatusOnce = once(initCurrentPostStatus);
+
 // 初始化当前帖子状态
-const initCurrentPostStatus = async (username: string) => {
+async function initCurrentPostStatus(username: string) {
   const { postId } = getPostInfo(window.location.href, document);
   globalData.currentPostStatus = await getPostStatus(username, postId);
   console.log('初始化帖子信息', globalData.currentPostStatus);
 }
 
-// 防止 mutationObserver 多次触发导致被最新数据覆盖
-let initCurrentPostStatusOnce = once(initCurrentPostStatus);
-
-// ======================== DOM元素操作相关 ========================
+// ======================== DOM元素操作 ========================
 
 // 获取所有评论编号元素
 const findAllCommentsElement = () => {
-  return xpath(`//div[@id="Main"]//div[@class="box"][2]//div[starts-with(@id, "r_")]//span[@class="no" or @class="no v-stats-count-label"]`, document) as Node[];
+  return xpath.findNodes<HTMLSpanElement>(`//div[@id="Main"]//div[@class="box"][2]//div[starts-with(@id, "r_")]//span[@class="no" or @class="no v-stats-count-label"]`, document);
 };
 
-// ======================== 评论标签更新相关 ========================
+// ======================== 评论标签更新 ========================
 
 // 更新帖子页面中的新评论标签
 export const updateCommentsLabel = async (username: string) => {
@@ -39,6 +38,7 @@ export const updateCommentsLabel = async (username: string) => {
     console.log('帖子之前没访问过，不高亮');
     return;
   }
+  
   const { postId, viewedCount } = globalData.currentPostStatus;
 
   // 获取所有评论编号元素
@@ -83,7 +83,7 @@ export const updateCommentsLabel = async (username: string) => {
   }
 }
 
-// ======================== 滚动功能相关 ========================
+// ======================== 滚动功能 ========================
 
 // 滚动到指定楼层的评论
 const scrollToComments = (floor: number) => {

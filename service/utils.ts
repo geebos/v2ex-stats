@@ -2,28 +2,22 @@
 import { Granularity } from "@/types/types";
 import * as echarts from 'echarts';
 
-// ==================== 域名检测 ====================
+// ======================== 域名检测 ========================
 
 // 检测域名是否为 V2EX
 export const testIsV2EX = (hostname: string) => {
   return /^(?:([a-z0-9-]+\.)*)v2ex\.com$/.test(hostname);
 }
 
-// ==================== 图表样式配置 ====================
+// ======================== 暗色模式检测与图表样式 ========================
 
+// 图表背景色配置
 const chartsBackgroundColor = 'transparent';
+
+// 图表颜色配置
 const chartsColors = [
-  '#dd6b66',
-  '#759aa0',
-  '#e69d87',
-  '#8dc1a9',
-  '#ea7e53',
-  '#eedd78',
-  '#73a373',
-  '#73b9bc',
-  '#7289ab',
-  '#91ca8c',
-  '#f49f42'
+  '#dd6b66', '#759aa0', '#e69d87', '#8dc1a9', '#ea7e53',
+  '#eedd78', '#73a373', '#73b9bc', '#7289ab', '#91ca8c', '#f49f42'
 ]
 
 // 检测当前页面是否为暗色模式
@@ -58,7 +52,7 @@ export const adjustChartDarkMode = (option: echarts.EChartsCoreOption) => {
   return option;
 }
 
-// ==================== 时间格式化 ====================
+// ======================== 时间格式化工具 ========================
 
 // 根据粒度格式化时间戳为字符串
 export const formatTimestamp = (timestamp: number, granularity: Granularity) => {
@@ -77,7 +71,7 @@ export const formatTimestamp = (timestamp: number, granularity: Granularity) => 
   }
 };
 
-// ==================== 时间戳工具函数 ====================
+// ======================== 时间戳工具函数 ========================
 
 // 获取月份开始时间戳（当月第一天00:00:00）
 export const getMonthStartTimestamp = (timestamp: number) => {
@@ -104,6 +98,8 @@ export const getHourStartTimestamp = (timestamp: number) => {
   return date.getTime();
 }
 
+// ======================== 数据格式化工具 ========================
+
 // 格式化字节数为人类可读格式
 export const formatBytes = (bytes: number): string => {
   if (bytes === 0) return '0 B';
@@ -114,27 +110,3 @@ export const formatBytes = (bytes: number): string => {
 
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 }
-
-export const xpath = (path: string, root: Node = document): Node[] | string | number | boolean | null => {
-  const result = document.evaluate(path, root, null, XPathResult.ANY_TYPE, null);
-
-  switch (result.resultType) {
-    case XPathResult.STRING_TYPE:
-      return result.stringValue;
-    case XPathResult.NUMBER_TYPE:
-      return result.numberValue;
-    case XPathResult.BOOLEAN_TYPE:
-      return result.booleanValue;
-    case XPathResult.UNORDERED_NODE_ITERATOR_TYPE:
-    case XPathResult.ORDERED_NODE_ITERATOR_TYPE:
-      const nodes: Node[] = [];
-      let node = result.iterateNext();
-      while (node) {
-        nodes.push(node);
-        node = result.iterateNext();
-      }
-      return nodes;
-    default:
-      return null;
-  }
-};

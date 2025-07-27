@@ -1,6 +1,6 @@
 import { storage } from "@wxt-dev/storage";
 
-// ===== 类型定义 =====
+// ======================== 类型定义 ========================
 
 // 帖子状态完整数据结构
 export interface PostStatus {
@@ -18,7 +18,7 @@ export interface UpdatePostStatus {
   timestamp?: number;
 }
 
-// ===== 存储操作函数 =====
+// ======================== 帖子状态存储操作 ========================
 
 // 更新帖子状态信息到本地存储
 export const updatePostStatus = async (username: string, updatePostStatus: UpdatePostStatus): Promise<void> => {
@@ -54,4 +54,19 @@ export const updatePostStatus = async (username: string, updatePostStatus: Updat
 export const getPostStatus = async (username: string, postId: string): Promise<PostStatus | undefined> => {
   const postStatusMap = await storage.getItem<Record<string, PostStatus>>(`local:postStatus:${username}`, { fallback: {} });
   return postStatusMap[postId];
+};
+
+// ======================== 帖子忽略功能 ========================
+
+// 忽略指定帖子
+export const ignorePost = async (username: string, postId: string): Promise<void> => {
+  const ignoreMap = await storage.getItem<Record<string, boolean>>(`local:ignorePost:${username}`, { fallback: {} });
+  ignoreMap[postId] = true;
+  await storage.setItem(`local:ignorePost:${username}`, ignoreMap);
+};
+
+// 检查帖子是否被忽略
+export const isPostIgnored = async (username: string, postId: string): Promise<boolean> => {
+  const ignoreMap = await storage.getItem<Record<string, boolean>>(`local:ignorePost:${username}`, { fallback: {} });
+  return ignoreMap[postId] || false;
 };
