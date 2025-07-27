@@ -83,6 +83,27 @@ export const updatePostsLable = async (username: string) => {
   });
 }
 
+export const initPostIngoreButtons = async (username: string) => {
+  // 获取主页帖子列表中的回复数链接元素
+  const tdList = xpath('(//div[@id="Main"]//div[@class="box"])[1]//div[@class="cell item"]//td[4]', document.body) as HTMLTableDataCellElement[];
+  console.log('帖子标签', tdList);
+  if (tdList.length === 0) {
+    return;
+  }
+
+  // 遍历每个帖子链接，检查是否有新回复
+  tdList.forEach(async (td) => {
+    const div = document.createElement('div');
+    div.innerText = '忽略更新';
+    div.classList.add('v-stats-ignore-button');
+    div.onclick = async () => {
+      console.log('忽略更新', username, td);
+    }
+    td.classList.add('v-stats-ignore-button-container');
+    td.appendChild(div);
+  });
+}
+
 // 处理帖子列表页面UI
 export const processPostUI = async (username: string) => {
   console.log('处理帖子UI');

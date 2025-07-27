@@ -2,7 +2,7 @@ import { updatePostStatus } from "@/service/history/post";
 import { getIsDarkMode } from "@/service/utils";
 import { debounce, once } from "lodash";
 import { processCommentsUI } from "@/ui/comments.ui";
-import { processPostUI } from "@/ui/post.ui";
+import { initPostIngoreButtons, processPostUI } from "@/ui/post.ui";
 
 // ======================== 页面检测相关 ========================
 
@@ -49,6 +49,9 @@ const registerMutationObserver = async (username: string) => {
     window.addEventListener('pageshow', async () => {
       await processUI(username);
     });
+
+    // 初始化帖子忽略按钮
+    await initPostIngoreButtons(username);
   }), 2000, { leading: false, trailing: true }));
   loadedObserver.observe(container, { childList: true, subtree: true });
 
@@ -80,7 +83,35 @@ export const injectStyle = () => {
       padding: 2px 6px;
       font-size: 10px;
       border-radius: 999px;
-    }`;
+    }
+
+    .v-stats-ignore-button-container:hover{
+      position: relative;
+    }
+      
+    .v-stats-ignore-button-container:hover .v-stats-count-label::after {
+      display: none;
+    }
+
+    .v-stats-ignore-button-container:hover .v-stats-ignore-button {
+      display: flex;
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 99999;
+      height: 100%;
+      width: 100%;
+      justify-content: center;
+      align-items: center;
+      background-color: #fa8c16;
+      color: white;
+      cursor: pointer;
+    }
+    
+    .v-stats-ignore-button {
+      display: none;
+    }
+    `;
   document.head.appendChild(style);
 }
 
