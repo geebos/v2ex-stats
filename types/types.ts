@@ -62,6 +62,11 @@ export interface ConfigOptions {
     smoothScrolling: boolean;
     markNewPosts: boolean;
   };
+
+  // 界面设置
+  ui: {
+    showIgnoreUpdateConfig: boolean;
+  };
 }
 
 // 默认配置
@@ -80,5 +85,8 @@ export const defaultConfig: ConfigOptions = {
     autoScrollToFirstNewComment: false,
     smoothScrolling: false,
     markNewPosts: false,
+  },
+  ui: {
+    showIgnoreUpdateConfig: false,
   },
 };

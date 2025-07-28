@@ -1,4 +1,4 @@
-import { isPostBrowsingMarkNewPosts, isPostBrowsingShowNewComments } from "@/service/config";
+import { isPostBrowsingMarkNewPosts, isUIShowIgnoreUpdateConfig, isPostBrowsingShowNewComments } from "@/service/config";
 import { getPostInfo } from "@/service/history/collect";
 import { getPostStatus, ignorePost, isPostIgnored, PostStatus } from "@/service/history/post";
 import xpath from "@/service/xpath";
@@ -138,6 +138,11 @@ export const removeIgnoredPosts = async (username: string) => {
 
 // 初始化帖子忽略按钮
 export const initPostIngoreButtons = async (username: string) => {
+  if (!await isUIShowIgnoreUpdateConfig()) {
+    console.log('initPostIngoreButtons: 帖子忽略按钮未启用，跳过');
+    return;
+  }
+
   // 获取主页帖子列表中的回复数链接元素
   const tdList = xpath.findNodes<Element>(`${V2EX_POST_CELL_XPATH}//td[4]`, document.body);
   console.log('帖子标签', tdList);

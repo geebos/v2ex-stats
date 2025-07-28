@@ -17,6 +17,7 @@ export const getConfig = async (): Promise<ConfigOptions> => {
     coinStats: { ...defaultConfig.coinStats, ...config.coinStats },
     activityTime: { ...defaultConfig.activityTime, ...config.activityTime },
     postBrowsing: { ...defaultConfig.postBrowsing, ...config.postBrowsing },
+    ui: { ...defaultConfig.ui, ...(config.ui || {}) },
   };
 };
 
@@ -36,6 +37,7 @@ export const updateConfig = async (partialConfig: Partial<ConfigOptions>): Promi
     coinStats: { ...currentConfig.coinStats, ...partialConfig.coinStats },
     activityTime: { ...currentConfig.activityTime, ...partialConfig.activityTime },
     postBrowsing: { ...currentConfig.postBrowsing, ...partialConfig.postBrowsing },
+    ui: { ...currentConfig.ui, ...(partialConfig.ui || {}) },
   };
   await setConfig(newConfig);
 };
@@ -88,4 +90,9 @@ export const isPostBrowsingSmoothScrolling = async (): Promise<boolean> => {
 export const isPostBrowsingMarkNewPosts = async (): Promise<boolean> => {
   const config = await getConfig();
   return config.postBrowsing.markNewPosts;
+};
+
+export const isUIShowIgnoreUpdateConfig = async (): Promise<boolean> => {
+  const config = await getConfig();
+  return config.ui.showIgnoreUpdateConfig;
 };

@@ -264,6 +264,25 @@ const OptionsPage: React.FC = () => {
               </div>
             </div>
 
+            {/* 界面设置 */}
+            <div className="space-y-3">
+              <h2 className="text-lg font-semibold text-gray-800 flex items-center">
+                <span className="w-2 h-2 bg-orange-500 rounded-full mr-3"></span>
+                界面设置
+              </h2>
+              <div className="ml-5 space-y-2">
+                <label className="flex items-center space-x-3 p-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={config.ui.showIgnoreUpdateConfig}
+                    onChange={(e) => updateConfig('ui', 'showIgnoreUpdateConfig', e.target.checked)}
+                    className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+                  />
+                  <span className="text-gray-700">显示忽略更新配置</span>
+                </label>
+              </div>
+            </div>
+
             {/* 操作按钮 */}
             <div className="flex justify-between items-center pt-3 border-t border-gray-200">
               <button
