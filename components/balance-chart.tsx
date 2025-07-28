@@ -475,7 +475,7 @@ function ChartApp(props: { username: string }) {
     const latestRecord = await getLatestBalanceRecord(props.username);
     const latestTimestamp = latestRecord?.timestamp ?? 0;
 
-    console.log('开始增量抓取, 最新时间戳:', latestTimestamp);
+    console.log('开始增量抓取, 最新时间戳:', latestTimestamp, props.username);
 
     const processRecords = async (page: number, records: BalanceRecord[]): Promise<boolean> => {
       // 过滤出新的记录（时间戳大于最新记录的时间戳）
@@ -496,7 +496,7 @@ function ChartApp(props: { username: string }) {
 
     // 第一页直接从当前页面获取
     const rawRecords = parseBalanceRecords(document);
-    const records = rawRecords.map(parseBalanceRecord);
+    const records = rawRecords.map(parseBalanceRecord).map(record => ({ ...record, username: props.username }));
     if (!await processRecords(1, records)) {
       console.log('在第一页发现最新记录，停止增量抓取');
       return;
