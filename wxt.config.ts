@@ -1,4 +1,5 @@
 import { defineConfig } from 'wxt';
+import tailwindcss from '@tailwindcss/vite'
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -18,6 +19,8 @@ export default defineConfig({
     disabled: true,
   },
   vite: () => ({
+    plugins: [
+    ],
     esbuild: {
       // 在生产环境只去除 console.log 和 console.debug，保留 warn/error 等
       pure: process.env.DEV_ENV ? [] : ['console.log', 'console.debug'],

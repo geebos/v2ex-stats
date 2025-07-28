@@ -20,6 +20,8 @@
     "act": "act --secret-file .github/local/.secrets --env-file .github/local/.env --artifact-server-path .github/local/artifacts --container-architecture linux/amd64"
   },
   "dependencies": {
+    "@tailwindcss/postcss": "^4.1.11",
+    "@tailwindcss/vite": "^4.1.11",
     "@types/jsdom": "^21.1.7",
     "@types/lodash": "^4.17.20",
     "@types/lodash.debounce": "^4.0.9",
@@ -41,8 +43,11 @@
     "@vitest/coverage-v8": "3.2.4",
     "@vitest/ui": "^3.2.4",
     "@wxt-dev/module-react": "^1.1.3",
+    "autoprefixer": "^10.4.21",
     "jsdom": "^26.1.0",
+    "postcss": "^8.5.6",
     "protobufjs-cli": "^1.1.3",
+    "tailwindcss": "^4.1.11",
     "typescript": "^5.8.3",
     "vitest": "^3.2.4",
     "wxt": "^0.20.6"

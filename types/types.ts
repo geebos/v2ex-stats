@@ -39,3 +39,48 @@ export interface UsedTimeRecord {
   timestamp: number;
   seconds: number;
 }
+
+// 配置选项接口
+export interface ConfigOptions {
+  // 金币统计
+  coinStats: {
+    enabled: boolean;
+  };
+  
+  // 活动时间
+  activityTime: {
+    enableStats: boolean;
+    showInStatusBar: boolean;
+    showDetailInProfile: boolean;
+    openDetailInNewWindow: boolean;
+  };
+  
+  // 帖子浏览
+  postBrowsing: {
+    showNewComments: boolean;
+    highlightNewComments: boolean;
+    autoScrollToFirstNewComment: boolean;
+    smoothScrolling: boolean;
+    markNewPosts: boolean;
+  };
+}
+
+// 默认配置
+export const defaultConfig: ConfigOptions = {
+  coinStats: {
+    enabled: true,
+  },
+  activityTime: {
+    enableStats: false,
+    showInStatusBar: false,
+    showDetailInProfile: false,
+    openDetailInNewWindow: false,
+  },
+  postBrowsing: {
+    showNewComments: false,
+    highlightNewComments: false,
+    autoScrollToFirstNewComment: false,
+    smoothScrolling: false,
+    markNewPosts: false,
+  },
+};
