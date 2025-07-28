@@ -1,3 +1,4 @@
+import { isPostBrowsingAutoScrollToFirstNewComment, isPostBrowsingHighlightNewComments, isPostBrowsingSmoothScrolling } from "@/service/config";
 import { getPostInfo } from "@/service/history/collect";
 import { getPostStatus, PostStatus, updatePostStatus } from "@/service/history/post";
 import xpath from "@/service/xpath";
@@ -32,6 +33,11 @@ const findAllCommentsElement = () => {
 
 // 更新帖子页面中的新评论标签
 export const updateCommentsLabel = async (username: string) => {
+  if (!await isPostBrowsingHighlightNewComments()) {
+    console.log('updateCommentsLabel: 评论高亮未启用，跳过');
+    return;
+  }
+
   await initCurrentPostStatusOnce(username);
 
   if (!globalData.currentPostStatus) {
@@ -86,7 +92,7 @@ export const updateCommentsLabel = async (username: string) => {
 // ======================== 滚动功能 ========================
 
 // 滚动到指定楼层的评论
-const scrollToComments = (floor: number) => {
+const scrollToComments = async (floor: number) => {
   // 查找所有评论编号元素
   const commentElements = findAllCommentsElement();
 
@@ -108,12 +114,21 @@ const scrollToComments = (floor: number) => {
   }
 
   console.log('滚动到评论', floor, targetElement);
+  let behavior: ScrollBehavior = 'auto';
+  if (await isPostBrowsingSmoothScrolling()) {
+    behavior = 'smooth';
+  }
   // 滚动到目标评论，居中显示
-  targetElement.scrollIntoView({ behavior: 'auto', block: 'center' });
+  targetElement.scrollIntoView({ behavior, block: 'center' });
 }
 
 // 滚动到第一条新评论
-const scrollToFirstNewComment = () => {
+const scrollToFirstNewComment = async () => {
+  if (!await isPostBrowsingAutoScrollToFirstNewComment()) {
+    console.log('scrollToFirstNewComment: 自动滚动到第一条新评论未启用，跳过');
+    return;
+  }
+
   if (!globalData.currentPostStatus) {
     console.log('帖子之前没访问过，不滚动');
     return;

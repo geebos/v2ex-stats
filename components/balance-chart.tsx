@@ -26,6 +26,7 @@ import { parseBalanceMaxPage, parseBalanceRecord, parseBalanceRecords, startCraw
 import { alignBanlanceRecordsTimeSeries, appendBalanceRecords, getLatestBalanceRecord, queryAggBalanceRecords } from "@/service/balance/query";
 import { getIsInited, getLatestCrawlerPage, getStorageSize, setIsInited, setLatestCrawlerPage } from "@/service/storage";
 import { adjustChartDarkMode, formatBytes, formatTimestamp, getIsDarkMode } from "@/service/utils";
+import { isCoinStatsEnabled } from "@/service/config";
 
 // 注册 ECharts 组件
 echarts.use([
@@ -539,6 +540,11 @@ function ChartApp(props: { username: string }) {
 
 // 尝试初始化余额图表
 export const tryInitBalanceChart = async (username: string) => {
+  if (!await isCoinStatsEnabled()) {
+    console.log('余额图表未启用，跳过余额图表初始化');
+    return;
+  }
+
   console.log('尝试初始化余额图表', username);
   const anchor = document.querySelector('div.balance_area');
   if (!anchor?.parentElement) {

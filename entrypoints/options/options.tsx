@@ -197,18 +197,6 @@ const OptionsPage: React.FC = () => {
                     在个人页面显示统计详情
                   </span>
                 </label>
-                <label className="flex items-center space-x-3 p-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer ml-6">
-                  <input
-                    type="checkbox"
-                    checked={config.activityTime.openDetailInNewWindow}
-                    onChange={(e) => updateConfig('activityTime', 'openDetailInNewWindow', e.target.checked)}
-                    className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
-                    disabled={!config.activityTime.enableStats || !config.activityTime.showDetailInProfile}
-                  />
-                  <span className={`text-gray-700 ${!config.activityTime.enableStats || !config.activityTime.showDetailInProfile ? 'opacity-50' : ''}`}>
-                    新窗口打开活动详情
-                  </span>
-                </label>
               </div>
             </div>
 

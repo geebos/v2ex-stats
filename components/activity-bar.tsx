@@ -1,4 +1,5 @@
 import { getTodayTotalUsedSeconds } from "@/service/activity/query";
+import { isActivityTimeShowInStatusBar } from "@/service/config";
 import { createElement, useMemo } from "react";
 import { createRoot } from "react-dom/client";
 import styled from 'styled-components';
@@ -89,6 +90,11 @@ const ActivityBar = (props: ActivityBarProps) => {
 
 // 初始化活动条组件
 export const tryInitActivityBar = async (username: string) => {
+  if (!await isActivityTimeShowInStatusBar()) {
+    console.log('活动条未启用，跳过活动条初始化');
+    return;
+  }
+
   // 查找活动条容器元素
   const activityDiv = document.getElementById('member-activity');
   if (!activityDiv) {

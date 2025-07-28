@@ -1,3 +1,4 @@
+import { isPostBrowsingMarkNewPosts, isPostBrowsingShowNewComments } from "@/service/config";
 import { getPostInfo } from "@/service/history/collect";
 import { getPostStatus, ignorePost, isPostIgnored, PostStatus } from "@/service/history/post";
 import xpath from "@/service/xpath";
@@ -72,10 +73,16 @@ const processPostAnchor = async (username: string, anchor: HTMLAnchorElement) =>
   const postStatus = await getPostStatus(username, postId);
   if (!postStatus) {
     // 未访问过的帖子，增加未读标签
-    applyLabel(anchor, 'new', '#fa8c16');
+    if (await isPostBrowsingMarkNewPosts()) {
+      applyLabel(anchor, 'new', '#fa8c16');
+    }
     return;
   }
 
+  if (!await isPostBrowsingShowNewComments()) {
+    console.log('processPostAnchor: 帖子标签未启用，跳过');
+    return;
+  }
   // 比较当前回复数与历史回复数
   if (replyCount > postStatus.replyCount) {
     // 有新回复：显示增量标签

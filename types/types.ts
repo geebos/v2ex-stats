@@ -46,15 +46,14 @@ export interface ConfigOptions {
   coinStats: {
     enabled: boolean;
   };
-  
+
   // 活动时间
   activityTime: {
     enableStats: boolean;
     showInStatusBar: boolean;
     showDetailInProfile: boolean;
-    openDetailInNewWindow: boolean;
   };
-  
+
   // 帖子浏览
   postBrowsing: {
     showNewComments: boolean;
@@ -74,7 +73,6 @@ export const defaultConfig: ConfigOptions = {
     enableStats: false,
     showInStatusBar: false,
     showDetailInProfile: false,
-    openDetailInNewWindow: false,
   },
   postBrowsing: {
     showNewComments: false,
