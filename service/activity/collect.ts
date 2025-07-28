@@ -1,5 +1,5 @@
 import { minimunTimeSpan, throttleSeconds, updateMonthTimeRecord } from "./query";
-import throttle from "lodash.throttle";
+import { throttle } from "lodash";
 
 let isListenerBound = false; // 防重复初始化标志
 

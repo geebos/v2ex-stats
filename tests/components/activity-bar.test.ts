@@ -1,6 +1,31 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { formatTime, tryInitActivityBar } from '@/components/activity-bar';
 
+// Mock @wxt-dev/storage 模块
+vi.mock('@wxt-dev/storage', () => ({
+  storage: {
+    getItem: vi.fn(),
+    setItem: vi.fn(),
+  }
+}));
+
+// Mock service/config 模块
+vi.mock('@/service/config', () => ({
+  isActivityTimeShowInStatusBar: vi.fn().mockResolvedValue(true),
+  getConfig: vi.fn(),
+  setConfig: vi.fn(),
+  updateConfig: vi.fn(),
+  resetConfig: vi.fn(),
+  isCoinStatsEnabled: vi.fn(),
+  isActivityTimeEnabled: vi.fn(),
+  isActivityTimeShowDetailInProfile: vi.fn(),
+  isPostBrowsingShowNewComments: vi.fn(),
+  isPostBrowsingHighlightNewComments: vi.fn(),
+  isPostBrowsingAutoScrollToFirstNewComment: vi.fn(),
+  isPostBrowsingSmoothScrolling: vi.fn(),
+  isPostBrowsingMarkNewPosts: vi.fn(),
+}));
+
 // Mock 依赖模块
 vi.mock('@/service/activity/query', () => ({
   getTodayTotalUsedSeconds: vi.fn(),

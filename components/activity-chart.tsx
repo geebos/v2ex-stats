@@ -8,6 +8,7 @@ import { createRoot } from "react-dom/client";
 // 导入服务工具
 import { adjustChartDarkMode, formatTimestamp, getIsDarkMode } from '@/service/utils';
 import { getAggregatedUsedTimeRecords } from '@/service/activity/query';
+import { isActivityTimeShowDetailInProfile } from '@/service/config';
 
 // 初始化echarts组件
 echarts.use([
@@ -160,6 +161,10 @@ const ActivityChartApp = (props: { username: string }) => {
 // 在页面中初始化活动图表
 export const tryInitActivityChart = async (username: string) => {
   console.log('尝试初始化活动图表', username);
+  if (!await isActivityTimeShowDetailInProfile()) {
+    console.log('活动图表未启用，跳过活动图表初始化');
+    return;
+  }
   
   // 查找容器元素
   const box = document.querySelector('#Main .box');
