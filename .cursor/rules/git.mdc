@@ -4,9 +4,8 @@ globs:
 alwaysApply: false
 ---
 # 流程
-1. 总结变更，有必要的话更新 requirements.md
-2. 总结 commit message
-3. 提交所有文件到暂存区
+1. 总结 commit message
+2. 提交所有文件到暂存区
 
 # 模板
 <type>(<scope>): <subject>

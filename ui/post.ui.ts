@@ -5,6 +5,7 @@ import { applyLabel, clearLabel } from "@/ui/index";
 
 // V2EX 每页评论数量
 const V2EX_COMMENT_PAGE_SIZE = 100;
+const V2EX_POST_CELL_XPATH = '(//div[@id="Main"]//div[@class="box"])[1]//div[@class="cell item"]';
 
 // ======================== 插件环境检测 ========================
 
@@ -21,7 +22,7 @@ const detectPlugins = () => {
 const tryModifyHrefPage = (anchor: HTMLAnchorElement, postStatus: PostStatus) => {
   const { viewedCount } = postStatus;
   const { isVP } = detectPlugins();
-  
+
   // 如果没有查看记录或使用 V2EX Polish 插件则跳过
   if (!viewedCount || isVP) return;
 
@@ -53,13 +54,13 @@ const removePostCell = (postId: string) => {
     console.log('removePostCell: 帖子ID不存在');
     return;
   }
-  
+
   const cells = xpath.findNodes<HTMLDivElement>(`//div[contains(@class, 'cell item') and .//a[contains(@href, '/t/${postId}')]]`, document.body);
   if (cells.length === 0) {
     console.log('removePostCell: 帖子元素不存在', postId);
     return;
   }
-  
+
   cells.forEach(cell => cell.remove());
 }
 
@@ -70,6 +71,8 @@ const processPostAnchor = async (username: string, anchor: HTMLAnchorElement) =>
   // 获取用户历史访问时的帖子状态
   const postStatus = await getPostStatus(username, postId);
   if (!postStatus) {
+    // 未访问过的帖子，增加未读标签
+    applyLabel(anchor, 'new', '#fa8c16');
     return;
   }
 
@@ -92,9 +95,9 @@ const processPostAnchor = async (username: string, anchor: HTMLAnchorElement) =>
 // 更新主页帖子列表中的新回复数标签
 export const updatePostsLable = async (username: string) => {
   // 获取主页帖子列表中的回复数链接元素
-  const aList = xpath.findNodes<HTMLAnchorElement>('(//div[@id="Main"]//div[@class="box"])[1]//div[@class="cell item"]//td[4]/a', document.body);
+  const aList = xpath.findNodes<HTMLAnchorElement>(`${V2EX_POST_CELL_XPATH}//td[4]/a`, document.body);
   console.log('updatePostsLable: 帖子标签', aList);
-  
+
   if (aList.length === 0) {
     console.log('updatePostsLable: 帖子标签不存在');
     return;
@@ -109,12 +112,29 @@ export const updatePostsLable = async (username: string) => {
 
 // ======================== 忽略功能 ========================
 
+export const removeIgnoredPosts = async (username: string) => {
+  const postItems = xpath.findNodes<HTMLDivElement>(`${V2EX_POST_CELL_XPATH}`, document.body);
+  postItems.forEach(async (postItem) => {
+    const postURL = xpath.findString('.//a[contains(@href, "/t/")]/@href', postItem);
+    if (!postURL) {
+      console.log('removeIgnoredPosts: 帖子链接不存在', postItem);
+      return;
+    }
+
+    const { postId } = getPostInfo(postURL, document);
+    if (await isPostIgnored(username, postId)) {
+      console.log('removeIgnoredPosts: 帖子已被忽略', postId, postItem);
+      removePostCell(postId);
+    }
+  })
+}
+
 // 初始化帖子忽略按钮
 export const initPostIngoreButtons = async (username: string) => {
   // 获取主页帖子列表中的回复数链接元素
-  const tdList = xpath.findNodes<Element>('(//div[@id="Main"]//div[@class="box"])[1]//div[@class="cell item"]//td[4]', document.body);
+  const tdList = xpath.findNodes<Element>(`${V2EX_POST_CELL_XPATH}//td[4]`, document.body);
   console.log('帖子标签', tdList);
-  
+
   if (tdList.length === 0) {
     return;
   }
@@ -132,15 +152,8 @@ export const initPostIngoreButtons = async (username: string) => {
       console.log('initPostIngoreButtons: 帖子链接不存在', td);
       return;
     }
-    
+
     const { postId } = getPostInfo(href, document);
-    
-    // 检查帖子是否已被忽略
-    if (await isPostIgnored(username, postId.toString())) {
-      console.log('帖子已被忽略', postId, td);
-      removePostCell(postId);
-      return;
-    }
 
     // 绑定忽略点击事件
     div.onclick = async () => {
@@ -148,7 +161,7 @@ export const initPostIngoreButtons = async (username: string) => {
       await ignorePost(username, postId.toString());
       removePostCell(postId);
     }
-    
+
     td.classList.add('v-stats-ignore-button-container');
     td.appendChild(div);
   });
@@ -159,5 +172,6 @@ export const initPostIngoreButtons = async (username: string) => {
 // 处理帖子列表页面UI
 export const processPostUI = async (username: string) => {
   console.log('处理帖子UI');
+  await removeIgnoredPosts(username);
   await updatePostsLable(username);
 }

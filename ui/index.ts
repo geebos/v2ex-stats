@@ -73,12 +73,12 @@ export const injectStyle = () => {
   // 创建并插入样式元素
   const style = document.createElement('style');
   style.textContent = `
-    .v-stats-count-label::after {
-      content: attr(data-new); /* 从data-new属性读取显示内容 */
+    .v-stats-label::after {
+      content: attr(data-content); /* 从data-new属性读取显示内容 */
       position: absolute;
       top: -8px;
       right: -15px;
-      background-color: ${color}; /* 根据主题设置背景色 */
+      background-color: var(--v-stats-label-bg, ${color}); /* 根据主题设置背景色 */
       color: white;
       padding: 2px 6px;
       font-size: 10px;
@@ -89,7 +89,7 @@ export const injectStyle = () => {
       position: relative;
     }
       
-    .v-stats-ignore-button-container:hover .v-stats-count-label::after {
+    .v-stats-ignore-button-container:hover .v-stats-label::after {
       display: none;
     }
 
@@ -100,7 +100,7 @@ export const injectStyle = () => {
       left: 0;
       z-index: 99999;
       height: 100%;
-      width: 100%;
+      width: calc( 100% + 20px );
       justify-content: center;
       align-items: center;
       background-color: #fa8c16;
@@ -116,16 +116,19 @@ export const injectStyle = () => {
 }
 
 // 为链接元素应用新回复标签样式
-export const applyLabel = (element: HTMLElement, content: string) => {
+export const applyLabel = (element: HTMLElement, content: string, bg?: string) => {
   element.style.position = 'relative';
-  element.classList.add('v-stats-count-label');
-  element.setAttribute('data-new', content);
+  element.classList.add('v-stats-label');
+  element.setAttribute('data-content', content);
+  if (bg) {
+    element.style.setProperty('--v-stats-label-bg', bg);
+  }
 }
 
 // 清除元素的标签样式
 export const clearLabel = (element: HTMLElement) => {
-  element.classList.remove('v-stats-count-label');
-  element.removeAttribute('data-new');
+  element.classList.remove('v-stats-label');
+  element.removeAttribute('data-content');
 }
 
 // ======================== 主入口函数 ========================

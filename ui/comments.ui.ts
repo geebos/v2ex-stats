@@ -25,7 +25,7 @@ async function initCurrentPostStatus(username: string) {
 
 // 获取所有评论编号元素
 const findAllCommentsElement = () => {
-  return xpath.findNodes<HTMLSpanElement>(`//div[@id="Main"]//div[@class="box"][2]//div[starts-with(@id, "r_")]//span[@class="no" or @class="no v-stats-count-label"]`, document);
+  return xpath.findNodes<HTMLSpanElement>(`//div[@id="Main"]//div[@class="box"][2]//div[starts-with(@id, "r_")]//span[@class="no" or @class="no v-stats-label"]`, document);
 };
 
 // ======================== 评论标签更新 ========================
@@ -103,7 +103,7 @@ const scrollToComments = (floor: number) => {
   }) as HTMLElement;
 
   if (!targetElement) {
-    console.log('没有找到指定楼层的评论', floor);
+    console.log('没有找到指定楼层的评论', floor, commentElements);
     return;
   }
 
