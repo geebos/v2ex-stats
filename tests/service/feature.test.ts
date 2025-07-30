@@ -162,16 +162,29 @@ describe('FeatureManager', () => {
         throw new Error('Handler error');
       });
       
+      // 模拟 console.error
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      
       featureManager.registerMetricHandler('good', goodHandler);
       featureManager.registerMetricHandler('bad', badHandler);
       
-      // 即使有处理器抛出异常，也应该继续执行其他处理器
+      // 即使有处理器抛出异常，emitMetric 也不应该抛出异常
       await expect(
         featureManager.emitMetric('test', true)
-      ).rejects.toThrow('Handler error');
+      ).resolves.not.toThrow();
       
+      // 验证所有处理器都被调用了
       expect(goodHandler).toHaveBeenCalledWith('test', true);
       expect(badHandler).toHaveBeenCalledWith('test', true);
+      
+      // 验证错误被记录到控制台
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        'MetricHandler "bad" failed for metric "test":',
+        expect.any(Error)
+      );
+      
+      // 清理模拟
+      consoleErrorSpy.mockRestore();
     });
   });
 
@@ -500,6 +513,41 @@ describe('FeatureManager', () => {
       
       expect(syncEntrypoint).toHaveBeenCalledTimes(1);
       expect(handler).toHaveBeenCalledWith('mixedSync', true);
+    });
+
+    it('应该正确处理异步 MetricHandler 的异常', async () => {
+      const goodAsyncHandler = vi.fn(async (name: string, enabled: boolean) => {
+        await new Promise(resolve => setTimeout(resolve, 5));
+      });
+      
+      const badAsyncHandler = vi.fn(async (name: string, enabled: boolean) => {
+        await new Promise(resolve => setTimeout(resolve, 5));
+        throw new Error('Async handler error');
+      });
+      
+      // 模拟 console.error
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      
+      featureManager.registerMetricHandler('goodAsync', goodAsyncHandler);
+      featureManager.registerMetricHandler('badAsync', badAsyncHandler);
+      
+      // 即使异步处理器抛出异常，emitMetric 也不应该抛出异常
+      await expect(
+        featureManager.emitMetric('asyncTest', true)
+      ).resolves.not.toThrow();
+      
+      // 验证所有处理器都被调用了
+      expect(goodAsyncHandler).toHaveBeenCalledWith('asyncTest', true);
+      expect(badAsyncHandler).toHaveBeenCalledWith('asyncTest', true);
+      
+      // 验证错误被记录到控制台
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        'MetricHandler "badAsync" failed for metric "asyncTest":',
+        expect.any(Error)
+      );
+      
+      // 清理模拟
+      consoleErrorSpy.mockRestore();
     });
   });
 

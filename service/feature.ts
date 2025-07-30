@@ -11,8 +11,6 @@ export type Entrypoint = () => void | Promise<void>;
 // 带选项参数的入口点函数类型
 export type EntrypointWithOptions = <T>(options: T) => void | Promise<void>;
 
-export type Feature = () => void | Promise<void>;
-
 // 功能管理器类
 export class FeatureManager<T> {
   private config: T;
@@ -32,15 +30,19 @@ export class FeatureManager<T> {
   
   // 触发打点事件
   public async emitMetric(name: string, enabled: boolean) {
-    const promises = Object.values(this.metricHandlers).map(handler => 
-      Promise.resolve(handler(name, enabled))
-    );
+    const promises = Object.entries(this.metricHandlers).map(async ([handlerName, handler]) => {
+      try {
+        await Promise.resolve(handler(name, enabled));
+      } catch (error) {
+        console.error(`MetricHandler "${handlerName}" failed for metric "${name}":`, error);
+      }
+    });
     await Promise.all(promises);
   }
 
   // 定义功能的重载方法签名
-  public feature(name: string, enable: EnableFn, entrypoint: Entrypoint): Feature;
-  public feature(name: string, enable: EnableFn, options: OptionsFn, entrypoint: EntrypointWithOptions): Feature;
+  public feature(name: string, enable: EnableFn, entrypoint: Entrypoint): () => Promise<void>;
+  public feature(name: string, enable: EnableFn, options: OptionsFn, entrypoint: EntrypointWithOptions): () => Promise<void>;
 
   // 功能定义的实现方法
   public feature(name: string, enable: EnableFn, optionsFnOrEntrypoint: OptionsFn | Entrypoint, entrypointWithOptions?: EntrypointWithOptions) {
