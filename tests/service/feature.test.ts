@@ -46,13 +46,13 @@ describe('FeatureManager', () => {
       expect(manager).toBeInstanceOf(FeatureManager);
     });
 
-    it('应该初始化空的度量处理器集合', () => {
+    it('应该初始化空的度量处理器集合', async () => {
       const manager = new FeatureManager({});
       
       // 通过注册处理器来验证初始状态
       const handler = vi.fn();
       manager.registerMetricHandler('test', handler);
-      manager.emitMetric('test', true);
+      await manager.emitMetric('test', true);
       
       expect(handler).toHaveBeenCalledWith('test', true);
     });
@@ -60,7 +60,7 @@ describe('FeatureManager', () => {
 
   // ==================== registerMetricHandler 测试 ====================
   describe('registerMetricHandler', () => {
-    it('应该成功注册度量处理器', () => {
+    it('应该成功注册度量处理器', async () => {
       const handler = vi.fn();
       
       expect(() => {
@@ -68,18 +68,18 @@ describe('FeatureManager', () => {
       }).not.toThrow();
       
       // 验证处理器已注册
-      featureManager.emitMetric('test', true);
+      await featureManager.emitMetric('test', true);
       expect(handler).toHaveBeenCalledWith('test', true);
     });
 
-    it('应该能注册多个不同名称的处理器', () => {
+    it('应该能注册多个不同名称的处理器', async () => {
       const handler1 = vi.fn();
       const handler2 = vi.fn();
       
       featureManager.registerMetricHandler('handler1', handler1);
       featureManager.registerMetricHandler('handler2', handler2);
       
-      featureManager.emitMetric('test', true);
+      await featureManager.emitMetric('test', true);
       
       expect(handler1).toHaveBeenCalledWith('test', true);
       expect(handler2).toHaveBeenCalledWith('test', true);
@@ -108,23 +108,23 @@ describe('FeatureManager', () => {
 
   // ==================== emitMetric 测试 ====================
   describe('emitMetric', () => {
-    it('应该在没有注册处理器时不报错', () => {
-      expect(() => {
-        featureManager.emitMetric('test', true);
-      }).not.toThrow();
+    it('应该在没有注册处理器时不报错', async () => {
+      await expect(
+        featureManager.emitMetric('test', true)
+      ).resolves.not.toThrow();
     });
 
-    it('应该调用单个注册的处理器', () => {
+    it('应该调用单个注册的处理器', async () => {
       const handler = vi.fn();
       featureManager.registerMetricHandler('test', handler);
       
-      featureManager.emitMetric('feature1', true);
+      await featureManager.emitMetric('feature1', true);
       
       expect(handler).toHaveBeenCalledTimes(1);
       expect(handler).toHaveBeenCalledWith('feature1', true);
     });
 
-    it('应该调用所有注册的处理器', () => {
+    it('应该调用所有注册的处理器', async () => {
       const handler1 = vi.fn();
       const handler2 = vi.fn();
       const handler3 = vi.fn();
@@ -133,22 +133,22 @@ describe('FeatureManager', () => {
       featureManager.registerMetricHandler('h2', handler2);
       featureManager.registerMetricHandler('h3', handler3);
       
-      featureManager.emitMetric('feature2', false);
+      await featureManager.emitMetric('feature2', false);
       
       expect(handler1).toHaveBeenCalledWith('feature2', false);
       expect(handler2).toHaveBeenCalledWith('feature2', false);
       expect(handler3).toHaveBeenCalledWith('feature2', false);
     });
 
-    it('应该正确传递参数给所有处理器', () => {
+    it('应该正确传递参数给所有处理器', async () => {
       const handler1 = vi.fn();
       const handler2 = vi.fn();
       
       featureManager.registerMetricHandler('h1', handler1);
       featureManager.registerMetricHandler('h2', handler2);
       
-      featureManager.emitMetric('testFeature', true);
-      featureManager.emitMetric('anotherFeature', false);
+      await featureManager.emitMetric('testFeature', true);
+      await featureManager.emitMetric('anotherFeature', false);
       
       expect(handler1).toHaveBeenNthCalledWith(1, 'testFeature', true);
       expect(handler1).toHaveBeenNthCalledWith(2, 'anotherFeature', false);
@@ -156,7 +156,7 @@ describe('FeatureManager', () => {
       expect(handler2).toHaveBeenNthCalledWith(2, 'anotherFeature', false);
     });
 
-    it('应该处理处理器执行时的异常', () => {
+    it('应该处理处理器执行时的异常', async () => {
       const goodHandler = vi.fn();
       const badHandler = vi.fn(() => {
         throw new Error('Handler error');
@@ -166,9 +166,9 @@ describe('FeatureManager', () => {
       featureManager.registerMetricHandler('bad', badHandler);
       
       // 即使有处理器抛出异常，也应该继续执行其他处理器
-      expect(() => {
-        featureManager.emitMetric('test', true);
-      }).toThrow('Handler error');
+      await expect(
+        featureManager.emitMetric('test', true)
+      ).rejects.toThrow('Handler error');
       
       expect(goodHandler).toHaveBeenCalledWith('test', true);
       expect(badHandler).toHaveBeenCalledWith('test', true);
@@ -177,7 +177,7 @@ describe('FeatureManager', () => {
 
   // ==================== feature 方法测试 ====================
   describe('feature - 简单形式 (name, enable, entrypoint)', () => {
-    it('应该在功能启用时执行入口点并发送启用事件', () => {
+    it('应该在功能启用时执行入口点并发送启用事件', async () => {
       const entrypoint = vi.fn();
       const handler = vi.fn();
       featureManager.registerMetricHandler('test', handler);
@@ -185,13 +185,13 @@ describe('FeatureManager', () => {
       const enableFn = ((config: TestConfig) => config.feature1) as EnableFn;
       const featureRunner = featureManager.feature('testFeature', enableFn, entrypoint);
       
-      featureRunner();
+      await featureRunner();
       
       expect(entrypoint).toHaveBeenCalledTimes(1);
       expect(handler).toHaveBeenCalledWith('testFeature', true);
     });
 
-    it('应该在功能禁用时不执行入口点但发送禁用事件', () => {
+    it('应该在功能禁用时不执行入口点但发送禁用事件', async () => {
       const entrypoint = vi.fn();
       const handler = vi.fn();
       featureManager.registerMetricHandler('test', handler);
@@ -199,38 +199,38 @@ describe('FeatureManager', () => {
       const enableFn = ((config: TestConfig) => config.feature2) as EnableFn; // feature2 为 false
       const featureRunner = featureManager.feature('testFeature', enableFn, entrypoint);
       
-      featureRunner();
+      await featureRunner();
       
       expect(entrypoint).not.toHaveBeenCalled();
       expect(handler).toHaveBeenCalledWith('testFeature', false);
     });
 
-    it('应该将配置传递给启用检查函数', () => {
+    it('应该将配置传递给启用检查函数', async () => {
       const entrypoint = vi.fn();
       const enableFn = vi.fn((config: TestConfig) => config.enabled) as EnableFn;
       
       const featureRunner = featureManager.feature('testFeature', enableFn, entrypoint);
-      featureRunner();
+      await featureRunner();
       
       expect(enableFn).toHaveBeenCalledWith(testConfig);
     });
 
-    it('应该返回可重复执行的函数', () => {
+    it('应该返回可重复执行的函数', async () => {
       const entrypoint = vi.fn();
       const enableFn = ((config: TestConfig) => config.enabled) as EnableFn;
       
       const featureRunner = featureManager.feature('testFeature', enableFn, entrypoint);
       
-      featureRunner();
-      featureRunner();
-      featureRunner();
+      await featureRunner();
+      await featureRunner();
+      await featureRunner();
       
       expect(entrypoint).toHaveBeenCalledTimes(3);
     });
   });
 
   describe('feature - 带选项形式 (name, enable, options, entrypoint)', () => {
-    it('应该在功能启用时执行带选项的入口点', () => {
+    it('应该在功能启用时执行带选项的入口点', async () => {
       const entrypointWithOptions = vi.fn();
       const handler = vi.fn();
       featureManager.registerMetricHandler('test', handler);
@@ -239,14 +239,14 @@ describe('FeatureManager', () => {
       const optionsFn = ((config: TestConfig) => config.options) as OptionsFn;
       
       const featureRunner = featureManager.feature('testFeature', enableFn, optionsFn, entrypointWithOptions);
-      featureRunner();
+      await featureRunner();
       
       expect(entrypointWithOptions).toHaveBeenCalledTimes(1);
       expect(entrypointWithOptions).toHaveBeenCalledWith(testConfig.options);
       expect(handler).toHaveBeenCalledWith('testFeature', true);
     });
 
-    it('应该在功能禁用时不执行入口点', () => {
+    it('应该在功能禁用时不执行入口点', async () => {
       const entrypointWithOptions = vi.fn();
       const handler = vi.fn();
       featureManager.registerMetricHandler('test', handler);
@@ -255,24 +255,24 @@ describe('FeatureManager', () => {
       const optionsFn = ((config: TestConfig) => config.options) as OptionsFn;
       
       const featureRunner = featureManager.feature('testFeature', enableFn, optionsFn, entrypointWithOptions);
-      featureRunner();
+      await featureRunner();
       
       expect(entrypointWithOptions).not.toHaveBeenCalled();
       expect(handler).toHaveBeenCalledWith('testFeature', false);
     });
 
-    it('应该将配置传递给选项处理函数', () => {
+    it('应该将配置传递给选项处理函数', async () => {
       const entrypointWithOptions = vi.fn();
       const enableFn = ((config: TestConfig) => config.enabled) as EnableFn;
       const optionsFn = vi.fn((config: TestConfig) => config.options) as OptionsFn;
       
       const featureRunner = featureManager.feature('testFeature', enableFn, optionsFn, entrypointWithOptions);
-      featureRunner();
+      await featureRunner();
       
       expect(optionsFn).toHaveBeenCalledWith(testConfig);
     });
 
-    it('应该将选项处理函数的结果传递给入口点', () => {
+    it('应该将选项处理函数的结果传递给入口点', async () => {
       const entrypointWithOptions = vi.fn();
       const processedOptions = { theme: 'light', version: 2 };
       
@@ -280,7 +280,7 @@ describe('FeatureManager', () => {
       const optionsFn = (() => processedOptions) as OptionsFn;
       
       const featureRunner = featureManager.feature('testFeature', enableFn, optionsFn, entrypointWithOptions);
-      featureRunner();
+      await featureRunner();
       
       expect(entrypointWithOptions).toHaveBeenCalledWith(processedOptions);
     });
@@ -288,7 +288,7 @@ describe('FeatureManager', () => {
 
   // ==================== 综合测试 ====================
   describe('feature - 综合场景测试', () => {
-    it('应该支持动态启用/禁用功能', () => {
+    it('应该支持动态启用/禁用功能', async () => {
       const entrypoint = vi.fn();
       const handler = vi.fn();
       featureManager.registerMetricHandler('test', handler);
@@ -299,24 +299,24 @@ describe('FeatureManager', () => {
       const featureRunner = featureManager.feature('dynamicFeature', enableFn, entrypoint);
       
       // 首次执行 - 启用
-      featureRunner();
+      await featureRunner();
       expect(entrypoint).toHaveBeenCalledTimes(1);
       expect(handler).toHaveBeenLastCalledWith('dynamicFeature', true);
       
       // 禁用功能
       dynamicEnabled = false;
-      featureRunner();
+      await featureRunner();
       expect(entrypoint).toHaveBeenCalledTimes(1); // 不应再次调用
       expect(handler).toHaveBeenLastCalledWith('dynamicFeature', false);
       
       // 重新启用功能
       dynamicEnabled = true;
-      featureRunner();
+      await featureRunner();
       expect(entrypoint).toHaveBeenCalledTimes(2);
       expect(handler).toHaveBeenLastCalledWith('dynamicFeature', true);
     });
 
-    it('应该处理复杂的配置对象', () => {
+    it('应该处理复杂的配置对象', async () => {
       interface ComplexConfig {
         features: {
           auth: { enabled: boolean; provider: string };
@@ -340,12 +340,12 @@ describe('FeatureManager', () => {
         config.features.auth.enabled && config.environment === 'prod') as EnableFn;
       
       const featureRunner = complexManager.feature('authFeature', enableFn, entrypoint);
-      featureRunner();
+      await featureRunner();
       
       expect(entrypoint).toHaveBeenCalledTimes(1);
     });
 
-    it('应该处理入口点执行时的异常', () => {
+    it('应该处理入口点执行时的异常', async () => {
       const handler = vi.fn();
       featureManager.registerMetricHandler('test', handler);
       
@@ -356,16 +356,16 @@ describe('FeatureManager', () => {
       const enableFn = (() => true) as EnableFn;
       const featureRunner = featureManager.feature('errorFeature', enableFn, errorEntrypoint);
       
-      expect(() => {
-        featureRunner();
-      }).toThrow('Entrypoint error');
+      await expect(
+        featureRunner()
+      ).rejects.toThrow('Entrypoint error');
       
       // 验证入口点被调用了，但由于异常，不会发送启用事件
       expect(errorEntrypoint).toHaveBeenCalledTimes(1);
       expect(handler).not.toHaveBeenCalled();
     });
 
-    it('应该允许多个功能使用相同的处理器', () => {
+    it('应该允许多个功能使用相同的处理器', async () => {
       const handler = vi.fn();
       featureManager.registerMetricHandler('global', handler);
       
@@ -377,62 +377,165 @@ describe('FeatureManager', () => {
       const feature1Runner = featureManager.feature('feature1', enableFn, entrypoint1);
       const feature2Runner = featureManager.feature('feature2', enableFn, entrypoint2);
       
-      feature1Runner();
-      feature2Runner();
+      await feature1Runner();
+      await feature2Runner();
       
       expect(handler).toHaveBeenCalledWith('feature1', true);
       expect(handler).toHaveBeenCalledWith('feature2', true);
       expect(handler).toHaveBeenCalledTimes(2);
     });
 
-    it('应该处理空配置对象', () => {
+    it('应该处理空配置对象', async () => {
       const emptyManager = new FeatureManager({});
       const entrypoint = vi.fn();
       
       const enableFn = (() => true) as EnableFn;
       const featureRunner = emptyManager.feature('emptyConfigFeature', enableFn, entrypoint);
       
-      expect(() => {
-        featureRunner();
-      }).not.toThrow();
+      await expect(
+        featureRunner()
+      ).resolves.not.toThrow();
       
       expect(entrypoint).toHaveBeenCalledTimes(1);
     });
   });
 
+  // ==================== 异步功能测试 ====================
+  describe('异步功能支持', () => {
+    it('应该支持异步的 MetricHandler', async () => {
+      let asyncHandlerCalled = false;
+      const asyncHandler = async (name: string, enabled: boolean) => {
+        await new Promise(resolve => setTimeout(resolve, 10));
+        asyncHandlerCalled = true;
+      };
+      
+      featureManager.registerMetricHandler('async', asyncHandler);
+      await featureManager.emitMetric('test', true);
+      
+      expect(asyncHandlerCalled).toBe(true);
+    });
+
+    it('应该支持异步的 EnableFn', async () => {
+      let asyncEnableCalled = false;
+      const entrypoint = vi.fn();
+      
+      const asyncEnableFn = (async (config: TestConfig) => {
+        await new Promise(resolve => setTimeout(resolve, 10));
+        asyncEnableCalled = true;
+        return config.feature1;
+      }) as EnableFn;
+      
+      const featureRunner = featureManager.feature('asyncEnable', asyncEnableFn, entrypoint);
+      await featureRunner();
+      
+      expect(asyncEnableCalled).toBe(true);
+      expect(entrypoint).toHaveBeenCalledTimes(1);
+    });
+
+    it('应该支持异步的 OptionsFn', async () => {
+      let asyncOptionsCalled = false;
+      const entrypointWithOptions = vi.fn();
+      
+      const enableFn = () => true;
+      const asyncOptionsFn = (async (config: TestConfig) => {
+        await new Promise(resolve => setTimeout(resolve, 10));
+        asyncOptionsCalled = true;
+        return { ...config.options, theme: 'light' };
+      }) as OptionsFn;
+      
+      const featureRunner = featureManager.feature('asyncOptions', enableFn, asyncOptionsFn, entrypointWithOptions);
+      await featureRunner();
+      
+      expect(asyncOptionsCalled).toBe(true);
+      expect(entrypointWithOptions).toHaveBeenCalledWith({ theme: 'light', version: 1 });
+    });
+
+    it('应该支持异步的 Entrypoint', async () => {
+      let asyncEntrypointCalled = false;
+      
+      const asyncEntrypoint = async () => {
+        await new Promise(resolve => setTimeout(resolve, 10));
+        asyncEntrypointCalled = true;
+      };
+      
+      const enableFn = () => true;
+      const featureRunner = featureManager.feature('asyncEntrypoint', enableFn, asyncEntrypoint);
+      await featureRunner();
+      
+      expect(asyncEntrypointCalled).toBe(true);
+    });
+
+    it('应该支持异步的 EntrypointWithOptions', async () => {
+      let asyncEntrypointWithOptionsCalled = false;
+      let receivedOptions = null;
+      
+      const asyncEntrypointWithOptions = async (options: any) => {
+        await new Promise(resolve => setTimeout(resolve, 10));
+        asyncEntrypointWithOptionsCalled = true;
+        receivedOptions = options;
+      };
+      
+      const enableFn = () => true;
+      const optionsFn = ((config: TestConfig) => config.options) as OptionsFn;
+      
+      const featureRunner = featureManager.feature('asyncEntrypointWithOptions', enableFn, optionsFn, asyncEntrypointWithOptions);
+      await featureRunner();
+      
+      expect(asyncEntrypointWithOptionsCalled).toBe(true);
+      expect(receivedOptions).toEqual(testConfig.options);
+    });
+
+    it('应该正确处理混合的同步和异步函数', async () => {
+      const syncEntrypoint = vi.fn();
+      const handler = vi.fn();
+      featureManager.registerMetricHandler('mixed', handler);
+      
+      const asyncEnableFn = (async (config: TestConfig) => {
+        await new Promise(resolve => setTimeout(resolve, 5));
+        return config.feature1;
+      }) as EnableFn;
+      
+      const featureRunner = featureManager.feature('mixedSync', asyncEnableFn, syncEntrypoint);
+      await featureRunner();
+      
+      expect(syncEntrypoint).toHaveBeenCalledTimes(1);
+      expect(handler).toHaveBeenCalledWith('mixedSync', true);
+    });
+  });
+
   // ==================== 边界情况测试 ====================
   describe('边界情况和错误处理', () => {
-    it('应该处理null/undefined配置', () => {
+    it('应该处理null/undefined配置', async () => {
       const nullManager = new FeatureManager(null);
       const entrypoint = vi.fn();
       
       const enableFn = ((config) => config !== null) as EnableFn;
       const featureRunner = nullManager.feature('nullTest', enableFn, entrypoint);
       
-      featureRunner();
+      await featureRunner();
       
       expect(entrypoint).not.toHaveBeenCalled();
     });
 
-    it('应该处理启用函数返回非布尔值', () => {
+    it('应该处理启用函数返回非布尔值', async () => {
       const entrypoint = vi.fn();
       
       const enableFn = vi.fn(() => 'truthy' as any) as EnableFn; // 返回非布尔值
       const featureRunner = featureManager.feature('truthyTest', enableFn, entrypoint);
       
-      featureRunner();
+      await featureRunner();
       
       expect(entrypoint).toHaveBeenCalledTimes(1); // JavaScript的truthy值应该被当作true
     });
 
-    it('应该处理选项函数返回undefined', () => {
+    it('应该处理选项函数返回undefined', async () => {
       const entrypointWithOptions = vi.fn();
       
       const enableFn = (() => true) as EnableFn;
       const optionsFn = (() => undefined as any) as OptionsFn;
       
       const featureRunner = featureManager.feature('undefinedOptions', enableFn, optionsFn, entrypointWithOptions);
-      featureRunner();
+      await featureRunner();
       
       expect(entrypointWithOptions).toHaveBeenCalledWith(undefined);
     });

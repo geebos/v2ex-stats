@@ -1,15 +1,17 @@
 // 度量处理器函数类型
-export type MetricHandler = (name: string, enabled: boolean) => void;
+export type MetricHandler = (name: string, enabled: boolean) => void | Promise<void>;
 
 // 功能启用判断函数类型
-export type EnableFn = <T>(config: T) => boolean;
+export type EnableFn = <T>(config: T) => boolean | Promise<boolean>;
 // 选项处理函数类型
-export type OptionsFn = <T>(config: T) => T;
+export type OptionsFn = <T>(config: T) => T | Promise<T>;
 
 // 无参数入口点函数类型
-export type Entrypoint = () => void;
+export type Entrypoint = () => void | Promise<void>;
 // 带选项参数的入口点函数类型
-export type EntrypointWithOptions = <T>(options: T) => void;
+export type EntrypointWithOptions = <T>(options: T) => void | Promise<void>;
+
+export type Feature = () => void | Promise<void>;
 
 // 功能管理器类
 export class FeatureManager<T> {
@@ -29,33 +31,36 @@ export class FeatureManager<T> {
   }
   
   // 触发打点事件
-  public emitMetric(name: string, enabled: boolean) {
-    for (const [_, metricHandler] of Object.entries(this.metricHandlers)) {
-      metricHandler(name, enabled);
-    }
+  public async emitMetric(name: string, enabled: boolean) {
+    const promises = Object.values(this.metricHandlers).map(handler => 
+      Promise.resolve(handler(name, enabled))
+    );
+    await Promise.all(promises);
   }
 
   // 定义功能的重载方法签名
-  public feature(name: string, enable: EnableFn, entrypoint: Entrypoint): () => void;
-  public feature(name: string, enable: EnableFn, options: OptionsFn, entrypoint: EntrypointWithOptions): () => void;
+  public feature(name: string, enable: EnableFn, entrypoint: Entrypoint): Feature;
+  public feature(name: string, enable: EnableFn, options: OptionsFn, entrypoint: EntrypointWithOptions): Feature;
 
   // 功能定义的实现方法
   public feature(name: string, enable: EnableFn, optionsFnOrEntrypoint: OptionsFn | Entrypoint, entrypointWithOptions?: EntrypointWithOptions) {
-    return () => {
+    return async () => {
       // 检查功能是否启用
-      if (!enable(this.config)) {
-        this.emitMetric(name, false);
+      const isEnabled = await Promise.resolve(enable(this.config));
+      if (!isEnabled) {
+        await this.emitMetric(name, false);
         return;
       }
 
       // 根据参数类型执行不同的入口点
       if (entrypointWithOptions) {
-        entrypointWithOptions(optionsFnOrEntrypoint(this.config));
+        const options = await Promise.resolve((optionsFnOrEntrypoint as OptionsFn)(this.config));
+        await Promise.resolve(entrypointWithOptions(options));
       } else {
-        (optionsFnOrEntrypoint as Entrypoint)();
+        await Promise.resolve((optionsFnOrEntrypoint as Entrypoint)());
       }
 
-      this.emitMetric(name, true);
+      await this.emitMetric(name, true);
     }
   }
 } 
