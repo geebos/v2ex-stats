@@ -1,5 +1,4 @@
 import { defineConfig } from 'wxt';
-import tailwindcss from '@tailwindcss/vite'
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -8,7 +7,8 @@ export default defineConfig({
   modules: ['@wxt-dev/module-react'],
   manifest: {
     permissions: ['storage'],
-    action: {}
+    action: {},
+    key: 'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAutX6DFhQWKNePMfj3ScxxYYp6QLSDrKgI8KbE5l3BuMwa/+w8mX46bubxRh6EQcOxZ/55oVd5NJmMKgpWzNLhF6dkSowllG2frYSjnFxpRrChV3wdPBZ+nEX099iG/XNqDWgqhvDDxTbFOSRzklSqkQFJDYDicqr6zxvnZOZ2kbzsBx3e3QplACmHQiT7SwlXYKsKV9USr+b7flMR0JJUxlhHkPjoUs2CUy756nl6QwMS191ZKgN2tsZXNf8Uik3XGXlYDL+YEqOB2qila2KOZoQlVNP29ErtHCmglohvLGMW6K65R9BubPIDRiAv57AZbJWEWt79QDAtXxpuTSjIQIDAQAB'
   },
   outDir: 'output',
   zip: {
