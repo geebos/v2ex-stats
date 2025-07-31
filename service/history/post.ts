@@ -65,6 +65,12 @@ export const ignorePost = async (username: string, postId: string): Promise<void
   await storage.setItem(`local:ignorePost:${username}`, ignoreMap);
 };
 
+export const recoverPost = async (username: string, postId: string): Promise<void> => {
+  const ignoreMap = await storage.getItem<Record<string, boolean>>(`local:ignorePost:${username}`, { fallback: {} });
+  delete ignoreMap[postId];
+  await storage.setItem(`local:ignorePost:${username}`, ignoreMap);
+};
+
 // 检查帖子是否被忽略
 export const isPostIgnored = async (username: string, postId: string): Promise<boolean> => {
   const ignoreMap = await storage.getItem<Record<string, boolean>>(`local:ignorePost:${username}`, { fallback: {} });

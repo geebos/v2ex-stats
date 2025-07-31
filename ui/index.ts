@@ -2,7 +2,7 @@ import { updatePostStatus } from "@/service/history/post";
 import { getIsDarkMode } from "@/service/utils";
 import { debounce, once } from "lodash";
 import { processCommentsUI } from "@/ui/comments.ui";
-import { initPostIngoreButtons, processPostUI } from "@/ui/post.ui";
+import { initPostIngoreButtons, initPostRecoverButtons, processPostUI } from "@/ui/post.ui";
 
 // ======================== 页面检测相关 ========================
 
@@ -52,6 +52,7 @@ const registerMutationObserver = async (username: string) => {
 
     // 初始化帖子忽略按钮
     await initPostIngoreButtons(username);
+    await initPostRecoverButtons(username);
   }), 2000, { leading: false, trailing: true }));
   loadedObserver.observe(container, { childList: true, subtree: true });
 
@@ -83,33 +84,65 @@ export const injectStyle = () => {
       padding: 2px 6px;
       font-size: 10px;
       border-radius: 999px;
-    }
+    }  
 
-    .v-stats-ignore-button-container:hover{
+    .v-stats-ignore-button-container:hover,
+    .v-stats-recover-button-container:hover {
       position: relative;
     }
       
-    .v-stats-ignore-button-container:hover .v-stats-label::after {
+    .v-stats-ignore-button-container:hover .v-stats-label::after,
+    .v-stats-recover-button-container:hover .v-stats-label::after {
       display: none;
     }
 
-    .v-stats-ignore-button-container:hover .v-stats-ignore-button {
+    .v-stats-ignore-button-container:hover .v-stats-ignore-button,
+    .v-stats-recover-button-container:hover .v-stats-recover-button {
       display: flex;
       position: absolute;
       top: 0;
       left: 0;
-      z-index: 99999;
+      z-index: 99999!important;
       height: 100%;
       width: calc( 100% + 20px );
       justify-content: center;
       align-items: center;
-      background-color: #fa8c16;
       color: white;
       cursor: pointer;
     }
+
+    .v-stats-ignore-button-container:hover .v-stats-ignore-button {
+      background-color: #fa8c16;
+    }
+
+    .v-stats-recover-button-container:hover .v-stats-recover-button {
+      background-color: #1890ff;
+    }
     
-    .v-stats-ignore-button {
+    .v-stats-ignore-button,
+    .v-stats-recover-button {
       display: none;
+    }
+
+    .v-stats-toggle-bar {
+      cursor: pointer;
+      user-select: none;
+      text-align: center;
+      padding: 8px 16px;
+      margin: 8px auto;
+      max-width: 28rem;
+      background-color: #f5f5f5;
+      color: #374151;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      transition: all 0.2s ease-in-out;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .v-stats-toggle-bar:hover {
+      background-color: #e5e7eb;
+      box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     }
     `;
   document.head.appendChild(style);
