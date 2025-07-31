@@ -203,17 +203,21 @@ const transformRecordsToChartData = (records: BalanceRecord[], value: (record: B
 const transformRecordsToPieChartSource = (records: any[]) => {
   const source = records.map(record => [
     record.type,
-    Math.abs(record.delta),
+    toFixed(Math.abs(record.delta)),
     record.delta > 0 ? 'income' : 'expense'
   ]);
   return [['type', 'delta', 'kind'], ...source];
 };
 
+const toFixed = (value: number, precision: number = 2) => {
+  return parseFloat(value.toFixed(precision));
+}
+
 // ==================== 图表配置函数 ===================
 const getLineChartOption = (allRecords: BalanceRecord[], incomeRecords: BalanceRecord[], expenseRecords: BalanceRecord[], granularity: Granularity) => {
-  const { xAxis, series: allSeries } = transformRecordsToChartData(allRecords, (record) => record.balance, granularity);
-  const { series: incomeSeries } = transformRecordsToChartData(incomeRecords, (record) => record.delta, granularity);
-  const { series: expenseSeries } = transformRecordsToChartData(expenseRecords, (record) => Math.abs(record.delta), granularity);
+  const { xAxis, series: allSeries } = transformRecordsToChartData(allRecords, (record) => toFixed(record.balance), granularity);
+  const { series: incomeSeries } = transformRecordsToChartData(incomeRecords, (record) => toFixed(record.delta), granularity);
+  const { series: expenseSeries } = transformRecordsToChartData(expenseRecords, (record) => toFixed(Math.abs(record.delta)), granularity);
   const cumulativeIncomeSeries = cumulativeSum(incomeSeries);
   const cumulativeExpenseSeries = cumulativeSum(expenseSeries);
 
@@ -268,7 +272,7 @@ const getPieChartOption = (source: any[][]) => {
     },
     tooltip: {
       trigger: 'item',
-      formatter: (params: any) => `${params.name}: ${params.data[1]} (${params.percent}%)`
+      formatter: (params: any) => `${params.name}: ${params.data[1]} (${toFixed(params.percent, 2)}%)`
     },
     dataset: [
       { source: source },
