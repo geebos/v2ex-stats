@@ -40,6 +40,14 @@ export interface UsedTimeRecord {
   seconds: number;
 }
 
+export interface FavoriteRecord {
+  title: string;
+  link: string;
+  avatarUrl: string;
+  lastUpdated: number;
+  replyCount: number;
+}
+
 // 配置选项接口
 export interface ConfigOptions {
   // 金币统计

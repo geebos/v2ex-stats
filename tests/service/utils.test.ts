@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { getIsDarkMode, adjustChartDarkMode, formatTimestamp, testIsV2EX, getMonthStartTimestamp, getMonthEndTimestamp, getHourStartTimestamp } from '../../service/utils';
+import { getIsDarkMode, adjustChartDarkMode, formatTimestamp, testIsV2EX, getMonthStartTimestamp, getMonthEndTimestamp, getHourStartTimestamp, parseTimeToTimestamp } from '../../service/utils';
 import * as echarts from 'echarts';
 
 // 测试环境初始化
@@ -974,6 +974,204 @@ describe('getHourStartTimestamp', () => {
       expect(resultDate.getMinutes()).toBe(0);
       expect(resultDate.getSeconds()).toBe(0);
       expect(resultDate.getMilliseconds()).toBe(0);
+    });
+  });
+});
+
+// ==================== 时间字符串解析测试 ====================
+describe('parseTimeToTimestamp', () => {
+  describe('正常的V2EX时间格式', () => {
+    it('应该正确解析标准格式的时间字符串', () => {
+      const timeStr = '2024-06-15 09:30:52 +08:00';
+      const result = parseTimeToTimestamp(timeStr);
+      
+      // 验证结果是一个有效的时间戳
+      expect(typeof result).toBe('number');
+      expect(result).toBeGreaterThan(0);
+      
+      // 验证时间戳对应的UTC日期是否正确
+      const date = new Date(result);
+      
+      // 由于时区转换，我们验证UTC时间
+      // 2024-06-15 09:30:52 +08:00 = 2024-06-15 01:30:52 UTC
+      expect(date.getUTCFullYear()).toBe(2024);
+      expect(date.getUTCMonth()).toBe(5); // 月份从0开始，6月是5
+      expect(date.getUTCDate()).toBe(15);
+      expect(date.getUTCHours()).toBe(1); // 09:30 +08:00 = 01:30 UTC
+      expect(date.getUTCMinutes()).toBe(30);
+      expect(date.getUTCSeconds()).toBe(52);
+    });
+
+    it('应该正确处理不同的时区', () => {
+      const timeStr1 = '2024-12-25 12:00:00 +08:00'; // 北京时间
+      const timeStr2 = '2024-12-25 04:00:00 +00:00'; // UTC时间，应该等价于上面的时间
+      
+      const result1 = parseTimeToTimestamp(timeStr1);
+      const result2 = parseTimeToTimestamp(timeStr2);
+      
+      expect(result1).toBe(result2);
+    });
+
+    it('应该正确处理负时区', () => {
+      const timeStr = '2024-06-15 10:30:00 -05:00';
+      const result = parseTimeToTimestamp(timeStr);
+      
+      const date = new Date(result);
+      expect(date.getFullYear()).toBe(2024);
+      expect(date.getMonth()).toBe(5); // 6月
+      expect(date.getDate()).toBe(15);
+    });
+
+    it('应该正确处理边界时间', () => {
+      const testCases = [
+        '2024-01-01 00:00:00 +08:00', // 年初
+        '2024-12-31 23:59:59 +08:00', // 年末
+        '2024-02-29 12:00:00 +08:00', // 闰年2月29日
+        '2023-02-28 12:00:00 +08:00', // 平年2月28日
+      ];
+
+      testCases.forEach(timeStr => {
+        const result = parseTimeToTimestamp(timeStr);
+        expect(typeof result).toBe('number');
+        expect(result).toBeGreaterThan(0);
+        expect(isNaN(result)).toBe(false);
+      });
+    });
+  });
+
+  describe('不同的时间格式', () => {
+    it('应该处理没有时区信息的时间字符串', () => {
+      const timeStr = '2024-06-15 10:30:00';
+      const result = parseTimeToTimestamp(timeStr);
+      
+      expect(typeof result).toBe('number');
+      expect(result).toBeGreaterThan(0);
+      
+      const date = new Date(result);
+      expect(date.getFullYear()).toBe(2024);
+      expect(date.getMonth()).toBe(5);
+      expect(date.getDate()).toBe(15);
+    });
+
+    it('应该处理ISO 8601格式', () => {
+      const timeStr = '2024-06-15T10:30:00.000Z';
+      const result = parseTimeToTimestamp(timeStr);
+      
+      expect(typeof result).toBe('number');
+      expect(result).toBeGreaterThan(0);
+    });
+
+    it('应该处理不同的时区格式', () => {
+      const testCases = [
+        '2024-06-15 10:30:00 +0800',    // 没有冒号的时区
+        '2024-06-15 10:30:00 GMT+8',    // GMT格式
+        '2024-06-15 10:30:00Z',         // Z表示UTC
+      ];
+
+      testCases.forEach(timeStr => {
+        const result = parseTimeToTimestamp(timeStr);
+        expect(typeof result).toBe('number');
+        expect(result).toBeGreaterThan(0);
+      });
+    });
+  });
+
+  describe('错误处理', () => {
+    it('应该处理无效的时间字符串', () => {
+      const invalidTimeStrings = [
+        'invalid-date',
+        '2024-13-01 10:30:00 +08:00', // 无效月份
+        '2024-06-32 10:30:00 +08:00', // 无效日期
+        '2024-06-15 25:30:00 +08:00', // 无效小时
+        '',                           // 空字符串
+        '   ',                        // 只有空格
+      ];
+
+      invalidTimeStrings.forEach(timeStr => {
+        const result = parseTimeToTimestamp(timeStr);
+        
+        // 应该返回一个有效的时间戳（当前时间作为兜底）
+        expect(typeof result).toBe('number');
+        expect(result).toBeGreaterThan(0);
+        expect(isNaN(result)).toBe(false);
+      });
+    });
+
+    it('应该为无效时间返回当前时间戳作为兜底', () => {
+      const beforeCall = Date.now();
+      const result = parseTimeToTimestamp('invalid-time');
+      const afterCall = Date.now();
+      
+      // 结果应该在调用前后的时间范围内
+      expect(result).toBeGreaterThanOrEqual(beforeCall);
+      expect(result).toBeLessThanOrEqual(afterCall);
+    });
+
+    it('应该处理null和undefined', () => {
+      // @ts-ignore - 测试运行时错误处理
+      const resultNull = parseTimeToTimestamp(null);
+      // @ts-ignore - 测试运行时错误处理
+      const resultUndefined = parseTimeToTimestamp(undefined);
+      
+      expect(typeof resultNull).toBe('number');
+      expect(typeof resultUndefined).toBe('number');
+      expect(isNaN(resultNull)).toBe(false);
+      expect(isNaN(resultUndefined)).toBe(false);
+    });
+  });
+
+  describe('时间精度测试', () => {
+    it('应该保持毫秒精度', () => {
+      const timeStr = '2024-06-15T10:30:45.123Z';
+      const result = parseTimeToTimestamp(timeStr);
+      
+      const date = new Date(result);
+      expect(date.getMilliseconds()).toBe(123);
+    });
+
+    it('应该正确处理不同的秒精度', () => {
+      const testCases = [
+        { input: '2024-06-15 10:30:00 +08:00', seconds: 0 },
+        { input: '2024-06-15 10:30:30 +08:00', seconds: 30 },
+        { input: '2024-06-15 10:30:59 +08:00', seconds: 59 },
+      ];
+
+      testCases.forEach(({ input, seconds }) => {
+        const result = parseTimeToTimestamp(input);
+        const date = new Date(result);
+        expect(date.getSeconds()).toBe(seconds);
+      });
+    });
+  });
+
+  describe('实际使用场景测试', () => {
+    it('应该正确解析V2EX实际返回的时间格式', () => {
+      // 模拟V2EX实际可能返回的时间格式
+      const v2exTimeFormats = [
+        '2024-01-15 08:30:45 +08:00',
+        '2024-12-25 23:59:59 +08:00',
+        '2024-06-15 12:00:00 +08:00',
+      ];
+
+      v2exTimeFormats.forEach(timeStr => {
+        const result = parseTimeToTimestamp(timeStr);
+        
+        expect(typeof result).toBe('number');
+        expect(result).toBeGreaterThan(0);
+        expect(isNaN(result)).toBe(false);
+        
+        // 验证时间戳可以正确转回日期
+        const date = new Date(result);
+        expect(date.getFullYear()).toBeGreaterThanOrEqual(2024);
+      });
+    });
+
+    it('应该与原生Date.parse()结果一致', () => {
+      const timeStr = '2024-06-15 10:30:00 +08:00';
+      const ourResult = parseTimeToTimestamp(timeStr);
+      const nativeResult = Date.parse(timeStr);
+      
+      expect(ourResult).toBe(nativeResult);
     });
   });
 }); 

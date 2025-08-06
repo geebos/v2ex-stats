@@ -98,6 +98,21 @@ export const getHourStartTimestamp = (timestamp: number) => {
   return date.getTime();
 }
 
+// 将时间字符串转换为时间戳
+export const parseTimeToTimestamp = (timeStr: string): number => {
+  // 时间格式: 2025-05-30 09:30:52 +08:00
+  // 直接使用 Date 构造函数，它能正确解析包含时区信息的 ISO 8601 格式字符串
+  const date = new Date(timeStr);
+  
+  // 检查日期是否有效
+  if (isNaN(date.getTime())) {
+    console.warn('无效的时间格式:', timeStr);
+    return Date.now(); // 返回当前时间戳作为兜底
+  }
+  
+  return date.getTime();
+}
+
 // ======================== 数据格式化工具 ========================
 
 // 格式化字节数为人类可读格式
