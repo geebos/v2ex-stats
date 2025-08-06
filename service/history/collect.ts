@@ -32,6 +32,16 @@ export const getPostInfo = (pathname: string, document: Document): { postId: str
   };
 };
 
+// 从URL中提取帖子信息
+export const getPostInfoFromUrl = (url: string): { postId: string, replyCount: number } => {
+  const matches = /\/t\/(\d+)(?:#reply(\d+))?/.exec(url);
+  if (!matches || !matches[1]) {
+    return { postId: '', replyCount: 0 };
+  }
+
+  return { postId: matches[1], replyCount: matches[2] ? parseInt(matches[2], 10) : 0 };
+}
+
 // ======================== 数据收集 ========================
 
 // 收集当前帖子的浏览信息并更新存储

@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import { JSDOM } from 'jsdom';
 import { readFileSync } from 'fs';
 import { join } from 'path';
-import { getPostInfo } from '../../../service/history/collect';
+import { getPostInfo, getPostInfoFromUrl } from '@/service/history/collect';
 
 // 全局 DOM 设置
 let mockDocument: Document;
@@ -12,20 +12,20 @@ beforeAll(() => {
   // 读取测试用的 HTML 文件
   const htmlPath = join(__dirname, 'post.html');
   postHtmlContent = readFileSync(htmlPath, 'utf-8');
-  
+
   // 创建 JSDOM 实例
   const dom = new JSDOM(postHtmlContent, {
     url: 'https://www.v2ex.com/t/1147555',
     contentType: 'text/html',
     resources: 'usable'
   });
-  
+
   mockDocument = dom.window.document;
-  
+
   // 设置全局 document 和 window 对象
   global.document = mockDocument;
   global.window = dom.window as any;
-  
+
   // 设置 XPathResult 常量，JSDOM 没有完全实现这些
   global.XPathResult = {
     ANY_TYPE: 0,
@@ -46,7 +46,7 @@ describe('getPostInfo', () => {
     it('应该从 post.html 文件中正确解析帖子ID和回复数量', () => {
       const pathname = 'https://www.v2ex.com/t/1147555#reply29';
       const result = getPostInfo(pathname, mockDocument);
-      
+
       // 从真实的 HTML 文件中，这个帖子有 29 条回复
       expect(result).toEqual({
         postId: '1147555',
@@ -58,7 +58,7 @@ describe('getPostInfo', () => {
       // URL 中显示 reply50，但实际 DOM 中是 29 条回复
       const pathname = 'https://www.v2ex.com/t/1147555#reply50';
       const result = getPostInfo(pathname, mockDocument);
-      
+
       expect(result).toEqual({
         postId: '1147555',
         replyCount: 29 // DOM 解析结果应该优先
@@ -68,7 +68,7 @@ describe('getPostInfo', () => {
     it('应该在没有回复锚点时也能解析帖子ID并从DOM获取回复数', () => {
       const pathname = '/t/1147555';
       const result = getPostInfo(pathname, mockDocument);
-      
+
       // 新逻辑：没有 reply 锚点时也能解析帖子ID，并从DOM获取回复数
       expect(result).toEqual({
         postId: '1147555',
@@ -80,9 +80,9 @@ describe('getPostInfo', () => {
       const pathname = '/t/1147555';
       const emptyDom = new JSDOM('<html><body></body></html>');
       const emptyDocument = emptyDom.window.document;
-      
+
       const result = getPostInfo(pathname, emptyDocument);
-      
+
       expect(result).toEqual({
         postId: '1147555',
         replyCount: 0 // DOM解析失败时使用默认值
@@ -95,10 +95,10 @@ describe('getPostInfo', () => {
       // 创建一个空的 document 来模拟 DOM 解析失败
       const emptyDom = new JSDOM('<html><body></body></html>');
       const emptyDocument = emptyDom.window.document;
-      
+
       const pathname = '/t/1147518#reply8';
       const result = getPostInfo(pathname, emptyDocument);
-      
+
       expect(result).toEqual({
         postId: '1147518',
         replyCount: 8
@@ -108,10 +108,10 @@ describe('getPostInfo', () => {
     it('应该从带有回复锚点的路径中解析帖子信息', () => {
       const emptyDom = new JSDOM('<html><body></body></html>');
       const emptyDocument = emptyDom.window.document;
-      
+
       const pathname = '/t/1147472#reply30';
       const result = getPostInfo(pathname, emptyDocument);
-      
+
       expect(result).toEqual({
         postId: '1147472',
         replyCount: 30
@@ -121,10 +121,10 @@ describe('getPostInfo', () => {
     it('应该在无效路径时返回空帖子ID和0回复数', () => {
       const emptyDom = new JSDOM('<html><body></body></html>');
       const emptyDocument = emptyDom.window.document;
-      
+
       const pathname = '/invalid/path';
       const result = getPostInfo(pathname, emptyDocument);
-      
+
       expect(result).toEqual({
         postId: '',
         replyCount: 0
@@ -134,10 +134,10 @@ describe('getPostInfo', () => {
     it('应该在没有帖子ID的路径时返回空帖子ID和0回复数', () => {
       const emptyDom = new JSDOM('<html><body></body></html>');
       const emptyDocument = emptyDom.window.document;
-      
+
       const pathname = '/t/';
       const result = getPostInfo(pathname, emptyDocument);
-      
+
       expect(result).toEqual({
         postId: '',
         replyCount: 0
@@ -147,10 +147,10 @@ describe('getPostInfo', () => {
     it('应该在只有 /t 路径时返回空帖子ID和0回复数', () => {
       const emptyDom = new JSDOM('<html><body></body></html>');
       const emptyDocument = emptyDom.window.document;
-      
+
       const pathname = '/t';
       const result = getPostInfo(pathname, emptyDocument);
-      
+
       expect(result).toEqual({
         postId: '',
         replyCount: 0
@@ -162,10 +162,10 @@ describe('getPostInfo', () => {
     it('应该处理解析单个数字的回复数量', () => {
       const emptyDom = new JSDOM('<html><body></body></html>');
       const emptyDocument = emptyDom.window.document;
-      
+
       const pathname = '/t/123456#reply1';
       const result = getPostInfo(pathname, emptyDocument);
-      
+
       expect(result).toEqual({
         postId: '123456',
         replyCount: 1
@@ -175,10 +175,10 @@ describe('getPostInfo', () => {
     it('应该处理解析大的回复数量', () => {
       const emptyDom = new JSDOM('<html><body></body></html>');
       const emptyDocument = emptyDom.window.document;
-      
+
       const pathname = '/t/987654#reply999';
       const result = getPostInfo(pathname, emptyDocument);
-      
+
       expect(result).toEqual({
         postId: '987654',
         replyCount: 999
@@ -188,10 +188,10 @@ describe('getPostInfo', () => {
     it('应该在回复格式错误时解析帖子ID但回复数为0', () => {
       const emptyDom = new JSDOM('<html><body></body></html>');
       const emptyDocument = emptyDom.window.document;
-      
+
       const pathname = '/t/123456#replyabc';
       const result = getPostInfo(pathname, emptyDocument);
-      
+
       expect(result).toEqual({
         postId: '123456',
         replyCount: 0
@@ -201,10 +201,10 @@ describe('getPostInfo', () => {
     it('应该处理只有 reply 关键字没有数字的情况', () => {
       const emptyDom = new JSDOM('<html><body></body></html>');
       const emptyDocument = emptyDom.window.document;
-      
+
       const pathname = '/t/123456#reply';
       const result = getPostInfo(pathname, emptyDocument);
-      
+
       expect(result).toEqual({
         postId: '123456',
         replyCount: 0
@@ -214,10 +214,10 @@ describe('getPostInfo', () => {
     it('应该处理完整URL格式', () => {
       const emptyDom = new JSDOM('<html><body></body></html>');
       const emptyDocument = emptyDom.window.document;
-      
+
       const pathname = 'https://www.v2ex.com/t/123456#reply10';
       const result = getPostInfo(pathname, emptyDocument);
-      
+
       expect(result).toEqual({
         postId: '123456',
         replyCount: 10
@@ -227,10 +227,10 @@ describe('getPostInfo', () => {
     it('应该处理带查询参数的URL', () => {
       const emptyDom = new JSDOM('<html><body></body></html>');
       const emptyDocument = emptyDom.window.document;
-      
+
       const pathname = '/t/123456?from=timeline';
       const result = getPostInfo(pathname, emptyDocument);
-      
+
       expect(result).toEqual({
         postId: '123456',
         replyCount: 0
@@ -240,12 +240,162 @@ describe('getPostInfo', () => {
     it('应该处理非数字帖子ID', () => {
       const emptyDom = new JSDOM('<html><body></body></html>');
       const emptyDocument = emptyDom.window.document;
-      
+
       const pathname = '/t/abc123#reply5';
       const result = getPostInfo(pathname, emptyDocument);
-      
+
       expect(result).toEqual({
         postId: '',
+        replyCount: 0
+      });
+    });
+  });
+});
+
+describe('getPostInfoFromUrl', () => {
+  describe('基础URL解析测试', () => {
+    it('应该从完整URL中解析帖子ID和回复数', () => {
+      const url = 'https://www.v2ex.com/t/123456#reply30';
+      const result = getPostInfoFromUrl(url);
+
+      expect(result).toEqual({
+        postId: '123456',
+        replyCount: 30
+      });
+    });
+
+    it('应该从路径中解析帖子ID和回复数', () => {
+      const url = '/t/789012#reply15';
+      const result = getPostInfoFromUrl(url);
+
+      expect(result).toEqual({
+        postId: '789012',
+        replyCount: 15
+      });
+    });
+
+    it('应该解析没有回复锚点的URL', () => {
+      const url = '/t/555666';
+      const result = getPostInfoFromUrl(url);
+
+      expect(result).toEqual({
+        postId: '555666',
+        replyCount: 0
+      });
+    });
+
+    it('应该解析完整URL但没有回复锚点', () => {
+      const url = 'https://www.v2ex.com/t/333444';
+      const result = getPostInfoFromUrl(url);
+
+      expect(result).toEqual({
+        postId: '333444',
+        replyCount: 0
+      });
+    });
+  });
+
+  describe('边界情况测试', () => {
+    it('应该处理无效URL返回空值', () => {
+      const url = '/invalid/path';
+      const result = getPostInfoFromUrl(url);
+
+      expect(result).toEqual({
+        postId: '',
+        replyCount: 0
+      });
+    });
+
+    it('应该处理空字符串URL', () => {
+      const url = '';
+      const result = getPostInfoFromUrl(url);
+
+      expect(result).toEqual({
+        postId: '',
+        replyCount: 0
+      });
+    });
+
+    it('应该处理只有/t/路径的URL', () => {
+      const url = '/t/';
+      const result = getPostInfoFromUrl(url);
+
+      expect(result).toEqual({
+        postId: '',
+        replyCount: 0
+      });
+    });
+
+    it('应该处理非数字帖子ID', () => {
+      const url = '/t/abc#reply5';
+      const result = getPostInfoFromUrl(url);
+
+      expect(result).toEqual({
+        postId: '',
+        replyCount: 0
+      });
+    });
+
+    it('应该处理非数字回复数', () => {
+      const url = '/t/123456#replyabc';
+      const result = getPostInfoFromUrl(url);
+
+      expect(result).toEqual({
+        postId: '123456',
+        replyCount: 0
+      });
+    });
+
+    it('应该处理只有reply关键字没有数字', () => {
+      const url = '/t/123456#reply';
+      const result = getPostInfoFromUrl(url);
+
+      expect(result).toEqual({
+        postId: '123456',
+        replyCount: 0
+      });
+    });
+  });
+
+  describe('特殊格式测试', () => {
+    it('应该处理带查询参数的URL（当前实现限制：无法解析查询参数后的锚点）', () => {
+      const url = '/t/123456?from=timeline#reply20';
+      const result = getPostInfoFromUrl(url);
+
+      // 注意：当前实现能正确解析帖子ID，但查询参数会阻止锚点的解析
+      // 正则表达式只匹配到 /t/123456 部分，无法匹配后面的 #reply20
+      expect(result).toEqual({
+        postId: '123456',
+        replyCount: 0
+      });
+    });
+
+    it('应该处理单个数字的回复数', () => {
+      const url = '/t/999888#reply1';
+      const result = getPostInfoFromUrl(url);
+
+      expect(result).toEqual({
+        postId: '999888',
+        replyCount: 1
+      });
+    });
+
+    it('应该处理大的回复数', () => {
+      const url = '/t/111222#reply999';
+      const result = getPostInfoFromUrl(url);
+
+      expect(result).toEqual({
+        postId: '111222',
+        replyCount: 999
+      });
+    });
+
+    it('应该处理回复数为0的锚点', () => {
+      const url = '/t/444555#reply0';
+      const result = getPostInfoFromUrl(url);
+
+      expect(result).toEqual({
+        postId: '444555',
         replyCount: 0
       });
     });

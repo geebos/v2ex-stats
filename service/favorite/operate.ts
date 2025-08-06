@@ -1,6 +1,7 @@
 import xpath from '@/service/xpath'
 import type { FavoriteRecord } from '@/types/types'
 import { parseTimeToTimestamp } from '@/service/utils'
+import { getPostInfoFromUrl } from '@/service/history/collect'
 
 type FavoriteOperation = 'favorite' | 'unfavorite'
 
@@ -134,10 +135,12 @@ const parseFavoritesFromPage = (doc: Document): FavoriteRecord[] => {
       if (title && link && avatarUrl && lastUpdatedStr) {
         const lastUpdated = parseTimeToTimestamp(lastUpdatedStr)
         const replyCount = replyCountStr ? parseInt(replyCountStr, 10) : 0
+        const { postId } = getPostInfoFromUrl(link)
 
         favorites.push({
           title: title.trim(),
           link: link,
+          postId: postId,
           avatarUrl: avatarUrl,
           lastUpdated,
           replyCount
