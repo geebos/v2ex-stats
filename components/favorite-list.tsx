@@ -3,12 +3,20 @@ import type { FavoriteRecord } from "@/types/types";
 import xpath from "@/service/xpath";
 import { createElement, useState } from "react";
 import { createRoot } from "react-dom/client";
+import { getCollapsedStatus, setCollapsedStatus } from "@/service/favorite/status";
 
-const FavoriteList = (props: { favoriteList: FavoriteRecord[] }) => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+const FavoriteList = (props: { favoriteList: FavoriteRecord[], username: string }) => {
+  const [isCollapsed, setIsCollapsed] = useState(true);
 
-  const handleToggleCollapse = () => {
+  useEffect(() => {
+    (async () => {
+      setIsCollapsed(await getCollapsedStatus(props.username))
+    })()
+  }, [props.username])
+
+  const handleToggleCollapse = async () => {
     setIsCollapsed(!isCollapsed);
+    await setCollapsedStatus(props.username, !isCollapsed)
   };
 
   return <>
@@ -45,20 +53,21 @@ const FavoriteList = (props: { favoriteList: FavoriteRecord[] }) => {
     `}</style>
     <div className="cell flex-one-row">
       <span className="fade">关注的主题</span>
-      <a 
-        href="#;" 
+      <span
         onClick={handleToggleCollapse}
         style={{
           transition: 'transform 0.2s ease-in-out',
-          display: 'inline-block'
+          display: 'inline-block',
+          cursor: 'pointer',
+          color: 'var(--link-color)',
         }}
       >
         {isCollapsed ? '▼ 展开' : '▲ 折叠'}
-      </a>
+      </span>
     </div>
-    <div 
+    <div
       className={`favorite-list-container ${isCollapsed ? 'collapsed' : 'expanded'}`}
-      style={{ 
+      style={{
         overflowY: isCollapsed ? 'hidden' : 'auto',
         // 自定义滚动条样式
         scrollbarWidth: 'thin',
@@ -89,7 +98,7 @@ const FavoriteList = (props: { favoriteList: FavoriteRecord[] }) => {
 }
 
 
-export const tryInitFavoriteList = async () => {
+export const tryInitFavoriteList = async (username: string) => {
   console.log('尝试初始化收藏列表');
   const box = document.createElement('div');
   box.className = 'box';
@@ -105,6 +114,6 @@ export const tryInitFavoriteList = async () => {
   sep.parentElement?.insertBefore(box, sep);
 
   const favoriteList = await getFavoriteList();
-  createRoot(box).render(createElement(FavoriteList, { favoriteList }));
+  createRoot(box).render(createElement(FavoriteList, { favoriteList, username }));
   console.log('收藏列表初始化完成');
 }

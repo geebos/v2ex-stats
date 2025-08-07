@@ -69,6 +69,6 @@ export default defineContentScript({
 
     await collectPostInfo(info.username);
     await tryInitUI(info.username);
-    await tryInitFavoriteList();
+    await tryInitFavoriteList(info.username);
   }
 }); 
