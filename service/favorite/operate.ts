@@ -127,19 +127,21 @@ const parseFavoritesFromPage = (doc: Document): FavoriteRecord[] => {
   for (const container of postContainers) {
     try {
       const title = xpath.findString('.//td[3]/span[@class="item_title"]/a/text()', container)
-      const link = xpath.findString('.//td[3]/span[@class="item_title"]/a/@href', container)
+      const postLink = xpath.findString('.//td[3]/span[@class="item_title"]/a/@href', container)
+      const memberLink = xpath.findString('.//td[1]//a/@href', container)
       const avatarUrl = xpath.findString('.//td[1]//img/@src', container)
       const lastUpdatedStr = xpath.findString('.//td[3]/span[@class="topic_info"]/span[@title]/@title', container)
       const replyCountStr = xpath.findString('.//td[4]/a[@class="count_livid"]/text()', container)
 
-      if (title && link && avatarUrl && lastUpdatedStr) {
+      if (title && postLink && memberLink && avatarUrl && lastUpdatedStr) {
         const lastUpdated = parseTimeToTimestamp(lastUpdatedStr)
         const replyCount = replyCountStr ? parseInt(replyCountStr, 10) : 0
-        const { postId } = getPostInfoFromUrl(link)
+        const { postId } = getPostInfoFromUrl(postLink)
 
         favorites.push({
           title: title.trim(),
-          link: link,
+          postLink: postLink,
+          memberLink: memberLink,
           postId: postId,
           avatarUrl: avatarUrl,
           lastUpdated,

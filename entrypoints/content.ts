@@ -6,7 +6,7 @@ import { tryInitActivityChart } from '@/components/activity-chart';
 import { testIsV2EX } from '@/service/utils';
 import { collectPostInfo } from '@/service/history/collect';
 import { tryInitUI } from '@/ui';
-import { getFavoriteList } from '@/service/favorite/operate';
+import { tryInitFavoriteList } from '@/components/favorite-list';
 
 // ==================== 页面检测和信息获取 ====================
 
@@ -45,11 +45,9 @@ export default defineContentScript({
     '*://www.v2ex.com/*'
   ],
   main: async () => {
-    console.log('V2EX Coins Extension: Content script loaded');
+    console.log('V2EX Stats Extension: Content script loaded');
 
     const info = detectAndGetInfo();
-
-    (window as any).getFavoriteList = getFavoriteList;
 
     if (!info.isLoggedIn) {
       console.log('用户未登录，跳过');
@@ -71,5 +69,6 @@ export default defineContentScript({
 
     await collectPostInfo(info.username);
     await tryInitUI(info.username);
+    await tryInitFavoriteList();
   }
 }); 

@@ -42,7 +42,8 @@ export interface UsedTimeRecord {
 
 export interface FavoriteRecord {
   title: string;
-  link: string;
+  postLink: string;
+  memberLink: string;
   postId: string;
   avatarUrl: string;
   lastUpdated: number;
