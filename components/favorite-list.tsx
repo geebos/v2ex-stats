@@ -1,5 +1,5 @@
 // React 相关导入
-import { createElement, useEffect, useState } from "react";
+import { createElement, useState } from "react";
 import { createRoot } from "react-dom/client";
 import styled from 'styled-components';
 
@@ -10,9 +10,9 @@ import xpath from "@/service/xpath";
 import type { FavoriteRecord } from "@/types/types";
 
 // 收藏列表容器样式组件
-const FavoriteListContainer = styled.div<{ $isCollapsed: boolean }>`
-    // 折叠动画效果
-    transition: height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease-in-out;
+const FavoriteListContainer = styled.div<{ $isCollapsed: boolean, $shouldAnimate: boolean }>`
+    // 折叠动画效果（仅在用户交互时启用）
+    transition: ${props => (props.$shouldAnimate ? 'height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease-in-out' : 'none')};
     transform-origin: top;
     height: ${props => (props.$isCollapsed ? '0' : '400px')};
     opacity: ${props => (props.$isCollapsed ? '0' : '1')};
@@ -41,18 +41,13 @@ const FavoriteListContainer = styled.div<{ $isCollapsed: boolean }>`
   `;
 
 // 收藏列表组件
-const FavoriteList = (props: { favoriteList: FavoriteRecord[], username: string }) => {
-  const [isCollapsed, setIsCollapsed] = useState(true);
-
-  // 初始化折叠状态
-  useEffect(() => {
-    (async () => {
-      setIsCollapsed(await getCollapsedStatus(props.username))
-    })()
-  }, [props.username])
+const FavoriteList = (props: { favoriteList: FavoriteRecord[], username: string, isCollapsed: boolean }) => {
+  const [isCollapsed, setIsCollapsed] = useState(props.isCollapsed);
+  const [shouldAnimate, setShouldAnimate] = useState(false);
 
   // 切换折叠状态
   const handleToggleCollapse = async () => {
+    setShouldAnimate(true);
     setIsCollapsed(!isCollapsed);
     await setCollapsedStatus(props.username, !isCollapsed)
   };
@@ -73,9 +68,9 @@ const FavoriteList = (props: { favoriteList: FavoriteRecord[], username: string 
         {isCollapsed ? '▼ 展开' : '▲ 折叠'}
       </span>
     </div>
-    
+
     {/* 收藏列表内容 */}
-    <FavoriteListContainer $isCollapsed={isCollapsed}>
+    <FavoriteListContainer $isCollapsed={isCollapsed} $shouldAnimate={shouldAnimate}>
       {props.favoriteList.map((item) => (
         <div className="cell from_" key={item.postId}>
           <table cellPadding="0" cellSpacing="0" border={0} width="100%">
@@ -116,7 +111,7 @@ export const tryInitFavoriteList = async (username: string) => {
     console.log('没有找到定位元素');
     return;
   }
-  
+
   // 插入分隔符和容器
   const sep2 = document.createElement('div');
   sep2.className = 'sep';
@@ -125,7 +120,8 @@ export const tryInitFavoriteList = async (username: string) => {
 
   // 获取收藏列表数据并渲染
   const favoriteList = await getFavoriteList(username);
+  const isCollapsed = await getCollapsedStatus(username);
   console.log('收藏列表', favoriteList);
-  createRoot(box).render(createElement(FavoriteList, { favoriteList, username }));
+  createRoot(box).render(createElement(FavoriteList, { favoriteList, username, isCollapsed }));
   console.log('收藏列表初始化完成');
 }
