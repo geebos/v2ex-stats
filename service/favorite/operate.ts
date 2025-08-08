@@ -2,13 +2,24 @@ import xpath from '@/service/xpath'
 import type { FavoriteRecord } from '@/types/types'
 import { parseTimeToTimestamp } from '@/service/utils'
 import { getPostInfoFromUrl } from '@/service/history/collect'
+import { throttle } from 'lodash'
+import { storage } from '@wxt-dev/storage'
 
+// 收藏操作类型定义
 type FavoriteOperation = 'favorite' | 'unfavorite'
+
+// 收藏列表更新间隔：30分钟
+const UPDATE_INTERVAL = 1000 * 60 * 30
+
+// 防重复初始化标志
+let isListenerBound = false
+
+// ==================== 收藏操作相关 ====================
 
 // 执行收藏/取消收藏操作的通用函数
 const performFavoriteOperation = async (postId: string, operationType: FavoriteOperation): Promise<boolean> => {
   try {
-    // 1. 获取帖子页面
+    // 获取帖子页面
     const postUrl = `/t/${postId}`
     const response = await fetch(postUrl)
     if (!response.ok) {
@@ -20,24 +31,25 @@ const performFavoriteOperation = async (postId: string, operationType: FavoriteO
     const parser = new DOMParser()
     const doc = parser.parseFromString(html, 'text/html')
 
-    // 2. 使用 xpath 获取 favorite 链接
+    // 获取收藏操作链接
     const href = xpath.findString('//a[contains(@href, "favorite")]/@href', doc)
     if (!href) {
       console.log(`未找到${operationType}链接`)
       return false
     }
+
+    // 检查当前收藏状态是否与目标操作一致
     if (operationType === 'favorite') {
       if (href.includes('unfavorite')) {
-        return true
+        return true // 已收藏
       }
     } else {
       if (!href.includes('unfavorite')) {
-        return true
+        return true // 已取消收藏
       }
     }
 
-
-    // 3. 请求链接执行操作
+    // 执行收藏操作
     const operationResponse = await fetch(href)
     if (!operationResponse.ok) {
       console.log(`${operationType}操作失败: ${operationResponse.status}`)
@@ -61,12 +73,14 @@ export const unfavorite = async (postId: string): Promise<boolean> => {
   return performFavoriteOperation(postId, 'unfavorite')
 }
 
-// 获取收藏列表
-export const getFavoriteList = async (): Promise<FavoriteRecord[]> => {
+// ==================== 收藏列表获取相关 ====================
+
+// 获取完整收藏列表（内部方法）
+const _getFavoriteList = async (): Promise<FavoriteRecord[]> => {
   try {
     const allFavorites: FavoriteRecord[] = []
-    
-    // 1. 获取第一页数据以确定总页数
+
+    // 获取第一页以确定总页数
     const firstPageResponse = await fetch('/my/topics?p=1')
     if (!firstPageResponse.ok) {
       console.log(`获取收藏列表第一页失败: ${firstPageResponse.status}`)
@@ -77,7 +91,7 @@ export const getFavoriteList = async (): Promise<FavoriteRecord[]> => {
     const parser = new DOMParser()
     const firstPageDoc = parser.parseFromString(firstPageHtml, 'text/html')
 
-    // 2. 从第一页提取总收藏数
+    // 提取总收藏数并计算页数
     const totalCountStr = xpath.findString('//a[contains(@href, "/my/topics")]/span[@class="bigger"]/text()', firstPageDoc)
     if (!totalCountStr) {
       console.log('未找到收藏主题总数')
@@ -88,13 +102,13 @@ export const getFavoriteList = async (): Promise<FavoriteRecord[]> => {
     const pageSize = 20
     const totalPages = Math.ceil(totalCount / pageSize)
 
-    // 3. 解析第一页数据
+    // 解析第一页数据
     const firstPageFavorites = parseFavoritesFromPage(firstPageDoc)
     allFavorites.push(...firstPageFavorites)
 
-    // 4. 遍历其他页面
+    // 遍历其他页面
     for (let page = 2; page <= totalPages; page++) {
-      await new Promise(resolve => setTimeout(resolve, 500))
+      await new Promise(resolve => setTimeout(resolve, 500)) // 防止请求过快
       const pageResponse = await fetch(`/my/topics?p=${page}`)
       if (!pageResponse.ok) {
         console.log(`获取收藏列表第${page}页失败: ${pageResponse.status}`)
@@ -119,11 +133,11 @@ export const getFavoriteList = async (): Promise<FavoriteRecord[]> => {
 // 从页面解析收藏记录
 const parseFavoritesFromPage = (doc: Document): FavoriteRecord[] => {
   const favorites: FavoriteRecord[] = []
-  
-  // 1. 解析帖子容器
+
+  // 获取帖子容器列表
   const postContainers = xpath.findNodes('(//div[@id="Main"]//div[@class="box"])[1]//div[@class="cell item"]', doc)
-  
-  // 2. 解析每个帖子的详细信息
+
+  // 解析每个帖子的详细信息
   for (const container of postContainers) {
     try {
       const title = xpath.findString('.//td[3]/span[@class="item_title"]/a/text()', container)
@@ -155,4 +169,61 @@ const parseFavoritesFromPage = (doc: Document): FavoriteRecord[] => {
   }
 
   return favorites
+}
+
+// ==================== 收藏列表存储和更新相关 ====================
+
+// 从本地存储获取收藏列表
+export const getFavoriteList = async (username: string): Promise<FavoriteRecord[]> => {
+  const item = await storage.getItem<FavoriteRecord[]>(`local:${username}:favoriteList`);
+  return item ?? [];
+}
+
+// 更新收藏列表到本地存储
+export const updateFavoriteList = async (username: string) => {
+  const lastUpdateTime = await storage.getItem<number>(`local:${username}:favoriteListLastUpdateTime`, { fallback: 0 }); 
+  if (!lastUpdateTime || Date.now() - lastUpdateTime > UPDATE_INTERVAL) {
+    const favoriteList = await _getFavoriteList();
+    await storage.setItem(`local:${username}:favoriteList`, favoriteList);
+    await storage.setItem(`local:${username}:favoriteListLastUpdateTime`, Date.now());
+  }
+}
+
+// 初始化收藏列表自动更新触发器
+export const initUpdateFavoriteListTrigger = async (username: string) => { 
+  if (isListenerBound) {
+    console.log('收藏列表更新监听器已初始化，跳过');
+    return;
+  }
+  
+  console.log('初始化收藏列表更新监听器', username);
+  isListenerBound = true;
+
+  // 创建节流处理的事件处理器
+  const eventHandler = throttle(() => {
+    updateFavoriteList(username);
+    console.log('触发收藏列表更新事件', username);
+  }, UPDATE_INTERVAL);
+
+  // 注册用户活动事件监听器
+  const registerAllEvents = () => {
+    window.addEventListener('mousemove', eventHandler);
+    window.addEventListener('keydown', eventHandler);
+    window.addEventListener('keyup', eventHandler);
+    window.addEventListener('keypress', eventHandler);
+    window.addEventListener('scroll', eventHandler);
+    window.addEventListener('resize', eventHandler);
+    window.addEventListener('focus', eventHandler);
+  };
+
+  // 确保在DOM加载完成后注册事件
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      registerAllEvents();
+    });
+  } else {
+    registerAllEvents();
+  }
+  
+  console.log('初始化收藏列表更新监听器完成', username);
 }
