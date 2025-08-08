@@ -4,8 +4,8 @@ globs:
 alwaysApply: false
 ---
 # 流程
-1. 总结 commit message
-2. 提交所有文件到暂存区
+1. 使用 `git diff` 查看变更文件，根据变更内容总结 commit message
+2. 提交所有文件到暂存区，使用多个 -m 实现换行
 
 # 模板
 <type>(<scope>): <subject>

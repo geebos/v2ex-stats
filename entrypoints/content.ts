@@ -69,6 +69,10 @@ export default defineContentScript({
 
     await collectPostInfo(info.username);
     await tryInitUI(info.username);
-    await tryInitFavoriteList(info.username);
+
+    if (info.pathname === '/') {
+      // 只在首页初始化收藏列表
+      await tryInitFavoriteList(info.username);
+    }
   }
 }); 

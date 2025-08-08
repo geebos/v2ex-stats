@@ -159,7 +159,8 @@ const parseFavoritesFromPage = (doc: Document): FavoriteRecord[] => {
           postId: postId,
           avatarUrl: avatarUrl,
           lastUpdated,
-          replyCount
+          replyCount,
+          viewedCount: 0,
         })
       }
     } catch (error) {
@@ -173,29 +174,45 @@ const parseFavoritesFromPage = (doc: Document): FavoriteRecord[] => {
 
 // ==================== 收藏列表存储和更新相关 ====================
 
+const getFavoriteRecords = async (username: string): Promise<Record<string, FavoriteRecord>> => {
+  const recordsMap = await storage.getItem<Record<string, FavoriteRecord>>(`local:${username}:favoriteRecords`);
+  return recordsMap ?? {};
+}
+
 // 从本地存储获取收藏列表
 export const getFavoriteList = async (username: string): Promise<FavoriteRecord[]> => {
-  const item = await storage.getItem<FavoriteRecord[]>(`local:${username}:favoriteList`);
-  return item ?? [];
+  const recordsMap = await getFavoriteRecords(username);
+  const records = Object.values(recordsMap ?? {});
+  return records.filter(record => record.viewedCount < record.replyCount).sort((a, b) => b.lastUpdated - a.lastUpdated);
 }
 
 // 更新收藏列表到本地存储
 export const updateFavoriteList = async (username: string) => {
-  const lastUpdateTime = await storage.getItem<number>(`local:${username}:favoriteListLastUpdateTime`, { fallback: 0 }); 
+  const lastUpdateTime = await storage.getItem<number>(`local:${username}:favoriteRecordsLastUpdateTime`, { fallback: 0 });
   if (!lastUpdateTime || Date.now() - lastUpdateTime > UPDATE_INTERVAL) {
     const favoriteList = await _getFavoriteList();
-    await storage.setItem(`local:${username}:favoriteList`, favoriteList);
-    await storage.setItem(`local:${username}:favoriteListLastUpdateTime`, Date.now());
+    const favoriteRecords = await getFavoriteRecords(username);
+    for (const record of favoriteList) {
+      if (favoriteRecords[record.postId]) {
+        favoriteRecords[record.postId].lastUpdated = record.lastUpdated;
+        favoriteRecords[record.postId].replyCount = record.replyCount;
+      } else {
+        record.viewedCount = record.replyCount;
+        favoriteRecords[record.postId] = record;
+      }
+    }
+    await storage.setItem(`local:${username}:favoriteRecords`, favoriteRecords);
+    await storage.setItem(`local:${username}:favoriteRecordsLastUpdateTime`, Date.now());
   }
 }
 
 // 初始化收藏列表自动更新触发器
-export const initUpdateFavoriteListTrigger = async (username: string) => { 
+export const initUpdateFavoriteListTrigger = async (username: string) => {
   if (isListenerBound) {
     console.log('收藏列表更新监听器已初始化，跳过');
     return;
   }
-  
+
   console.log('初始化收藏列表更新监听器', username);
   isListenerBound = true;
 
@@ -224,6 +241,6 @@ export const initUpdateFavoriteListTrigger = async (username: string) => {
   } else {
     registerAllEvents();
   }
-  
+
   console.log('初始化收藏列表更新监听器完成', username);
 }

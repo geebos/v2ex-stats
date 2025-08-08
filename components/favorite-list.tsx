@@ -4,21 +4,28 @@ import { createRoot } from "react-dom/client";
 import styled from 'styled-components';
 
 // 业务逻辑导入
-import { getFavoriteList, initUpdateFavoriteListTrigger } from "@/service/favorite/operate";
+import { getFavoriteList, initUpdateFavoriteListTrigger, updateFavoriteList } from "@/service/favorite/operate";
 import { getCollapsedStatus, setCollapsedStatus } from "@/service/favorite/status";
 import xpath from "@/service/xpath";
 import type { FavoriteRecord } from "@/types/types";
 
 // 收藏列表容器样式组件
-const FavoriteListContainer = styled.div<{ $isCollapsed: boolean, $shouldAnimate: boolean }>`
+const FavoriteListContainer = styled.div<{ $isCollapsed: boolean, $shouldAnimate: boolean, $isEmpty: boolean }>`
     // 折叠动画效果（仅在用户交互时启用）
     transition: ${props => (props.$shouldAnimate ? 'height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease-in-out' : 'none')};
     transform-origin: top;
-    height: ${props => (props.$isCollapsed ? '0' : '400px')};
+    height: ${props => {
+      if (props.$isCollapsed) return '0';
+      return 'auto';
+    }};
+    max-height: 400px;
     opacity: ${props => (props.$isCollapsed ? '0' : '1')};
     padding-top: ${props => (props.$isCollapsed ? '0' : 'initial')};
     padding-bottom: ${props => (props.$isCollapsed ? '0' : 'initial')};
-    overflow-y: ${props => (props.$isCollapsed ? 'hidden' : 'auto')};
+    overflow-y: ${props => {
+      if (props.$isCollapsed) return 'hidden';
+      return props.$isEmpty ? 'visible' : 'auto';
+    }};
     
     // 自定义滚动条样式
     scrollbar-width: thin;
@@ -70,26 +77,32 @@ const FavoriteList = (props: { favoriteList: FavoriteRecord[], username: string,
     </div>
 
     {/* 收藏列表内容 */}
-    <FavoriteListContainer $isCollapsed={isCollapsed} $shouldAnimate={shouldAnimate}>
-      {props.favoriteList.map((item) => (
-        <div className="cell from_" key={item.postId}>
-          <table cellPadding="0" cellSpacing="0" border={0} width="100%">
-            <tbody><tr>
-              <td width="24" valign="middle" align="center">
-                <a href={item.memberLink}>
-                  <img src={item.avatarUrl} width="24" style={{ borderRadius: '4px', verticalAlign: 'bottom' }} alt={item.title} />
-                </a>
-              </td>
-              <td width="10"></td>
-              <td width="auto" valign="middle">
-                <span className="item_hot_topic_title">
-                  <a href={item.postLink}>{item.title}</a>
-                </span>
-              </td>
-            </tr>
-            </tbody></table>
+    <FavoriteListContainer $isCollapsed={isCollapsed} $shouldAnimate={shouldAnimate} $isEmpty={props.favoriteList.length === 0}>
+      {props.favoriteList.length === 0 ? (
+        <div className="cell" style={{ textAlign: 'center', color: 'var(--secondary-color, #9ca3af)' }}>
+          暂无更新
         </div>
-      ))}
+      ) : (
+        props.favoriteList.map((item) => (
+          <div className="cell from_" key={item.postId}>
+            <table cellPadding="0" cellSpacing="0" border={0} width="100%">
+              <tbody><tr>
+                <td width="24" valign="middle" align="center">
+                  <a href={item.memberLink}>
+                    <img src={item.avatarUrl} width="24" style={{ borderRadius: '4px', verticalAlign: 'bottom' }} alt={item.title} />
+                  </a>
+                </td>
+                <td width="10"></td>
+                <td width="auto" valign="middle">
+                  <span className="item_hot_topic_title">
+                    <a href={item.postLink}>{item.title}</a>
+                  </span>
+                </td>
+              </tr>
+              </tbody></table>
+          </div>
+        ))
+      )}
     </FavoriteListContainer>
   </>
 }

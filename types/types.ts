@@ -48,6 +48,7 @@ export interface FavoriteRecord {
   avatarUrl: string;
   lastUpdated: number;
   replyCount: number;
+  viewedCount: number;
 }
 
 // 配置选项接口
