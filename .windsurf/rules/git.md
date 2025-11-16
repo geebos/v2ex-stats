@@ -1,5 +1,7 @@
 ---
-alwaysApply: false
+trigger: manual
+description:
+globs:
 ---
 请根据以下要求生成 Git 提交信息：
 1. 遵循 Conventional Commit 规范。
