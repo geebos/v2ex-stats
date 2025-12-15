@@ -32,15 +32,28 @@ const SlideContent = styled.div`
   height: 100%;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
   text-align: center;
+`;
+
+const SlideTitle = styled.div`
+  flex-shrink: 0;
+  margin-top: 40px;
+  margin-bottom: 24px;
+`;
+
+const SlideBody = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 60px;
 `;
 
 const Title = styled.h1<{ $isDarkMode: boolean }>`
   font-size: 28px;
   font-weight: 700;
-  margin-bottom: 16px;
   color: ${props => props.$isDarkMode ? '#fff' : '#000'};
 `;
 
@@ -55,7 +68,7 @@ const StatNumber = styled.div`
   font-size: 48px;
   font-weight: 700;
   color: #667eea;
-  margin: 16px 0;
+  margin-bottom: 16px;
 `;
 
 const StatLabel = styled.div<{ $isDarkMode: boolean }>`
@@ -72,7 +85,6 @@ const TitleBadge = styled.span`
   border-radius: 20px;
   font-size: 14px;
   font-weight: 600;
-  margin: 4px;
 `;
 
 const Navigation = styled.div`
@@ -227,9 +239,13 @@ export function AnnualSummarySlides({ data }: AnnualSummarySlidesProps) {
         return (
           <Slide key={0} $totalSlides={totalSlides} ref={(el) => { slideRefs.current[0] = el; }}>
             <SlideContent>
-              <Title $isDarkMode={isDarkMode}>我的 {data.year} 年度总结</Title>
-              <Subtitle $isDarkMode={isDarkMode}>@{data.username}</Subtitle>
-              <StatLabel $isDarkMode={isDarkMode}>感谢你陪伴 V2EX 又一年</StatLabel>
+              <SlideTitle>
+                <Title $isDarkMode={isDarkMode}>我的 {data.year} 年度总结</Title>
+              </SlideTitle>
+              <SlideBody>
+                <Subtitle $isDarkMode={isDarkMode}>@{data.username}</Subtitle>
+                <StatLabel $isDarkMode={isDarkMode}>感谢你陪伴 V2EX 又一年</StatLabel>
+              </SlideBody>
             </SlideContent>
           </Slide>
         );
@@ -238,13 +254,17 @@ export function AnnualSummarySlides({ data }: AnnualSummarySlidesProps) {
         return (
           <Slide key={1} $totalSlides={totalSlides} ref={(el) => { slideRefs.current[1] = el; }}>
             <SlideContent>
-              <Subtitle $isDarkMode={isDarkMode}>登录统计</Subtitle>
-              <AnimatedNumber value={stats.login.totalCount} />
-              <StatLabel $isDarkMode={isDarkMode}>总登录次数</StatLabel>
-              <AnimatedNumber value={stats.login.totalCoins} />
-              <StatLabel $isDarkMode={isDarkMode}>获得铜币</StatLabel>
-              <AnimatedNumber value={stats.login.consecutiveDays} />
-              <StatLabel $isDarkMode={isDarkMode}>连续登录 {stats.login.consecutiveDays} 天</StatLabel>
+              <SlideTitle>
+                <Subtitle $isDarkMode={isDarkMode}>登录统计</Subtitle>
+              </SlideTitle>
+              <SlideBody>
+                <AnimatedNumber value={stats.login.totalCount} />
+                <StatLabel $isDarkMode={isDarkMode}>总登录次数</StatLabel>
+                <AnimatedNumber value={stats.login.totalCoins} />
+                <StatLabel $isDarkMode={isDarkMode}>获得铜币</StatLabel>
+                <AnimatedNumber value={stats.login.consecutiveDays} />
+                <StatLabel $isDarkMode={isDarkMode}>连续登录 {stats.login.consecutiveDays} 天</StatLabel>
+              </SlideBody>
             </SlideContent>
           </Slide>
         );
@@ -253,11 +273,15 @@ export function AnnualSummarySlides({ data }: AnnualSummarySlidesProps) {
         return (
           <Slide key={2} $totalSlides={totalSlides} ref={(el) => { slideRefs.current[2] = el; }}>
             <SlideContent>
-              <Subtitle $isDarkMode={isDarkMode}>回复统计</Subtitle>
-              <AnimatedNumber value={stats.reply.totalCount} />
-              <StatLabel $isDarkMode={isDarkMode}>总回复次数</StatLabel>
-              <AnimatedNumber value={stats.reply.totalCoinsSpent} />
-              <StatLabel $isDarkMode={isDarkMode}>消耗铜币</StatLabel>
+              <SlideTitle>
+                <Subtitle $isDarkMode={isDarkMode}>回复统计</Subtitle>
+              </SlideTitle>
+              <SlideBody>
+                <AnimatedNumber value={stats.reply.totalCount} />
+                <StatLabel $isDarkMode={isDarkMode}>总回复次数</StatLabel>
+                <AnimatedNumber value={stats.reply.totalCoinsSpent} />
+                <StatLabel $isDarkMode={isDarkMode}>消耗铜币</StatLabel>
+              </SlideBody>
             </SlideContent>
           </Slide>
         );
@@ -266,11 +290,15 @@ export function AnnualSummarySlides({ data }: AnnualSummarySlidesProps) {
         return (
           <Slide key={3} $totalSlides={totalSlides} ref={(el) => { slideRefs.current[3] = el; }}>
             <SlideContent>
-              <Subtitle $isDarkMode={isDarkMode}>发帖统计</Subtitle>
-              <AnimatedNumber value={stats.post.totalCount} />
-              <StatLabel $isDarkMode={isDarkMode}>总发帖次数</StatLabel>
-              <AnimatedNumber value={stats.post.totalCoinsSpent} />
-              <StatLabel $isDarkMode={isDarkMode}>消耗铜币</StatLabel>
+              <SlideTitle>
+                <Subtitle $isDarkMode={isDarkMode}>发帖统计</Subtitle>
+              </SlideTitle>
+              <SlideBody>
+                <AnimatedNumber value={stats.post.totalCount} />
+                <StatLabel $isDarkMode={isDarkMode}>总发帖次数</StatLabel>
+                <AnimatedNumber value={stats.post.totalCoinsSpent} />
+                <StatLabel $isDarkMode={isDarkMode}>消耗铜币</StatLabel>
+              </SlideBody>
             </SlideContent>
           </Slide>
         );
@@ -279,11 +307,15 @@ export function AnnualSummarySlides({ data }: AnnualSummarySlidesProps) {
         return (
           <Slide key={4} $totalSlides={totalSlides} ref={(el) => { slideRefs.current[4] = el; }}>
             <SlideContent>
-              <Subtitle $isDarkMode={isDarkMode}>感谢统计</Subtitle>
-              <AnimatedNumber value={stats.thank.totalCount} />
-              <StatLabel $isDarkMode={isDarkMode}>感谢他人次数</StatLabel>
-              <AnimatedNumber value={stats.thank.totalCoinsSpent} />
-              <StatLabel $isDarkMode={isDarkMode}>消耗铜币</StatLabel>
+              <SlideTitle>
+                <Subtitle $isDarkMode={isDarkMode}>感谢统计</Subtitle>
+              </SlideTitle>
+              <SlideBody>
+                <AnimatedNumber value={stats.thank.totalCount} />
+                <StatLabel $isDarkMode={isDarkMode}>感谢他人次数</StatLabel>
+                <AnimatedNumber value={stats.thank.totalCoinsSpent} />
+                <StatLabel $isDarkMode={isDarkMode}>消耗铜币</StatLabel>
+              </SlideBody>
             </SlideContent>
           </Slide>
         );
@@ -292,11 +324,15 @@ export function AnnualSummarySlides({ data }: AnnualSummarySlidesProps) {
         return (
           <Slide key={5} $totalSlides={totalSlides} ref={(el) => { slideRefs.current[5] = el; }}>
             <SlideContent>
-              <Subtitle $isDarkMode={isDarkMode}>收到感谢</Subtitle>
-              <AnimatedNumber value={stats.receivedThank.totalCount} />
-              <StatLabel $isDarkMode={isDarkMode}>收到感谢次数</StatLabel>
-              <AnimatedNumber value={stats.receivedThank.totalCoinsReceived} />
-              <StatLabel $isDarkMode={isDarkMode}>获得铜币</StatLabel>
+              <SlideTitle>
+                <Subtitle $isDarkMode={isDarkMode}>收到感谢</Subtitle>
+              </SlideTitle>
+              <SlideBody>
+                <AnimatedNumber value={stats.receivedThank.totalCount} />
+                <StatLabel $isDarkMode={isDarkMode}>收到感谢次数</StatLabel>
+                <AnimatedNumber value={stats.receivedThank.totalCoinsReceived} />
+                <StatLabel $isDarkMode={isDarkMode}>获得铜币</StatLabel>
+              </SlideBody>
             </SlideContent>
           </Slide>
         );
@@ -305,13 +341,17 @@ export function AnnualSummarySlides({ data }: AnnualSummarySlidesProps) {
         return (
           <Slide key={6} $totalSlides={totalSlides} ref={(el) => { slideRefs.current[6] = el; }}>
             <SlideContent>
-              <Subtitle $isDarkMode={isDarkMode}>铜币收支</Subtitle>
-              <AnimatedNumber value={stats.balance.totalIncome} />
-              <StatLabel $isDarkMode={isDarkMode}>总收入</StatLabel>
-              <AnimatedNumber value={stats.balance.totalExpense} />
-              <StatLabel $isDarkMode={isDarkMode}>总支出</StatLabel>
-              <AnimatedNumber value={stats.balance.netChange} />
-              <StatLabel $isDarkMode={isDarkMode}>净变化</StatLabel>
+              <SlideTitle>
+                <Subtitle $isDarkMode={isDarkMode}>铜币收支</Subtitle>
+              </SlideTitle>
+              <SlideBody>
+                <AnimatedNumber value={stats.balance.totalIncome} />
+                <StatLabel $isDarkMode={isDarkMode}>总收入</StatLabel>
+                <AnimatedNumber value={stats.balance.totalExpense} />
+                <StatLabel $isDarkMode={isDarkMode}>总支出</StatLabel>
+                <AnimatedNumber value={stats.balance.netChange} />
+                <StatLabel $isDarkMode={isDarkMode}>净变化</StatLabel>
+              </SlideBody>
             </SlideContent>
           </Slide>
         );
@@ -320,8 +360,12 @@ export function AnnualSummarySlides({ data }: AnnualSummarySlidesProps) {
         return (
           <Slide key={7} $totalSlides={totalSlides} ref={(el) => { slideRefs.current[7] = el; }}>
             <SlideContent>
-              <Subtitle $isDarkMode={isDarkMode}>活动热力图</Subtitle>
-              <StatLabel $isDarkMode={isDarkMode}>你的活跃时间分布</StatLabel>
+              <SlideTitle>
+                <Subtitle $isDarkMode={isDarkMode}>活动热力图</Subtitle>
+              </SlideTitle>
+              <SlideBody>
+                <StatLabel $isDarkMode={isDarkMode}>你的活跃时间分布</StatLabel>
+              </SlideBody>
             </SlideContent>
           </Slide>
         );
@@ -330,12 +374,16 @@ export function AnnualSummarySlides({ data }: AnnualSummarySlidesProps) {
         return (
           <Slide key={8} $totalSlides={totalSlides} ref={(el) => { slideRefs.current[8] = el; }}>
             <SlideContent>
-              <Subtitle $isDarkMode={isDarkMode}>我的称号</Subtitle>
-              <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '8px', marginTop: '20px' }}>
-                {titles.map(title => (
-                  <TitleBadge key={title.id}>{title.name}</TitleBadge>
-                ))}
-              </div>
+              <SlideTitle>
+                <Subtitle $isDarkMode={isDarkMode}>我的称号</Subtitle>
+              </SlideTitle>
+              <SlideBody>
+                <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '8px' }}>
+                  {titles.map(title => (
+                    <TitleBadge key={title.id}>{title.name}</TitleBadge>
+                  ))}
+                </div>
+              </SlideBody>
             </SlideContent>
           </Slide>
         );
