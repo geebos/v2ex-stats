@@ -4,7 +4,7 @@ import styled from 'styled-components';
 import { storage } from '@wxt-dev/storage';
 
 const ButtonContainer = styled.div`
-  margin: 16px 0;
+  margin: 16px 0 0 0;
   text-align: center;
 `;
 
@@ -32,13 +32,12 @@ const SummaryButton = styled.button`
 `;
 
 const FooterText = styled.div`
-  margin-top: 8px;
-  font-size: 12px;
+  margin-top: 4px;
+  font-size: 10px;
   color: #999;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
+  justify-content: space-between;
 `;
 
 const HideLink = styled.a`
