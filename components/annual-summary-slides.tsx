@@ -160,22 +160,92 @@ const SlideTitlesContainer = styled.div`
   margin-top: 24px;
 `;
 
-function getSlideRelatedTitles(titles: AnnualSummaryData['titles'], slideIndex: number) {
-  const prefixMap: Record<number, string[]> = {
-    1: ['login-'],
-    2: ['reply-'],
-    3: ['post-'],
-    4: ['thank-'],
-    5: ['received-thank-'],
-    6: ['balance-'],
+const HeatmapContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin: 16px 0;
+`;
+
+const HeatmapRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 2px;
+`;
+
+const HeatmapCell = styled.div<{ $intensity: number; $isDarkMode: boolean }>`
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  background: ${props => {
+    const intensity = props.$intensity;
+    if (intensity === 0) {
+      return props.$isDarkMode ? '#2d2d2d' : '#ebedf0';
+    }
+    const colors = props.$isDarkMode 
+      ? ['#0e4429', '#006d32', '#26a641', '#39d353']
+      : ['#9be9a8', '#40c463', '#30a14e', '#216e39'];
+    const index = Math.min(Math.floor(intensity * 4), 3);
+    return colors[index];
+  }};
+`;
+
+const HeatmapLabel = styled.div<{ $isDarkMode: boolean }>`
+  font-size: 10px;
+  color: ${props => props.$isDarkMode ? '#999' : '#666'};
+  width: 24px;
+  text-align: right;
+  margin-right: 4px;
+`;
+
+const HeatmapHourLabels = styled.div`
+  display: flex;
+  gap: 2px;
+  margin-left: 28px;
+`;
+
+const HeatmapHourLabel = styled.div<{ $isDarkMode: boolean }>`
+  width: 12px;
+  font-size: 8px;
+  color: ${props => props.$isDarkMode ? '#999' : '#666'};
+  text-align: center;
+`;
+
+const HeatmapLegend = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 12px;
+`;
+
+const HeatmapLegendLabel = styled.span<{ $isDarkMode: boolean }>`
+  font-size: 10px;
+  color: ${props => props.$isDarkMode ? '#999' : '#666'};
+`;
+
+function getSlideRelatedTitles(titles: AnnualSummaryData['titles'], slideType: string) {
+  const prefixMap: Record<string, string[]> = {
+    login: ['login-'],
+    reply: ['reply-'],
+    post: ['post-'],
+    thank: ['thank-'],
+    receivedThank: ['received-thank-'],
+    balance: ['balance-'],
+    heatmap: ['activity-'],
   };
 
-  const prefixes = prefixMap[slideIndex];
+  const prefixes = prefixMap[slideType];
   if (!prefixes) return [];
 
   return titles.filter(title => 
     prefixes.some(prefix => title.id.startsWith(prefix))
   );
+}
+
+function hasActivityData(data: AnnualSummaryData['stats']['activityHeatmap']): boolean {
+  if (!data || !data.data || data.data.length === 0) return false;
+  return data.maxValue > 0;
 }
 
 function AnimatedNumber({ value, duration = 1000 }: { value: number; duration?: number }) {
@@ -208,6 +278,8 @@ function AnimatedNumber({ value, duration = 1000 }: { value: number; duration?: 
   return <StatNumber>{displayValue.toLocaleString()}</StatNumber>;
 }
 
+const WEEKDAY_LABELS = ['日', '一', '二', '三', '四', '五', '六'];
+
 export function AnnualSummarySlides({ data }: AnnualSummarySlidesProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -217,7 +289,8 @@ export function AnnualSummarySlides({ data }: AnnualSummarySlidesProps) {
     setIsDarkMode(getIsDarkMode());
   }, []);
 
-  const totalSlides = 9;
+  const showHeatmap = hasActivityData(data.stats.activityHeatmap);
+  const totalSlides = showHeatmap ? 9 : 8;
 
   const handlePrev = () => {
     if (currentIndex > 0) {
@@ -257,8 +330,55 @@ export function AnnualSummarySlides({ data }: AnnualSummarySlidesProps) {
     }
   };
 
+  const renderHeatmap = () => {
+    const { data: heatmapData, maxValue } = data.stats.activityHeatmap;
+    
+    return (
+      <HeatmapContainer>
+        <HeatmapHourLabels>
+          {Array.from({ length: 24 }, (_, i) => (
+            <HeatmapHourLabel key={i} $isDarkMode={isDarkMode}>
+              {i % 3 === 0 ? i : ''}
+            </HeatmapHourLabel>
+          ))}
+        </HeatmapHourLabels>
+        {WEEKDAY_LABELS.map((label, weekday) => (
+          <HeatmapRow key={weekday}>
+            <HeatmapLabel $isDarkMode={isDarkMode}>{label}</HeatmapLabel>
+            {Array.from({ length: 24 }, (_, hour) => {
+              const value = heatmapData[weekday]?.[hour] ?? 0;
+              const intensity = maxValue > 0 ? value / maxValue : 0;
+              return (
+                <HeatmapCell
+                  key={hour}
+                  $intensity={intensity}
+                  $isDarkMode={isDarkMode}
+                  title={`周${label} ${hour}:00 - ${value} 次活动`}
+                />
+              );
+            })}
+          </HeatmapRow>
+        ))}
+        <HeatmapLegend>
+          <HeatmapLegendLabel $isDarkMode={isDarkMode}>少</HeatmapLegendLabel>
+          {[0, 0.25, 0.5, 0.75, 1].map((intensity, i) => (
+            <HeatmapCell key={i} $intensity={intensity} $isDarkMode={isDarkMode} />
+          ))}
+          <HeatmapLegendLabel $isDarkMode={isDarkMode}>多</HeatmapLegendLabel>
+        </HeatmapLegend>
+      </HeatmapContainer>
+    );
+  };
+
   const renderSlide = (index: number) => {
     const { stats, titles } = data;
+    
+    // 计算实际的幻灯片类型
+    // 0: cover, 1: login, 2: reply, 3: post, 4: thank, 5: receivedThank, 6: balance
+    // 如果有热力图: 7: heatmap, 8: titles
+    // 如果没有热力图: 7: titles
+    const heatmapIndex = showHeatmap ? 7 : -1;
+    const titlesIndex = showHeatmap ? 8 : 7;
 
     switch (index) {
       case 0:
@@ -275,7 +395,7 @@ export function AnnualSummarySlides({ data }: AnnualSummarySlidesProps) {
         );
 
       case 1: {
-        const loginTitles = getSlideRelatedTitles(titles, 1);
+        const loginTitles = getSlideRelatedTitles(titles, 'login');
         return (
           <Slide key={1} $totalSlides={totalSlides} ref={(el) => { slideRefs.current[1] = el; }}>
             <SlideContent>
@@ -303,7 +423,7 @@ export function AnnualSummarySlides({ data }: AnnualSummarySlidesProps) {
       }
 
       case 2: {
-        const replyTitles = getSlideRelatedTitles(titles, 2);
+        const replyTitles = getSlideRelatedTitles(titles, 'reply');
         return (
           <Slide key={2} $totalSlides={totalSlides} ref={(el) => { slideRefs.current[2] = el; }}>
             <SlideContent>
@@ -329,7 +449,7 @@ export function AnnualSummarySlides({ data }: AnnualSummarySlidesProps) {
       }
 
       case 3: {
-        const postTitles = getSlideRelatedTitles(titles, 3);
+        const postTitles = getSlideRelatedTitles(titles, 'post');
         return (
           <Slide key={3} $totalSlides={totalSlides} ref={(el) => { slideRefs.current[3] = el; }}>
             <SlideContent>
@@ -355,7 +475,7 @@ export function AnnualSummarySlides({ data }: AnnualSummarySlidesProps) {
       }
 
       case 4: {
-        const thankTitles = getSlideRelatedTitles(titles, 4);
+        const thankTitles = getSlideRelatedTitles(titles, 'thank');
         return (
           <Slide key={4} $totalSlides={totalSlides} ref={(el) => { slideRefs.current[4] = el; }}>
             <SlideContent>
@@ -381,7 +501,7 @@ export function AnnualSummarySlides({ data }: AnnualSummarySlidesProps) {
       }
 
       case 5: {
-        const receivedThankTitles = getSlideRelatedTitles(titles, 5);
+        const receivedThankTitles = getSlideRelatedTitles(titles, 'receivedThank');
         return (
           <Slide key={5} $totalSlides={totalSlides} ref={(el) => { slideRefs.current[5] = el; }}>
             <SlideContent>
@@ -407,7 +527,7 @@ export function AnnualSummarySlides({ data }: AnnualSummarySlidesProps) {
       }
 
       case 6: {
-        const balanceTitles = getSlideRelatedTitles(titles, 6);
+        const balanceTitles = getSlideRelatedTitles(titles, 'balance');
         return (
           <Slide key={6} $totalSlides={totalSlides} ref={(el) => { slideRefs.current[6] = el; }}>
             <SlideContent>
@@ -434,39 +554,52 @@ export function AnnualSummarySlides({ data }: AnnualSummarySlidesProps) {
         );
       }
 
-      case 7:
-        return (
-          <Slide key={7} $totalSlides={totalSlides} ref={(el) => { slideRefs.current[7] = el; }}>
-            <SlideContent>
-              <SlideTitle>
-                <Subtitle $isDarkMode={isDarkMode}>活动热力图</Subtitle>
-              </SlideTitle>
-              <SlideBody>
-                <StatLabel $isDarkMode={isDarkMode}>你的活跃时间分布</StatLabel>
-              </SlideBody>
-            </SlideContent>
-          </Slide>
-        );
-
-      case 8:
-        return (
-          <Slide key={8} $totalSlides={totalSlides} ref={(el) => { slideRefs.current[8] = el; }}>
-            <SlideContent>
-              <SlideTitle>
-                <Subtitle $isDarkMode={isDarkMode}>我的称号</Subtitle>
-              </SlideTitle>
-              <SlideBody>
-                <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '8px' }}>
-                  {titles.map(title => (
-                    <TitleBadge key={title.id}>{title.name}</TitleBadge>
-                  ))}
-                </div>
-              </SlideBody>
-            </SlideContent>
-          </Slide>
-        );
-
       default:
+        // 热力图页面（仅当 showHeatmap 为 true 时）
+        if (index === heatmapIndex && showHeatmap) {
+          const heatmapTitles = getSlideRelatedTitles(titles, 'heatmap');
+          return (
+            <Slide key={7} $totalSlides={totalSlides} ref={(el) => { slideRefs.current[7] = el; }}>
+              <SlideContent>
+                <SlideTitle>
+                  <Subtitle $isDarkMode={isDarkMode}>活动热力图</Subtitle>
+                </SlideTitle>
+                <SlideBody>
+                  <StatLabel $isDarkMode={isDarkMode}>你的活跃时间分布</StatLabel>
+                  {renderHeatmap()}
+                  {heatmapTitles.length > 0 && (
+                    <SlideTitlesContainer>
+                      {heatmapTitles.map(title => (
+                        <TitleBadge key={title.id}>{title.name}</TitleBadge>
+                      ))}
+                    </SlideTitlesContainer>
+                  )}
+                </SlideBody>
+              </SlideContent>
+            </Slide>
+          );
+        }
+
+        // 称号汇总页面
+        if (index === titlesIndex) {
+          return (
+            <Slide key={index} $totalSlides={totalSlides} ref={(el) => { slideRefs.current[index] = el; }}>
+              <SlideContent>
+                <SlideTitle>
+                  <Subtitle $isDarkMode={isDarkMode}>我的称号</Subtitle>
+                </SlideTitle>
+                <SlideBody>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '8px' }}>
+                    {titles.map(title => (
+                      <TitleBadge key={title.id}>{title.name}</TitleBadge>
+                    ))}
+                  </div>
+                </SlideBody>
+              </SlideContent>
+            </Slide>
+          );
+        }
+
         return null;
     }
   };

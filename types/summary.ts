@@ -70,7 +70,7 @@ export interface TimeDistribution {
 export interface Title {
   id: string;
   name: string;
-  category: 'login' | 'content' | 'interaction' | 'wealth';
+  category: 'login' | 'content' | 'interaction' | 'wealth' | 'activity';
   priority: number;
 }
 

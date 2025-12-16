@@ -9,6 +9,7 @@ export function generateTitles(stats: AnnualSummaryStats): Title[] {
   titles.push(...generateThankTitles(stats.thank));
   titles.push(...generateReceivedThankTitles(stats.receivedThank));
   titles.push(...generateBalanceTitles(stats.balance));
+  titles.push(...generateActivityHeatmapTitles(stats.activityHeatmap));
 
   return titles.sort((a, b) => b.priority - a.priority);
 }
@@ -191,6 +192,73 @@ function generateBalanceTitles(balance: AnnualSummaryStats['balance']): Title[] 
       titles.push({ id: 'balance-expense-3', name: '挥金如土', category: 'wealth', priority: 2 });
     } else {
       titles.push({ id: 'balance-expense-4', name: '入不敷出', category: 'wealth', priority: 1 });
+    }
+  }
+
+  return titles;
+}
+
+function generateActivityHeatmapTitles(activityHeatmap: AnnualSummaryStats['activityHeatmap']): Title[] {
+  const titles: Title[] = [];
+  const { data, maxValue } = activityHeatmap;
+
+  if (!data || data.length === 0 || maxValue === 0) {
+    return titles;
+  }
+
+  // 计算每个小时的总活动量
+  const hourlyActivity = new Array(24).fill(0);
+  for (let weekday = 0; weekday < 7; weekday++) {
+    for (let hour = 0; hour < 24; hour++) {
+      hourlyActivity[hour] += data[weekday]?.[hour] ?? 0;
+    }
+  }
+
+  // 找出最活跃的时段
+  let peakHour = 0;
+  let peakValue = 0;
+  for (let hour = 0; hour < 24; hour++) {
+    if (hourlyActivity[hour] > peakValue) {
+      peakValue = hourlyActivity[hour];
+      peakHour = hour;
+    }
+  }
+
+  // 根据最活跃时段生成称号
+  if (peakHour >= 6 && peakHour < 9) {
+    titles.push({ id: 'activity-time-morning', name: '早起鸟', category: 'activity', priority: 2 });
+  } else if (peakHour >= 11 && peakHour < 14) {
+    titles.push({ id: 'activity-time-noon', name: '午间战士', category: 'activity', priority: 2 });
+  } else if (peakHour >= 14 && peakHour < 18) {
+    titles.push({ id: 'activity-time-afternoon', name: '午后思考者', category: 'activity', priority: 2 });
+  } else if (peakHour >= 19 && peakHour < 23) {
+    titles.push({ id: 'activity-time-evening', name: '夜间精灵', category: 'activity', priority: 2 });
+  } else {
+    titles.push({ id: 'activity-time-night', name: '深夜猫头鹰', category: 'activity', priority: 2 });
+  }
+
+  // 计算工作日和周末的活动量
+  let weekdayActivity = 0;
+  let weekendActivity = 0;
+  for (let weekday = 0; weekday < 7; weekday++) {
+    const dailySum = data[weekday]?.reduce((sum, val) => sum + val, 0) ?? 0;
+    if (weekday >= 1 && weekday <= 5) {
+      weekdayActivity += dailySum;
+    } else {
+      weekendActivity += dailySum;
+    }
+  }
+
+  // 根据工作日/周末活跃度生成称号
+  const totalActivity = weekdayActivity + weekendActivity;
+  if (totalActivity > 0) {
+    const weekdayRatio = weekdayActivity / totalActivity;
+    if (weekdayRatio > 0.75) {
+      titles.push({ id: 'activity-weekday', name: '工作日战士', category: 'activity', priority: 2 });
+    } else if (weekdayRatio < 0.5) {
+      titles.push({ id: 'activity-weekend', name: '周末达人', category: 'activity', priority: 2 });
+    } else {
+      titles.push({ id: 'activity-balanced', name: '全天候在线', category: 'activity', priority: 1 });
     }
   }
 
