@@ -10,7 +10,7 @@ function isInDisplayPeriod(): boolean {
   const day = now.getDate();
 
   // 12月25日 - 12月31日
-  if (month === 12 && day >= 2) {
+  if (month === 12 && day >= 22) {
     return true;
   }
   // 1月1日 - 1月20日
