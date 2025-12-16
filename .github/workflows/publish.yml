@@ -57,7 +57,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: sources
-          path: output/
+          path: .
       - name: Release to chrome
         if: ${{ !env.ACT }}
         run: |
@@ -79,7 +79,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: sources
-          path: output/
+          path: .
       - name: Release to firefox
         if: ${{ !env.ACT }}
         run: |
@@ -100,7 +100,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: sources
-          path: output/
+          path: .
       - name: Release to github
         if: ${{ !env.ACT }}
         uses: softprops/action-gh-release@v2.3.2

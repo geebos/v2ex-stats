@@ -8,7 +8,10 @@ import { collectPostInfo } from '@/service/history/collect';
 import { tryInitUI } from '@/ui';
 import { tryInitAnnualSummaryButton } from '@/components/annual-summary-button';
 import { showAnnualSummaryModal } from '@/components/annual-summary-modal';
-import { generateAnnualSummary } from '@/service/summary';
+import { showAnnualDataInitModal } from '@/components/annual-data-init-modal';
+import { generateAnnualSummary, getNearestYear } from '@/service/summary';
+import { initNewBalanceRecords } from '@/service/balance/crawler';
+import { getAnnualReportInited, setAnnualReportInited } from '@/service/storage';
 
 // ==================== 页面检测和信息获取 ====================
 
@@ -74,7 +77,31 @@ export default defineContentScript({
 
     await tryInitAnnualSummaryButton(info.username, async () => {
       try {
-        const summaryData = await generateAnnualSummary(info.username, 2025);
+        const targetYear = getNearestYear();
+        
+        // 检查年度报告数据是否已初始化（使用年度报告专用标记）
+        const isInited = await getAnnualReportInited(info.username, targetYear);
+        console.log('[年度报告] 数据是否已初始化:', isInited);
+        
+        if (!isInited) {
+          // 未初始化，弹窗请求用户同意
+          console.log('[年度报告] 数据未初始化，需要用户确认');
+          const confirmed = await showAnnualDataInitModal(info.username, targetYear);
+          
+          if (!confirmed) {
+            console.log('[年度报告] 用户取消初始化');
+            return;
+          }
+          
+          console.log('[年度报告] 数据初始化完成');
+        } else {
+          // 已初始化，静默更新最新数据
+          console.log('[年度报告] 更新最新数据');
+          await initNewBalanceRecords(info.username);
+        }
+        
+        // 生成并展示年度报告
+        const summaryData = await generateAnnualSummary(info.username, targetYear);
         showAnnualSummaryModal(summaryData);
       } catch (error) {
         console.error('生成年终总结失败:', error);

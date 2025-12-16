@@ -22,9 +22,9 @@ import { SVGRenderer } from 'echarts/renderers';
 import { BalanceRecord, Granularity } from "@/types/types";
 
 // 服务模块
-import { parseBalanceMaxPage, parseBalanceRecord, parseBalanceRecords, startCrawler } from "@/service/balance/crawler";
-import { alignBanlanceRecordsTimeSeries, appendBalanceRecords, getLatestBalanceRecord, queryAggBalanceRecords } from "@/service/balance/query";
-import { getIsInited, getLatestCrawlerPage, getStorageSize, setIsInited, setLatestCrawlerPage } from "@/service/storage";
+import { initBalanceData } from "@/service/balance/crawler";
+import { alignBanlanceRecordsTimeSeries, queryAggBalanceRecords } from "@/service/balance/query";
+import { getStorageSize } from "@/service/storage";
 import { adjustChartDarkMode, formatBytes, formatTimestamp, getIsDarkMode } from "@/service/utils";
 import { isCoinStatsEnabled } from "@/service/config";
 
@@ -449,87 +449,21 @@ function ChartApp(props: { username: string }) {
     totalPages: 0
   });
 
-  // 初始化余额历史数据（首次抓取）
-  const initBalanceRecords = async (maxPage: number) => {
-    const startPage = await getLatestCrawlerPage(props.username);
-    console.log('开始初始化余额历史数据, 最大页数:', maxPage, '开始页数:', startPage);
-
-    setCrawlerProgress({ isLoading: true, currentPage: 0, totalPages: maxPage });
-
-    await startCrawler(startPage, maxPage, props.username, async (page, records) => {
-      console.log(`抓取第${page}页:`, records.length, '条记录', records);
-      await appendBalanceRecords(records);
-      await setLatestCrawlerPage(props.username, page);
-
-      setCrawlerProgress({ isLoading: true, currentPage: page, totalPages: maxPage });
-
-      await chartRef.current?.updateCharts();
-      return true;
-    });
-
-    await setIsInited(props.username, true);
-    console.log('初始化余额历史数据完成');
-
-    setCrawlerProgress({ isLoading: false, currentPage: 0, totalPages: 0 });
-  }
-
-  // 增量抓取新的余额记录
-  const initNewBalanceRecords = async (maxPage: number) => {
-    // 获取最新的余额记录时间戳
-    const latestRecord = await getLatestBalanceRecord(props.username);
-    const latestTimestamp = latestRecord?.timestamp ?? 0;
-
-    console.log('开始增量抓取, 最新时间戳:', latestTimestamp, props.username);
-
-    const processRecords = async (page: number, records: BalanceRecord[]): Promise<boolean> => {
-      // 过滤出新的记录（时间戳大于最新记录的时间戳）
-      // 可能导致同样时间戳的记录漏抓，但概率极低优先保证性能
-      const newRecords = records.filter(record => record.timestamp > latestTimestamp);
-
-      if (newRecords.length > 0) {
-        console.log(`抓取第${page}页: 新增${newRecords.length}/${records.length}条记录`, newRecords);
-        await appendBalanceRecords(newRecords);
-        // 如果新记录数量等于页面记录数量，说明这页都是新记录，继续抓取
-        return newRecords.length === records.length;
-      }
-
-      console.log('没有新记录，停止抓取 page:', page, 'records:', records);
-      // 没有新记录，停止抓取
-      return false;
-    }
-
-    // 第一页直接从当前页面获取
-    const rawRecords = parseBalanceRecords(document);
-    const records = rawRecords.map(parseBalanceRecord).map(record => ({ ...record, username: props.username }));
-    if (!await processRecords(1, records)) {
-      console.log('在第一页发现最新记录，停止增量抓取');
-      return;
-    }
-
-    // 从第二页开始增量抓取
-    console.log('从第二页开始增量抓取');
-    await startCrawler(2, maxPage, props.username, processRecords);
-
-    // 更新图表
-    await chartRef.current?.updateCharts();
-    console.log('增量抓取完成');
-  }
-
   // 初始化应用，根据是否已初始化决定执行首次抓取还是增量抓取
   const initApp = async () => {
-    // 解析余额记录的最大页数
-    const maxPage = parseBalanceMaxPage(document);
-
-    // 检查是否已经初始化过
-    const isInited = await getIsInited(props.username);
-
-    if (!isInited) {
-      // 首次初始化，抓取所有历史数据
-      await initBalanceRecords(maxPage);
-    } else {
-      // 已初始化，只需要增量抓取新数据
-      await initNewBalanceRecords(maxPage);
-    }
+    await initBalanceData(props.username, document, {
+      onStart: (maxPage) => {
+        setCrawlerProgress({ isLoading: true, currentPage: 0, totalPages: maxPage });
+      },
+      onCrawl: async (page, maxPage) => {
+        setCrawlerProgress({ isLoading: true, currentPage: page, totalPages: maxPage });
+        await chartRef.current?.updateCharts();
+      },
+      onFinish: () => {
+        setCrawlerProgress({ isLoading: false, currentPage: 0, totalPages: 0 });
+      }
+    });
+    await chartRef.current?.updateCharts();
   }
 
   // 组件挂载时初始化应用

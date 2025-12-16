@@ -50,10 +50,22 @@ const setLatestCrawlerPage = async (username: string, page: number) => {
   await storage.setItem(`local:latestCrawlerPage:${username}`, page);
 };
 
+// 年度报告专用的初始化标记
+const getAnnualReportInited = async (username: string, year: number) => {
+  const isInited = await storage.getItem<boolean>(`local:annualReportInited:${year}:${username}`);
+  return isInited ?? false;
+};
+
+const setAnnualReportInited = async (username: string, year: number, isInited: boolean) => {
+  await storage.setItem(`local:annualReportInited:${year}:${username}`, isInited);
+};
+
 export {
   getIsInited,
   setIsInited,
   getLatestCrawlerPage,
   setLatestCrawlerPage,
   getStorageSize,
+  getAnnualReportInited,
+  setAnnualReportInited,
 };

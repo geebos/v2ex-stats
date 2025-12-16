@@ -201,4 +201,3 @@ export function getNearestYear(): number {
   
   return currentMonth < 6 ? currentYear - 1 : currentYear;
 }
-
