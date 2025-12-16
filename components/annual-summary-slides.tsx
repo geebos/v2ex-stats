@@ -152,6 +152,32 @@ interface AnnualSummarySlidesProps {
   data: AnnualSummaryData;
 }
 
+const SlideTitlesContainer = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 24px;
+`;
+
+function getSlideRelatedTitles(titles: AnnualSummaryData['titles'], slideIndex: number) {
+  const prefixMap: Record<number, string[]> = {
+    1: ['login-'],
+    2: ['reply-'],
+    3: ['post-'],
+    4: ['thank-'],
+    5: ['received-thank-'],
+    6: ['balance-'],
+  };
+
+  const prefixes = prefixMap[slideIndex];
+  if (!prefixes) return [];
+
+  return titles.filter(title => 
+    prefixes.some(prefix => title.id.startsWith(prefix))
+  );
+}
+
 function AnimatedNumber({ value, duration = 1000 }: { value: number; duration?: number }) {
   const [displayValue, setDisplayValue] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -248,7 +274,8 @@ export function AnnualSummarySlides({ data }: AnnualSummarySlidesProps) {
           </Slide>
         );
 
-      case 1:
+      case 1: {
+        const loginTitles = getSlideRelatedTitles(titles, 1);
         return (
           <Slide key={1} $totalSlides={totalSlides} ref={(el) => { slideRefs.current[1] = el; }}>
             <SlideContent>
@@ -262,12 +289,21 @@ export function AnnualSummarySlides({ data }: AnnualSummarySlidesProps) {
                 <StatLabel $isDarkMode={isDarkMode}>获得铜币</StatLabel>
                 <AnimatedNumber value={stats.login.consecutiveDays} />
                 <StatLabel $isDarkMode={isDarkMode}>连续登录 {stats.login.consecutiveDays} 天</StatLabel>
+                {loginTitles.length > 0 && (
+                  <SlideTitlesContainer>
+                    {loginTitles.map(title => (
+                      <TitleBadge key={title.id}>{title.name}</TitleBadge>
+                    ))}
+                  </SlideTitlesContainer>
+                )}
               </SlideBody>
             </SlideContent>
           </Slide>
         );
+      }
 
-      case 2:
+      case 2: {
+        const replyTitles = getSlideRelatedTitles(titles, 2);
         return (
           <Slide key={2} $totalSlides={totalSlides} ref={(el) => { slideRefs.current[2] = el; }}>
             <SlideContent>
@@ -279,12 +315,21 @@ export function AnnualSummarySlides({ data }: AnnualSummarySlidesProps) {
                 <StatLabel $isDarkMode={isDarkMode}>总回复次数</StatLabel>
                 <AnimatedNumber value={stats.reply.totalCoinsSpent} />
                 <StatLabel $isDarkMode={isDarkMode}>消耗铜币</StatLabel>
+                {replyTitles.length > 0 && (
+                  <SlideTitlesContainer>
+                    {replyTitles.map(title => (
+                      <TitleBadge key={title.id}>{title.name}</TitleBadge>
+                    ))}
+                  </SlideTitlesContainer>
+                )}
               </SlideBody>
             </SlideContent>
           </Slide>
         );
+      }
 
-      case 3:
+      case 3: {
+        const postTitles = getSlideRelatedTitles(titles, 3);
         return (
           <Slide key={3} $totalSlides={totalSlides} ref={(el) => { slideRefs.current[3] = el; }}>
             <SlideContent>
@@ -296,12 +341,21 @@ export function AnnualSummarySlides({ data }: AnnualSummarySlidesProps) {
                 <StatLabel $isDarkMode={isDarkMode}>总发帖次数</StatLabel>
                 <AnimatedNumber value={stats.post.totalCoinsSpent} />
                 <StatLabel $isDarkMode={isDarkMode}>消耗铜币</StatLabel>
+                {postTitles.length > 0 && (
+                  <SlideTitlesContainer>
+                    {postTitles.map(title => (
+                      <TitleBadge key={title.id}>{title.name}</TitleBadge>
+                    ))}
+                  </SlideTitlesContainer>
+                )}
               </SlideBody>
             </SlideContent>
           </Slide>
         );
+      }
 
-      case 4:
+      case 4: {
+        const thankTitles = getSlideRelatedTitles(titles, 4);
         return (
           <Slide key={4} $totalSlides={totalSlides} ref={(el) => { slideRefs.current[4] = el; }}>
             <SlideContent>
@@ -313,12 +367,21 @@ export function AnnualSummarySlides({ data }: AnnualSummarySlidesProps) {
                 <StatLabel $isDarkMode={isDarkMode}>感谢他人次数</StatLabel>
                 <AnimatedNumber value={stats.thank.totalCoinsSpent} />
                 <StatLabel $isDarkMode={isDarkMode}>消耗铜币</StatLabel>
+                {thankTitles.length > 0 && (
+                  <SlideTitlesContainer>
+                    {thankTitles.map(title => (
+                      <TitleBadge key={title.id}>{title.name}</TitleBadge>
+                    ))}
+                  </SlideTitlesContainer>
+                )}
               </SlideBody>
             </SlideContent>
           </Slide>
         );
+      }
 
-      case 5:
+      case 5: {
+        const receivedThankTitles = getSlideRelatedTitles(titles, 5);
         return (
           <Slide key={5} $totalSlides={totalSlides} ref={(el) => { slideRefs.current[5] = el; }}>
             <SlideContent>
@@ -330,12 +393,21 @@ export function AnnualSummarySlides({ data }: AnnualSummarySlidesProps) {
                 <StatLabel $isDarkMode={isDarkMode}>收到感谢次数</StatLabel>
                 <AnimatedNumber value={stats.receivedThank.totalCoinsReceived} />
                 <StatLabel $isDarkMode={isDarkMode}>获得铜币</StatLabel>
+                {receivedThankTitles.length > 0 && (
+                  <SlideTitlesContainer>
+                    {receivedThankTitles.map(title => (
+                      <TitleBadge key={title.id}>{title.name}</TitleBadge>
+                    ))}
+                  </SlideTitlesContainer>
+                )}
               </SlideBody>
             </SlideContent>
           </Slide>
         );
+      }
 
-      case 6:
+      case 6: {
+        const balanceTitles = getSlideRelatedTitles(titles, 6);
         return (
           <Slide key={6} $totalSlides={totalSlides} ref={(el) => { slideRefs.current[6] = el; }}>
             <SlideContent>
@@ -349,10 +421,18 @@ export function AnnualSummarySlides({ data }: AnnualSummarySlidesProps) {
                 <StatLabel $isDarkMode={isDarkMode}>总支出</StatLabel>
                 <AnimatedNumber value={stats.balance.netChange} />
                 <StatLabel $isDarkMode={isDarkMode}>净变化</StatLabel>
+                {balanceTitles.length > 0 && (
+                  <SlideTitlesContainer>
+                    {balanceTitles.map(title => (
+                      <TitleBadge key={title.id}>{title.name}</TitleBadge>
+                    ))}
+                  </SlideTitlesContainer>
+                )}
               </SlideBody>
             </SlideContent>
           </Slide>
         );
+      }
 
       case 7:
         return (
