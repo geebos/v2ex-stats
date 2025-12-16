@@ -72,6 +72,8 @@ export interface Title {
   name: string;
   category: 'login' | 'content' | 'interaction' | 'wealth' | 'activity';
   priority: number;
+  description: string;
+  thresholdDescription: string;
 }
 
 export interface AnnualSummaryData {

@@ -1,6 +1,6 @@
 import { createElement, useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
-import { FaChevronLeft, FaChevronRight, FaDownload } from 'react-icons/fa';
+import { FaChevronLeft, FaChevronRight, FaDownload, FaEye, FaEyeSlash } from 'react-icons/fa';
 import type { AnnualSummaryData } from '@/types/summary';
 import { getIsDarkMode } from '@/service/utils';
 
@@ -126,10 +126,16 @@ const PageIndicator = styled.div<{ $isDarkMode: boolean }>`
   padding: 0 12px;
 `;
 
-const DownloadButton = styled.button`
+const ActionButtonsContainer = styled.div`
   position: absolute;
   bottom: 20px;
   right: 20px;
+  display: flex;
+  gap: 8px;
+  z-index: 10;
+`;
+
+const ActionButton = styled.button`
   width: 40px;
   height: 40px;
   border: none;
@@ -141,7 +147,6 @@ const DownloadButton = styled.button`
   align-items: center;
   justify-content: center;
   transition: background 0.2s;
-  z-index: 10;
 
   &:hover {
     background: rgba(102, 126, 234, 1);
@@ -158,6 +163,33 @@ const SlideTitlesContainer = styled.div`
   justify-content: center;
   gap: 8px;
   margin-top: 24px;
+`;
+
+const TitleDetailItem = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  border-radius: 12px;
+  min-width: 140px;
+`;
+
+const TitleDetailName = styled.span`
+  display: inline-block;
+  padding: 4px 10px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 600;
+`;
+
+const TitleDetailDescription = styled.span<{ $isDarkMode: boolean }>`
+  font-size: 12px;
+  color: ${props => props.$isDarkMode ? '#999' : '#666'};
+  text-align: center;
 `;
 
 const HeatmapContainer = styled.div`
@@ -283,6 +315,7 @@ const WEEKDAY_LABELS = ['日', '一', '二', '三', '四', '五', '六'];
 export function AnnualSummarySlides({ data }: AnnualSummarySlidesProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isPrivacyMode, setIsPrivacyMode] = useState(false);
   const slideRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   useEffect(() => {
@@ -585,13 +618,15 @@ export function AnnualSummarySlides({ data }: AnnualSummarySlidesProps) {
           return (
             <Slide key={index} $totalSlides={totalSlides} ref={(el) => { slideRefs.current[index] = el; }}>
               <SlideContent>
-                <SlideTitle>
-                  <Subtitle $isDarkMode={isDarkMode}>我的称号</Subtitle>
-                </SlideTitle>
                 <SlideBody>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '8px' }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '12px', padding: '0 16px' }}>
                     {titles.map(title => (
-                      <TitleBadge key={title.id}>{title.name}</TitleBadge>
+                      <TitleDetailItem key={title.id}>
+                        <TitleDetailName>{title.name}</TitleDetailName>
+                        <TitleDetailDescription $isDarkMode={isDarkMode}>
+                          {isPrivacyMode ? title.thresholdDescription : title.description}
+                        </TitleDetailDescription>
+                      </TitleDetailItem>
                     ))}
                   </div>
                 </SlideBody>
@@ -620,9 +655,16 @@ export function AnnualSummarySlides({ data }: AnnualSummarySlidesProps) {
           <FaChevronRight />
         </NavButton>
       </Navigation>
-      <DownloadButton onClick={handleDownload}>
-        <FaDownload />
-      </DownloadButton>
+      <ActionButtonsContainer>
+        {currentIndex === totalSlides - 1 && (
+          <ActionButton onClick={() => setIsPrivacyMode(!isPrivacyMode)} title={isPrivacyMode ? '显示详细数据' : '隐藏详细数据'}>
+            {isPrivacyMode ? <FaEyeSlash /> : <FaEye />}
+          </ActionButton>
+        )}
+        <ActionButton onClick={handleDownload} title="下载当前页面">
+          <FaDownload />
+        </ActionButton>
+      </ActionButtonsContainer>
     </SlidesContainer>
   );
 }
