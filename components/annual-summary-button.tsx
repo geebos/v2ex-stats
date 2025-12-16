@@ -2,6 +2,7 @@ import { createElement, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import styled from 'styled-components';
 import { storage } from '@wxt-dev/storage';
+import { getNearestYear } from '@/service/summary';
 
 const ButtonContainer = styled.div`
   margin: 16px 0 0 0;
@@ -77,10 +78,12 @@ function AnnualSummaryButton({ username, onOpen }: AnnualSummaryButtonProps) {
     return null;
   }
 
+  const nearestYear = getNearestYear();
+
   return (
     <ButtonContainer>
       <SummaryButton onClick={onOpen}>
-        查看你的 2025 年终总结
+        查看你的 {nearestYear} 年度总结
       </SummaryButton>
       <FooterText>
         <span>from V2EX Stats</span>

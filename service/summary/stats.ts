@@ -188,3 +188,16 @@ export function getDefaultDateRange(): { startDate: number; endDate: number } {
   return { startDate, endDate };
 }
 
+/**
+ * 计算距离最近的年份
+ * 如果当前月份小于6（1-5月），使用上一年的年份
+ * 否则使用当前年的年份
+ */
+export function getNearestYear(): number {
+  const now = new Date();
+  const currentMonth = now.getMonth() + 1; // getMonth() 返回 0-11
+  const currentYear = now.getFullYear();
+  
+  return currentMonth < 6 ? currentYear - 1 : currentYear;
+}
+

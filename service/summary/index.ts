@@ -1,15 +1,16 @@
-import { calculateAnnualSummaryStats, getDefaultDateRange } from './stats';
+import { calculateAnnualSummaryStats, getDefaultDateRange, getNearestYear } from './stats';
 import { generateTitles } from './titles';
 import type { AnnualSummaryData } from '@/types/summary';
 
-export async function generateAnnualSummary(username: string, year: number = 2025): Promise<AnnualSummaryData> {
+export async function generateAnnualSummary(username: string, year?: number): Promise<AnnualSummaryData> {
   const { startDate, endDate } = getDefaultDateRange();
   const stats = await calculateAnnualSummaryStats(username, startDate, endDate);
   const titles = generateTitles(stats);
+  const finalYear = year ?? getNearestYear();
 
   return {
     username,
-    year,
+    year: finalYear,
     startDate,
     endDate,
     stats,
@@ -17,6 +18,6 @@ export async function generateAnnualSummary(username: string, year: number = 202
   };
 }
 
-export { calculateAnnualSummaryStats, getDefaultDateRange } from './stats';
+export { calculateAnnualSummaryStats, getDefaultDateRange, getNearestYear } from './stats';
 export { generateTitles } from './titles';
 

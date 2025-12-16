@@ -239,11 +239,9 @@ export function AnnualSummarySlides({ data }: AnnualSummarySlidesProps) {
         return (
           <Slide key={0} $totalSlides={totalSlides} ref={(el) => { slideRefs.current[0] = el; }}>
             <SlideContent>
-              <SlideTitle>
-                <Title $isDarkMode={isDarkMode}>我的 {data.year} 年度总结</Title>
-              </SlideTitle>
               <SlideBody>
-                <Subtitle $isDarkMode={isDarkMode}>@{data.username}</Subtitle>
+                <Title $isDarkMode={isDarkMode}>{data.year} 年度总结</Title>
+                <Subtitle $isDarkMode={isDarkMode} style={{ marginTop: '16px' }}>@{data.username}</Subtitle>
                 <StatLabel $isDarkMode={isDarkMode}>感谢你陪伴 V2EX 又一年</StatLabel>
               </SlideBody>
             </SlideContent>
