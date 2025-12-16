@@ -40,23 +40,67 @@ jobs:
         run: |
           pnpm zip
           pnpm zip:firefox
-      - name: Release chrome extension
+      - name: Upload sources
+        uses: actions/upload-artifact@v4
+        with:
+          name: sources
+          path: output/
+  release-chrome:
+    runs-on: ubuntu-latest
+    needs: ['build']
+    steps:
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4.1.0
+        with:
+          version: 10.12.3
+      - name: Download sources
+        uses: actions/download-artifact@v4
+        with:
+          name: sources
+          path: output/
+      - name: Release to chrome
         if: ${{ !env.ACT }}
         run: |
-          pnpm wxt submit --chrome-zip output/${{ env.CHROME_FILE_NAME }}.zip 
+          pnpm dlx wxt@0.20.6 submit --chrome-zip output/${{ env.CHROME_FILE_NAME }}.zip 
         env:
           CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
           CHROME_CLIENT_ID: ${{ secrets.CLIENT_ID }}
           CHROME_CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
           CHROME_REFRESH_TOKEN: ${{ secrets.REFRESH_TOKEN }}
-      - name: Release firefox extension
+  release-firefox:
+    runs-on: ubuntu-latest
+    needs: ['build']
+    steps:
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4.1.0
+        with:
+          version: 10.12.3
+      - name: Download sources
+        uses: actions/download-artifact@v4
+        with:
+          name: sources
+          path: output/
+      - name: Release to firefox
         if: ${{ !env.ACT }}
         run: |
-          pnpm wxt submit --firefox-zip output/${{ env.FIREFOX_FILE_NAME }}.zip --firefox-sources-zip output/${{ env.SOURCES_FILE_NAME }}.zip
+          pnpm dlx wxt@0.20.6 submit --firefox-zip output/${{ env.FIREFOX_FILE_NAME }}.zip --firefox-sources-zip output/${{ env.SOURCES_FILE_NAME }}.zip
         env:
           FIREFOX_JWT_ISSUER: ${{ secrets.FIREFOX_JWT_ISSUER }}
           FIREFOX_JWT_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}
           FIREFOX_EXTENSION_ID: ${{ secrets.FIREFOX_EXTENSION_ID }}
+  release-github:
+    runs-on: ubuntu-latest
+    needs: ['build']
+    steps:
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4.1.0
+        with:
+          version: 10.12.3
+      - name: Download sources
+        uses: actions/download-artifact@v4
+        with:
+          name: sources
+          path: output/
       - name: Release to github
         if: ${{ !env.ACT }}
         uses: softprops/action-gh-release@v2.3.2
