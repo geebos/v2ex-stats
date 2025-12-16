@@ -4,6 +4,26 @@ import styled from 'styled-components';
 import { storage } from '@wxt-dev/storage';
 import { getNearestYear } from '@/service/summary';
 
+function isInDisplayPeriod(): boolean {
+  const now = new Date();
+  const month = now.getMonth() + 1;
+  const day = now.getDate();
+
+  // 12月25日 - 12月31日
+  if (month === 12 && day >= 25) {
+    return true;
+  }
+  // 1月1日 - 1月20日
+  if (month === 1 && day <= 20) {
+    return true;
+  }
+  return false;
+}
+
+function getHiddenStorageKey(username: string, year: number): `local:${string}` {
+  return `local:annualSummaryHidden:${year}:${username}`;
+}
+
 const ButtonContainer = styled.div`
   margin: 16px 0 0 0;
   text-align: center;
@@ -65,12 +85,12 @@ function AnnualSummaryButton({ username, onOpen }: AnnualSummaryButtonProps) {
   }, []);
 
   async function checkHiddenStatus() {
-    const hidden = await storage.getItem<boolean>(`local:annualSummaryHidden:${username}`, { fallback: false });
+    const hidden = await storage.getItem<boolean>(getHiddenStorageKey(username, getNearestYear()), { fallback: false });
     setIsHidden(hidden);
   }
 
   async function handleHide() {
-    await storage.setItem(`local:annualSummaryHidden:${username}`, true);
+    await storage.setItem(getHiddenStorageKey(username, getNearestYear()), true);
     setIsHidden(true);
   }
 
@@ -97,7 +117,19 @@ export async function tryInitAnnualSummaryButton(
   username: string,
   onOpen: () => void
 ): Promise<void> {
+  // 优先级最高：用户已点击不再显示
+  const hidden = await storage.getItem<boolean>(getHiddenStorageKey(username, getNearestYear()), { fallback: false });
+  if (hidden) {
+    return;
+  }
+
+  // 只在首页显示
   if (window.location.pathname !== '/') {
+    return;
+  }
+
+  // 只在 12.25-1.20 期间显示
+  if (!isInDisplayPeriod()) {
     return;
   }
 
