@@ -79,6 +79,7 @@ export async function calculateAnnualSummaryStats(
   const allRecords = await getAllBalanceRecords(username);
   const records = allRecords.filter(r => r.timestamp >= startDate && r.timestamp <= endDate);
 
+  const dailyLoginRecords = records.filter(r => r.type === '每日登录奖励');
   const loginRecords = records.filter(r => r.type === '每日登录奖励' || r.type === '每日活跃度奖励' || r.type === '连续登录奖励');
   const replyRecords = records.filter(r => r.type === '创建回复');
   const postRecords = records.filter(r => r.type === '创建主题');
@@ -86,12 +87,12 @@ export async function calculateAnnualSummaryStats(
   const receivedThankRecords = records.filter(r => r.type === '收到谢意');
 
   const loginStats: LoginStats = {
-    totalCount: loginRecords.length,
+    totalCount: dailyLoginRecords.length,
     totalCoins: loginRecords.reduce((sum, r) => sum + r.delta, 0),
-    avgCoinsPerLogin: loginRecords.length > 0
-      ? loginRecords.reduce((sum, r) => sum + r.delta, 0) / loginRecords.length
+    avgCoinsPerLogin: dailyLoginRecords.length > 0
+      ? loginRecords.reduce((sum, r) => sum + r.delta, 0) / dailyLoginRecords.length
       : 0,
-    consecutiveDays: calculateConsecutiveDays(loginRecords),
+    consecutiveDays: calculateConsecutiveDays(dailyLoginRecords),
     timeDistribution: getTimeDistribution(loginRecords),
   };
 
