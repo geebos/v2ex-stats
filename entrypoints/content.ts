@@ -6,6 +6,9 @@ import { tryInitActivityChart } from '@/components/activity-chart';
 import { testIsV2EX } from '@/service/utils';
 import { collectPostInfo } from '@/service/history/collect';
 import { tryInitUI } from '@/ui';
+import { tryInitAnnualSummaryButton } from '@/components/annual-summary-button';
+import { showAnnualSummaryModal } from '@/components/annual-summary-modal';
+import { generateAnnualSummary } from '@/service/summary';
 
 // ==================== 页面检测和信息获取 ====================
 
@@ -68,5 +71,14 @@ export default defineContentScript({
 
     await collectPostInfo(info.username);
     await tryInitUI(info.username);
+
+    await tryInitAnnualSummaryButton(info.username, async () => {
+      try {
+        const summaryData = await generateAnnualSummary(info.username, 2025);
+        showAnnualSummaryModal(summaryData);
+      } catch (error) {
+        console.error('生成年终总结失败:', error);
+      }
+    });
   }
 }); 
