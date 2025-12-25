@@ -1,6 +1,7 @@
 import { createElement, useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { FaChevronLeft, FaChevronRight, FaDownload, FaEye, FaEyeSlash } from 'react-icons/fa';
+import { toPng } from 'html-to-image';
 import type { AnnualSummaryData } from '@/types/summary';
 import { getIsDarkMode } from '@/service/utils';
 
@@ -342,22 +343,24 @@ export function AnnualSummarySlides({ data }: AnnualSummarySlidesProps) {
     if (!currentSlide) return;
     
     try {
-      const html2canvas = (await import('html2canvas')).default;
-      const canvas = await html2canvas(currentSlide, {
-        scale: 2,
+      const dataUrl = await toPng(currentSlide, {
+        pixelRatio: 2,
         backgroundColor: isDarkMode ? '#1a1a1a' : '#fff',
+        skipFonts: true,
+        cacheBust: true,
+        filter: (node: HTMLElement) => {
+          // 跳过可能导致问题的节点
+          if (node.tagName === 'SCRIPT' || node.tagName === 'LINK') {
+            return false;
+          }
+          return true;
+        },
       });
       
-      canvas.toBlob((blob) => {
-        if (blob) {
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `v2ex-annual-summary-${data.year}-page-${currentIndex + 1}.png`;
-          a.click();
-          URL.revokeObjectURL(url);
-        }
-      });
+      const a = document.createElement('a');
+      a.href = dataUrl;
+      a.download = `v2ex-annual-summary-${data.year}-page-${currentIndex + 1}.png`;
+      a.click();
     } catch (error) {
       console.error('导出失败:', error);
     }
