@@ -1,4 +1,19 @@
 import type { AggType, BalanceRecord, BalanceRecordType, CompactBalanceRecord, Granularity, RecordType } from "@/types/types";
+import {
+  BRTypeUploadImage,
+  BRTypeManualRecharge,
+  BRTypeInitialCapital,
+  BRTypeDailyActivity,
+  BRTypeDailyLogin,
+  BRTypeTopicReplyIncome,
+  BRTypeCreateReply,
+  BRTypeConsecutiveLogin,
+  BRTypeCreateTopic,
+  BRTypeSendThanks,
+  BRTypeCreateAppendix,
+  BRTypeEditTopic,
+  BRTypeReceiveThanks,
+} from "@/types/types";
 import { storage } from "@wxt-dev/storage";
 import { aggreateByTime, aggregateByKey } from "../data/aggregate";
 import { fillGaps } from "../data/fill";
@@ -6,16 +21,19 @@ import { fillGaps } from "../data/fill";
 // ==================== 常量定义 ====================
 // 预定义的余额记录类型，避免频繁查询存储
 const defaultBalanceRecordTypes: BalanceRecordType[] = [
-  { id: 10, value: "每日活跃度奖励" },
-  { id: 11, value: "每日登录奖励" },
-  { id: 12, value: "主题回复收益" },
-  { id: 13, value: "创建回复" },
-  { id: 14, value: "连续登录奖励" },
-  { id: 15, value: "创建主题" },
-  { id: 16, value: "发送谢意" },
-  { id: 17, value: "创建主题附言" },
-  { id: 18, value: "编辑主题" },
-  { id: 19, value: "收到谢意" }
+  { id: 0, value: BRTypeUploadImage },
+  { id: 1, value: BRTypeManualRecharge },
+  { id: 2, value: BRTypeInitialCapital },
+  { id: 10, value: BRTypeDailyActivity },
+  { id: 11, value: BRTypeDailyLogin },
+  { id: 12, value: BRTypeTopicReplyIncome },
+  { id: 13, value: BRTypeCreateReply },
+  { id: 14, value: BRTypeConsecutiveLogin },
+  { id: 15, value: BRTypeCreateTopic },
+  { id: 16, value: BRTypeSendThanks },
+  { id: 17, value: BRTypeCreateAppendix },
+  { id: 18, value: BRTypeEditTopic },
+  { id: 19, value: BRTypeReceiveThanks },
 ];
 
 // 类型ID到值的映射缓存

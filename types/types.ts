@@ -1,6 +1,6 @@
 export interface BalanceRecord {
   timestamp: number;
-  type: string;
+  type: BRTypeEnum | string;
   delta: number;
   balance: number;
   username: string;
@@ -24,8 +24,39 @@ export interface BalanceRecordQuery {
 
 export interface BalanceRecordType {
   id: number;
-  value: string;
+  value: BRTypeEnum | string;
 }
+
+// 余额记录类型常量
+export const BRTypeUploadImage = "上传图片" as const;
+export const BRTypeManualRecharge = "手工充值" as const;
+export const BRTypeInitialCapital = "初始资本" as const;
+export const BRTypeDailyActivity = "每日活跃度奖励" as const;
+export const BRTypeDailyLogin = "每日登录奖励" as const;
+export const BRTypeTopicReplyIncome = "主题回复收益" as const;
+export const BRTypeCreateReply = "创建回复" as const;
+export const BRTypeConsecutiveLogin = "连续登录奖励" as const;
+export const BRTypeCreateTopic = "创建主题" as const;
+export const BRTypeSendThanks = "发送谢意" as const;
+export const BRTypeCreateAppendix = "创建主题附言" as const;
+export const BRTypeEditTopic = "编辑主题" as const;
+export const BRTypeReceiveThanks = "收到谢意" as const;
+
+// 余额记录类型枚举
+export type BRTypeEnum =
+  | typeof BRTypeUploadImage
+  | typeof BRTypeManualRecharge
+  | typeof BRTypeInitialCapital
+  | typeof BRTypeDailyActivity
+  | typeof BRTypeDailyLogin
+  | typeof BRTypeTopicReplyIncome
+  | typeof BRTypeCreateReply
+  | typeof BRTypeConsecutiveLogin
+  | typeof BRTypeCreateTopic
+  | typeof BRTypeSendThanks
+  | typeof BRTypeCreateAppendix
+  | typeof BRTypeEditTopic
+  | typeof BRTypeReceiveThanks;
 
 export type CompactBalanceRecord = [number, number, number, number];
 

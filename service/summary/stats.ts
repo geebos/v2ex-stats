@@ -1,5 +1,16 @@
 import { getAllBalanceRecords, queryBalanceRecords } from '@/service/balance/query';
-import type { BalanceRecord } from '@/types/types';
+import type { BalanceRecord, BRTypeEnum } from '@/types/types';
+import {
+  BRTypeDailyLogin,
+  BRTypeDailyActivity,
+  BRTypeConsecutiveLogin,
+  BRTypeCreateReply,
+  BRTypeCreateTopic,
+  BRTypeSendThanks,
+  BRTypeReceiveThanks,
+  BRTypeCreateAppendix,
+  BRTypeEditTopic,
+} from '@/types/types';
 import type {
   AnnualSummaryStats,
   LoginStats,
@@ -79,12 +90,12 @@ export async function calculateAnnualSummaryStats(
   const allRecords = await getAllBalanceRecords(username);
   const records = allRecords.filter(r => r.timestamp >= startDate && r.timestamp <= endDate);
 
-  const dailyLoginRecords = records.filter(r => r.type === '每日登录奖励');
-  const loginRecords = records.filter(r => r.type === '每日登录奖励' || r.type === '每日活跃度奖励' || r.type === '连续登录奖励');
-  const replyRecords = records.filter(r => r.type === '创建回复');
-  const postRecords = records.filter(r => r.type === '创建主题');
-  const thankRecords = records.filter(r => r.type === '发送谢意');
-  const receivedThankRecords = records.filter(r => r.type === '收到谢意');
+  const dailyLoginRecords = records.filter(r => r.type === BRTypeDailyLogin);
+  const loginRecords = records.filter(r => r.type === BRTypeDailyLogin || r.type === BRTypeDailyActivity || r.type === BRTypeConsecutiveLogin);
+  const replyRecords = records.filter(r => r.type === BRTypeCreateReply);
+  const postRecords = records.filter(r => r.type === BRTypeCreateTopic);
+  const thankRecords = records.filter(r => r.type === BRTypeSendThanks);
+  const receivedThankRecords = records.filter(r => r.type === BRTypeReceiveThanks);
 
   const loginStats: LoginStats = {
     totalCount: dailyLoginRecords.length,
@@ -168,10 +179,18 @@ export async function calculateAnnualSummaryStats(
   };
 }
 
+// 用户主动触发的记录类型
+const ACTIVE_RECORD_TYPES: (BRTypeEnum | string)[] = [
+  BRTypeCreateReply, BRTypeCreateTopic, BRTypeSendThanks, BRTypeCreateAppendix, BRTypeEditTopic,
+  BRTypeDailyLogin, BRTypeDailyActivity, BRTypeConsecutiveLogin,
+];
+
 function calculateActivityHeatmap(records: BalanceRecord[]): ActivityHeatmapStats {
   const data: number[][] = Array(7).fill(null).map(() => Array(24).fill(0));
 
-  records.forEach(record => {
+  const activeRecords = records.filter(r => ACTIVE_RECORD_TYPES.includes(r.type));
+
+  activeRecords.forEach(record => {
     const date = new Date(record.timestamp);
     const weekday = date.getDay();
     const hour = date.getHours();
