@@ -1,8 +1,0 @@
----
-trigger: always_on
-description: 
-globs: 
----
-禁止自动提交代码
-禁止创建示例文件
-禁止创建演示文件

@@ -1,9 +1,0 @@
----
-trigger: manual
-description:
-globs:
----
-单测编写规则
-使用 `@/` 引用文件
-代码行数不超过 20 行的函数，单测代码放到 {filename}.test.ts
-代码行数超过 20 行的函数，单测代码放到单独的文件 {filename}.{functionName}.test.ts
