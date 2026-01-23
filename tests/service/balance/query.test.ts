@@ -714,23 +714,37 @@ describe('setBalanceRecords', () => {
       createRecord(1609459200000, '新类型', 50, 150),
     ];
     
-    // Mock 初次查询返回空数组，然后模拟新类型被添加
-    vi.mocked(storage.getItem)
-      .mockResolvedValueOnce([]) // 第一次查询类型记录为空
-      .mockResolvedValueOnce([{ id: 0, value: '新类型' }]); // 设置新类型后查询
+    // Mock 查询返回空数组（类型未初始化）
+    vi.mocked(storage.getItem).mockResolvedValueOnce([]);
     
     await setBalanceRecords(key, records);
     
     // 验证新类型被保存
     expect(storage.setItem).toHaveBeenCalledWith(
       'local:balanceRecordTypes', 
-      [{ id: 0, value: '新类型' }]
+      [{ id: 20, value: '新类型' }]
     );
     
-    // 验证记录被保存，新类型的ID是0
+    // 验证记录被保存，新类型的ID是默认最大ID(19)+1=20
     expect(storage.setItem).toHaveBeenCalledWith(key, [
-      [1609459200000, 0, 50, 150]
+      [1609459200000, 20, 50, 150]
     ]);
+  });
+
+  it('应该忽略与默认类型冲突的已存储类型ID并重新分配', async () => {
+    const key = 'local:balanceRecords:testuser|2024|01' as any;
+    const records: BalanceRecord[] = [
+      createRecord(1609459200000, '更改用户名', -5000, 150),
+    ];
+
+    // 存储里出现脏数据：占用默认ID=0，但值不是“上传图片”
+    vi.mocked(storage.getItem).mockResolvedValueOnce([{ id: 0, value: '更改用户名' }]);
+
+    await setBalanceRecords(key, records);
+
+    // 应过滤掉脏映射，并为“更改用户名”分配新的ID=20
+    expect(storage.setItem).toHaveBeenCalledWith('local:balanceRecordTypes', [{ id: 20, value: '更改用户名' }]);
+    expect(storage.setItem).toHaveBeenCalledWith(key, [[1609459200000, 20, -5000, 150]]);
   });
 
   it('应该处理空记录数组', async () => {

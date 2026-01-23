@@ -36,6 +36,9 @@ const defaultBalanceRecordTypes: BalanceRecordType[] = [
   { id: 19, value: BRTypeReceiveThanks },
 ];
 
+// 默认类型 ID->值映射（用于识别保留 ID，避免与动态类型冲突）
+const defaultBalanceTypeId2ValueMap = new Map<number, string>(defaultBalanceRecordTypes.map(type => [type.id, type.value]));
+
 // 类型ID到值的映射缓存
 const balanceTypeId2ValueMap = new Map<number, string>(defaultBalanceRecordTypes.map(type => [type.id, type.value]));
 
@@ -65,23 +68,43 @@ const getBalanceRecordTypeValue = async (id: number): Promise<string> => {
   if (balanceTypeId2ValueMap.has(id)) return balanceTypeId2ValueMap.get(id)!;
   const recordTypes = await storage.getItem<BalanceRecordType[]>(`local:balanceRecordTypes`);
   const recordType = recordTypes?.find(type => type.id === id);
-  return recordType?.value || 'UNKNOWN';
+  if (!recordType) return 'UNKNOWN';
+  balanceTypeId2ValueMap.set(recordType.id, recordType.value);
+  balanceTypeValue2IdMap.set(recordType.value, recordType.id);
+  return recordType.value;
 };
 
 // 根据类型值获取类型ID，不存在时自动创建
 const getBalanceRecordTypeID = async (value: string): Promise<number> => {
   if (balanceTypeValue2IdMap.has(value)) return balanceTypeValue2IdMap.get(value)!;
-  const recordTypes = await storage.getItem<BalanceRecordType[]>(`local:balanceRecordTypes`);
-  const recordType = recordTypes?.find(type => type.value === value);
-  if (!recordType) {
-    const newRecordType: BalanceRecordType = {
-      id: recordTypes?.length || 0,
-      value,
-    };
-    await storage.setItem(`local:balanceRecordTypes`, [...(recordTypes ?? []), newRecordType]);
-    return newRecordType.id;
+  const recordTypes = (await storage.getItem<BalanceRecordType[]>(`local:balanceRecordTypes`)) ?? [];
+
+  const isReservedIdConflict = (type: BalanceRecordType) => {
+    if (!defaultBalanceTypeId2ValueMap.has(type.id)) return false;
+    return defaultBalanceTypeId2ValueMap.get(type.id) !== type.value;
+  };
+
+  const sanitizedRecordTypes = recordTypes.filter(type => !isReservedIdConflict(type));
+
+  const recordType = sanitizedRecordTypes.find(type => type.value === value);
+  if (recordType) {
+    balanceTypeId2ValueMap.set(recordType.id, recordType.value);
+    balanceTypeValue2IdMap.set(recordType.value, recordType.id);
+    return recordType.id;
   }
-  return recordType.id;
+
+  // 新类型使用“当前最大 ID + 1”，避免与默认类型/历史类型冲突
+  const usedIds = new Set<number>([
+    ...defaultBalanceRecordTypes.map(type => type.id),
+    ...sanitizedRecordTypes.map(type => type.id),
+  ]);
+  const maxId = Math.max(...Array.from(usedIds));
+  const newRecordType: BalanceRecordType = { id: maxId + 1, value };
+
+  await storage.setItem(`local:balanceRecordTypes`, [...sanitizedRecordTypes, newRecordType]);
+  balanceTypeId2ValueMap.set(newRecordType.id, newRecordType.value);
+  balanceTypeValue2IdMap.set(newRecordType.value, newRecordType.id);
+  return newRecordType.id;
 };
 
 // ==================== 数据序列化/反序列化 ====================
