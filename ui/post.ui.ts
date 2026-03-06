@@ -5,8 +5,12 @@ import xpath from "@/service/xpath";
 import { applyLabel, applyHotLabel, clearLabel, clearHotLabel } from "@/ui/index";
 import { getIsDarkMode } from "@/service/utils";
 
+// ======================== 常量 ========================
+
 // V2EX 每页评论数量
 const V2EX_COMMENT_PAGE_SIZE = 100;
+
+// 主页帖子列表 XPath
 const V2EX_POST_ALL_CELL_XPATH = '(//div[@id="Main"]//div[@class="box"])[1]//div[@class="cell item"]';
 const V2EX_POST_SHOWN_CELL_XPATH = '(//div[@id="Main"]//div[@class="box"])[1]/div[@class="cell item"]';
 const V2EX_POST_IGNORED_CELL_XPATH = '(//div[@id="Main"]//div[@class="box"])[1]/div[@class="v-stats-removed-posts"]/div[@class="cell item"]';
@@ -14,18 +18,8 @@ const V2EX_POST_IGNORED_CELL_XPATH = '(//div[@id="Main"]//div[@class="box"])[1]/
 // 今日热议主题
 const V2EX_HOT_TOPICS_BOX_ID = 'TopicsHot';
 const V2EX_HOT_TOPICS_SHOWN_CELL_XPATH = `//div[@id="${V2EX_HOT_TOPICS_BOX_ID}"]/div[contains(@class, "cell") and contains(@class, "hot_t_")]`;
-const V2EX_HOT_TOPICS_IGNORED_CELL_XPATH = `//div[@id="${V2EX_HOT_TOPICS_BOX_ID}"]/div[@class="v-stats-removed-posts"]/div[contains(@class, "cell") and contains(@class, "hot_t_")]`;
 
-// ======================== 插件环境检测 ========================
-
-// 检测页面插件环境
-const detectPlugins = () => {
-  // 检测是否是 V2EX Polish
-  const isVP = Array.from(document.body.classList).some(className => className.includes('v2p'))
-  return { isVP }
-}
-
-// ======================== 链接修改相关 ========================
+// ======================== 通用工具 ========================
 
 // 根据帖子状态修改跳转链接，直接跳到最新评论页
 const tryModifyHrefPage = (anchor: HTMLAnchorElement, postStatus: PostStatus) => {
@@ -54,9 +48,37 @@ const tryModifyHrefPage = (anchor: HTMLAnchorElement, postStatus: PostStatus) =>
   }
 }
 
-// ======================== 帖子处理相关 ========================
+// 创建切换显示/隐藏忽略帖子的按钮（主页和热议共用）
+const createToggleButton = async (count: number, container: HTMLElement) => {
+  const toggleButton = document.createElement('div');
+  toggleButton.classList.add('v-stats-toggle-bar');
 
-// 移除帖子元素
+  // 适配暗色模式
+  const isDark = await getIsDarkMode();
+  if (isDark) {
+    toggleButton.style.backgroundColor = 'transparent';
+    toggleButton.style.color = 'inherit';
+  }
+
+  const updateButtonText = (isHidden: boolean) => {
+    toggleButton.innerText = isHidden
+      ? `已忽略 ${count} 条帖子, 点击显示`
+      : `已展示忽略的 ${count} 条帖子，点击隐藏`;
+  };
+
+  updateButtonText(true);
+  toggleButton.onclick = () => {
+    const isHidden = container.style.display === 'none';
+    container.style.display = isHidden ? 'block' : 'none';
+    updateButtonText(!isHidden);
+  };
+
+  return toggleButton;
+};
+
+// ======================== 主页帖子 ========================
+
+// 将帖子从 DOM 中移除（忽略时使用）
 const removePostCell = (postId: string) => {
   if (!postId) {
     console.log('removePostCell: 帖子ID不存在');
@@ -72,6 +94,7 @@ const removePostCell = (postId: string) => {
   cells.forEach(cell => cell.remove());
 }
 
+// 将帖子从隐藏容器移回展示区域（恢复时使用）
 const appendPostCell = (postId: string) => {
   if (!postId) {
     console.log('appendPostCell: 帖子ID不存在');
@@ -98,46 +121,6 @@ const appendPostCell = (postId: string) => {
   }
 
   box.insertBefore(cell, ignoreToggle);
-}
-
-// 从今日热议容器中移除指定帖子 cell（仅从 #TopicsHot 内查找）
-const removeHotTopicCell = (postId: string) => {
-  if (!postId) return;
-  const box = document.getElementById(V2EX_HOT_TOPICS_BOX_ID);
-  if (!box) return;
-  const cells = xpath.findNodes<HTMLDivElement>(`.//div[contains(@class, 'cell') and contains(@class, 'hot_t_') and .//a[contains(@href, '/t/${postId}')]]`, box);
-  cells.forEach(cell => cell.remove());
-};
-
-// 将已恢复的帖子 cell 重新插入今日热议的展示区域（从隐藏容器移回）
-const appendHotTopicCell = (postId: string) => {
-  if (!postId) return;
-  const box = document.getElementById(V2EX_HOT_TOPICS_BOX_ID);
-  if (!box) return;
-  const hiddenContainer = box.querySelector('.v-stats-removed-posts');
-  if (!hiddenContainer) return;
-  const cell = xpath.findNode<HTMLDivElement>(`.//div[contains(@class, 'cell') and contains(@class, 'hot_t_') and .//a[contains(@href, '/t/${postId}')]]`, hiddenContainer as Element);
-  if (!cell) return;
-  const toggleBar = box.querySelector('.v-stats-toggle-bar');
-  if (toggleBar) {
-    box.insertBefore(cell, toggleBar);
-  } else {
-    hiddenContainer.parentElement?.insertBefore(cell, hiddenContainer);
-  }
-}
-
-// 从今日热议 cell 或链接解析 postId（class 含 hot_t_123 或 href /t/123）
-function getHotTopicPostId(cellOrAnchor: Element): string {
-  const anchor = cellOrAnchor.tagName === 'A' ? (cellOrAnchor as HTMLAnchorElement) : cellOrAnchor.querySelector?.('a[href*="/t/"]');
-  const href = anchor?.getAttribute?.('href') ?? (cellOrAnchor as HTMLAnchorElement).href ?? xpath.findString('.//a[contains(@href, "/t/")]/@href', cellOrAnchor);
-  if (href) {
-    const m = /\/t\/(\d+)/.exec(href);
-    if (m) return m[1];
-  }
-  const withClass = (cellOrAnchor as Element).closest?.('[class*="hot_t_"]') ?? cellOrAnchor;
-  const cls = withClass?.getAttribute?.('class') ?? '';
-  const hotMatch = /hot_t_(\d+)/.exec(cls);
-  return hotMatch ? hotMatch[1] : '';
 }
 
 // 处理单个帖子的回复数标签和跳转链接
@@ -172,8 +155,6 @@ const processPostAnchor = async (username: string, anchor: HTMLAnchorElement) =>
   tryModifyHrefPage(anchor, postStatus);
 }
 
-// ======================== 帖子标签更新 ========================
-
 // 更新主页帖子列表中的新回复数标签
 export const updatePostsLable = async (username: string) => {
   // 获取主页帖子列表中的回复数链接元素
@@ -192,8 +173,7 @@ export const updatePostsLable = async (username: string) => {
   });
 }
 
-// ======================== 忽略功能 ========================
-
+// 将已忽略的帖子移入隐藏容器并添加切换按钮
 export const removeIgnoredPosts = async (username: string) => {
   if (!await isUIShowIgnoreUpdateConfig()) {
     console.log('removeIgnoredPosts: 帖子忽略按钮未启用，跳过');
@@ -240,74 +220,125 @@ export const removeIgnoredPosts = async (username: string) => {
   }
 }
 
-// 创建切换显示/隐藏按钮
-const createToggleButton = async (count: number, container: HTMLElement) => {
-  const toggleButton = document.createElement('div');
-  toggleButton.classList.add('v-stats-toggle-bar');
-
-  // 适配暗色模式
-  const isDark = await getIsDarkMode();
-  if (isDark) {
-    toggleButton.style.backgroundColor = 'transparent';
-    toggleButton.style.color = 'inherit';
+// 初始化帖子忽略按钮
+export const initPostIngoreButtons = async (username: string) => {
+  if (!await isUIShowIgnoreUpdateConfig()) {
+    console.log('initPostIngoreButtons: 帖子忽略按钮未启用，跳过');
+    return;
   }
 
-  // 设置切换逻辑
-  const updateButtonText = (isHidden: boolean) => {
-    toggleButton.innerText = isHidden
-      ? `已忽略 ${count} 条帖子, 点击显示`
-      : `已展示忽略的 ${count} 条帖子，点击隐藏`;
-  };
+  const tdList = xpath.findNodes<Element>(`${V2EX_POST_SHOWN_CELL_XPATH}//td[4]`, document.body);
+  console.log('帖子标签', tdList);
 
-  updateButtonText(true);
-  toggleButton.onclick = () => {
-    const isHidden = container.style.display === 'none';
-    container.style.display = isHidden ? 'block' : 'none';
-    updateButtonText(!isHidden);
-  };
+  if (tdList.length === 0) return;
 
-  return toggleButton;
-};
+  tdList.forEach(async (td) => {
+    // 创建忽略按钮
+    const div = document.createElement('div');
+    div.innerText = '忽略更新';
+    div.classList.add('v-stats-ignore-button');
 
-// ======================== 今日热议：忽略与折叠 ========================
+    // 获取帖子链接
+    const href = xpath.findString('./ancestor::div[contains(@class, "cell item")]//a[contains(@href, "/t/")]/@href', td);
+    if (!href) {
+      console.log('initPostIngoreButtons: 帖子链接不存在', td);
+      return;
+    }
 
-export const removeIgnoredPostsHot = async (username: string) => {
-  // 功能开关检测
-  const isApplyToHot = await isPostBrowsingApplyToHotTopics();
-  const isShowIgnore = await isUIShowIgnoreUpdateConfig();
-  if (!isApplyToHot || !isShowIgnore) return;
+    const { postId } = getPostInfo(href, document);
 
-  // 定位今日热议容器
+    // 绑定忽略点击事件
+    div.onclick = async () => {
+      console.log('忽略更新', username, postId);
+      await ignorePost(username, postId.toString());
+      removePostCell(postId);
+    }
+
+    td.classList.add('v-stats-ignore-button-container');
+    td.appendChild(div);
+  });
+}
+
+// 初始化帖子恢复按钮
+export const initPostRecoverButtons = async (username: string) => {
+  if (!await isUIShowIgnoreUpdateConfig()) {
+    console.log('initPostRecoverButtons: 帖子恢复按钮未启用，跳过');
+    return;
+  }
+
+  const tdList = xpath.findNodes<Element>(`${V2EX_POST_IGNORED_CELL_XPATH}//td[4]`, document.body);
+  console.log('帖子标签', tdList);
+
+  if (tdList.length === 0) return;
+
+  tdList.forEach(async (td) => {
+    // 创建恢复按钮
+    const div = document.createElement('div');
+    div.innerText = '恢复关注';
+    div.classList.add('v-stats-recover-button');
+
+    // 获取帖子链接
+    const href = xpath.findString('./ancestor::div[contains(@class, "cell item")]//a[contains(@href, "/t/")]/@href', td);
+    if (!href) {
+      console.log('initPostRecoverButtons: 帖子链接不存在', td);
+      return;
+    }
+
+    const { postId } = getPostInfo(href, document);
+
+    // 绑定恢复点击事件
+    div.onclick = async () => {
+      console.log('恢复关注', username, postId);
+      await recoverPost(username, postId.toString());
+      appendPostCell(postId);
+    }
+
+    td.classList.add('v-stats-recover-button-container');
+    td.appendChild(div);
+  });
+}
+
+// ======================== 今日热议 ========================
+
+// 从今日热议 cell 或链接解析 postId（class 含 hot_t_123 或 href /t/123）
+function getHotTopicPostId(cellOrAnchor: Element): string {
+  const anchor = cellOrAnchor.tagName === 'A' ? (cellOrAnchor as HTMLAnchorElement) : cellOrAnchor.querySelector?.('a[href*="/t/"]');
+  const href = anchor?.getAttribute?.('href') ?? (cellOrAnchor as HTMLAnchorElement).href ?? xpath.findString('.//a[contains(@href, "/t/")]/@href', cellOrAnchor);
+  if (href) {
+    const m = /\/t\/(\d+)/.exec(href);
+    if (m) return m[1];
+  }
+  const withClass = (cellOrAnchor as Element).closest?.('[class*="hot_t_"]') ?? cellOrAnchor;
+  const cls = withClass?.getAttribute?.('class') ?? '';
+  const hotMatch = /hot_t_(\d+)/.exec(cls);
+  return hotMatch ? hotMatch[1] : '';
+}
+
+// 从今日热议容器中移除指定帖子 cell（仅从 #TopicsHot 内查找）
+const removeHotTopicCell = (postId: string) => {
+  if (!postId) return;
   const box = document.getElementById(V2EX_HOT_TOPICS_BOX_ID);
   if (!box) return;
-
-  // 遍历当前可见帖子，筛选出已被用户忽略的帖子
-  const shownCells = xpath.findNodes<HTMLDivElement>(V2EX_HOT_TOPICS_SHOWN_CELL_XPATH, document.body);
-  const ignoredCells: HTMLDivElement[] = [];
-
-  for (const cell of shownCells) {
-    const postId = getHotTopicPostId(cell);
-    if (!postId) continue;
-
-    const isIgnored = await isPostIgnored(username, postId);
-    if (isIgnored) {
-      ignoredCells.push(cell);
-    }
-  }
-
-  if (ignoredCells.length === 0) return;
-
-  // 创建隐藏容器，将已忽略的帖子移入其中
-  const hiddenContainer = document.createElement('div');
-  hiddenContainer.classList.add('v-stats-removed-posts');
-  hiddenContainer.style.display = 'none';
-  ignoredCells.forEach(c => hiddenContainer.appendChild(c));
-
-  // 创建切换按钮并插入到热议容器末尾
-  const toggleButton = await createToggleButton(ignoredCells.length, hiddenContainer);
-  box.appendChild(toggleButton);
-  box.appendChild(hiddenContainer);
+  const cells = xpath.findNodes<HTMLDivElement>(`.//div[contains(@class, 'cell') and contains(@class, 'hot_t_') and .//a[contains(@href, '/t/${postId}')]]`, box);
+  cells.forEach(cell => cell.remove());
 };
+
+// 将已恢复的帖子 cell 重新插入今日热议的展示区域（从隐藏容器移回）
+const appendHotTopicCell = (postId: string) => {
+  if (!postId) return;
+  const box = document.getElementById(V2EX_HOT_TOPICS_BOX_ID);
+  if (!box) return;
+  const hiddenContainer = box.querySelector('.v-stats-removed-posts');
+  if (!hiddenContainer) return;
+  const cell = xpath.findNode<HTMLDivElement>(`.//div[contains(@class, 'cell') and contains(@class, 'hot_t_') and .//a[contains(@href, '/t/${postId}')]]`, hiddenContainer as Element);
+  if (!cell) return;
+  const toggleBar = box.querySelector('.v-stats-toggle-bar');
+  if (toggleBar) {
+    box.insertBefore(cell, toggleBar);
+  } else {
+    hiddenContainer.parentElement?.insertBefore(cell, hiddenContainer);
+  }
+}
 
 // 获取或创建今日热议标题 <a> 后的 inline 容器（标签与按钮共用）
 const getOrCreateHotContainer = (titleSpan: Element): HTMLSpanElement => {
@@ -335,6 +366,57 @@ const getOrCreateHotContainer = (titleSpan: Element): HTMLSpanElement => {
   return container;
 };
 
+// 获取今日热议各帖子的回复数（命中缓存直接返回）
+const fetchHotTopicsReplyCount = async (): Promise<Map<string, number>> => {
+  const url = new URL(window.location.href);
+  const isHotTab = url.searchParams.get('tab') === 'hot';
+
+  // 当前已在热议 tab 则直接使用现有文档，否则需额外请求热议页面
+  let docToSearch: Document;
+  if (isHotTab) {
+    docToSearch = document;
+  } else {
+    try {
+      const res = await fetch(`${url.origin}/?tab=hot`);
+      const html = await res.text();
+      docToSearch = new DOMParser().parseFromString(html, 'text/html');
+    } catch (e) {
+      console.error('fetchHotTopicsReplyCount: 获取热议页面失败', e);
+      return new Map();
+    }
+  }
+
+  // 定位热议区域主容器
+  const mainBox = docToSearch.querySelector('#Main .box');
+  if (!mainBox) return new Map();
+
+  // 仅取前 10 条热议帖子
+  const cells = Array.from(mainBox.querySelectorAll('.cell.item')).slice(0, 10);
+  const map = new Map<string, number>();
+
+  // 解析每条帖子的 postId 与当前回复数并写入 map
+  for (const cell of cells) {
+    const replyAnchor = cell.querySelector<HTMLAnchorElement>('td:last-child a');
+    if (!replyAnchor) continue;
+
+    const href = replyAnchor.getAttribute('href') || '';
+    const postIdMatch = /\/t\/(\d+)/.exec(href);
+    const replyCountMatch = /#reply(\d+)/.exec(href);
+
+    if (!postIdMatch) continue;
+
+    const postId = postIdMatch[1];
+    let replyCount = 0;
+    if (replyCountMatch) {
+      replyCount = parseInt(replyCountMatch[1], 10);
+    }
+
+    map.set(postId, replyCount);
+  }
+
+  return map;
+};
+
 // 全局热议回复数 Map
 let hotReplyCountMap: Map<string, number> | undefined;
 
@@ -346,66 +428,6 @@ export const initHotReplyCountMap = async (): Promise<void> => {
   if (!await isPostBrowsingApplyToHotTopics()) return;
   if (!await isPostBrowsingShowNewComments()) return;
   hotReplyCountMap = await fetchHotTopicsReplyCount();
-};
-
-// 缓存热议回复数的 Promise，避免同一页面多次 fetch
-let hotTopicsReplyCountCache: Promise<Map<string, number>> | null = null;
-
-const fetchHotTopicsReplyCount = (): Promise<Map<string, number>> => {
-  // 命中缓存直接返回，避免同一页面重复发起请求
-  if (hotTopicsReplyCountCache) return hotTopicsReplyCountCache;
-
-  hotTopicsReplyCountCache = (async () => {
-    const url = new URL(window.location.href);
-    const isHotTab = url.searchParams.get('tab') === 'hot';
-
-    // 当前已在热议 tab 则直接使用现有文档，否则需额外请求热议页面
-    let docToSearch: Document;
-    if (isHotTab) {
-      docToSearch = document;
-    } else {
-      try {
-        const res = await fetch(`${url.origin}/?tab=hot`);
-        const html = await res.text();
-        docToSearch = new DOMParser().parseFromString(html, 'text/html');
-      } catch (e) {
-        console.error('fetchHotTopicsReplyCount: 获取热议页面失败', e);
-        return new Map();
-      }
-    }
-
-    // 定位热议区域主容器
-    const mainBox = docToSearch.querySelector('#Main .box');
-    if (!mainBox) return new Map();
-
-    // 仅取前 10 条热议帖子
-    const cells = Array.from(mainBox.querySelectorAll('.cell.item')).slice(0, 10);
-    const map = new Map<string, number>();
-
-    // 解析每条帖子的 postId 与当前回复数并写入 map
-    for (const cell of cells) {
-      const replyAnchor = cell.querySelector<HTMLAnchorElement>('td:last-child a');
-      if (!replyAnchor) continue;
-
-      const href = replyAnchor.getAttribute('href') || '';
-      const postIdMatch = /\/t\/(\d+)/.exec(href);
-      const replyCountMatch = /#reply(\d+)/.exec(href);
-
-      if (!postIdMatch) continue;
-
-      const postId = postIdMatch[1];
-      let replyCount = 0;
-      if (replyCountMatch) {
-        replyCount = parseInt(replyCountMatch[1], 10);
-      }
-
-      map.set(postId, replyCount);
-    }
-
-    return map;
-  })();
-
-  return hotTopicsReplyCountCache;
 };
 
 // 今日热议：处理单条帖子的状态标签（新帖子 / 新回复数）
@@ -448,108 +470,44 @@ const processHotTopicAnchor = async (username: string, anchor: HTMLAnchorElement
   tryModifyHrefPage(anchor, postStatus);
 };
 
-export const updateHotTopicsLabel = async (username: string) => {
+// 将今日热议中已忽略的帖子移入隐藏容器并添加切换按钮
+export const removeIgnoredPostsHot = async (username: string) => {
   // 功能开关检测
-  if (!await isPostBrowsingApplyToHotTopics()) return;
+  const isApplyToHot = await isPostBrowsingApplyToHotTopics();
+  const isShowIgnore = await isUIShowIgnoreUpdateConfig();
+  if (!isApplyToHot || !isShowIgnore) return;
 
-  // 初始化热议回复数 Map
-  await initHotReplyCountMap();
-
+  // 定位今日热议容器
   const box = document.getElementById(V2EX_HOT_TOPICS_BOX_ID);
   if (!box) return;
 
-  // 遍历热议区域所有帖子标题链接，逐一处理状态标签
-  const anchors = box.querySelectorAll<HTMLAnchorElement>('.item_hot_topic_title a[href*="/t/"]');
-  for (const a of anchors) {
-    await processHotTopicAnchor(username, a);
+  // 遍历当前可见帖子，筛选出已被用户忽略的帖子
+  const shownCells = xpath.findNodes<HTMLDivElement>(V2EX_HOT_TOPICS_SHOWN_CELL_XPATH, document.body);
+  const ignoredCells: HTMLDivElement[] = [];
+
+  for (const cell of shownCells) {
+    const postId = getHotTopicPostId(cell);
+    if (!postId) continue;
+
+    const isIgnored = await isPostIgnored(username, postId);
+    if (isIgnored) {
+      ignoredCells.push(cell);
+    }
   }
+
+  if (ignoredCells.length === 0) return;
+
+  // 创建隐藏容器，将已忽略的帖子移入其中
+  const hiddenContainer = document.createElement('div');
+  hiddenContainer.classList.add('v-stats-removed-posts');
+  hiddenContainer.style.display = 'none';
+  ignoredCells.forEach(c => hiddenContainer.appendChild(c));
+
+  // 创建切换按钮并插入到热议容器末尾
+  const toggleButton = await createToggleButton(ignoredCells.length, hiddenContainer);
+  box.appendChild(toggleButton);
+  box.appendChild(hiddenContainer);
 };
-
-// 初始化帖子忽略按钮
-export const initPostIngoreButtons = async (username: string) => {
-  if (!await isUIShowIgnoreUpdateConfig()) {
-    console.log('initPostIngoreButtons: 帖子忽略按钮未启用，跳过');
-    return;
-  }
-
-  // 获取主页帖子列表中的回复数链接元素
-  const tdList = xpath.findNodes<Element>(`${V2EX_POST_SHOWN_CELL_XPATH}//td[4]`, document.body);
-  console.log('帖子标签', tdList);
-
-  if (tdList.length === 0) {
-    return;
-  }
-
-  // 遍历每个帖子链接，检查是否有新回复或者是否被忽略
-  tdList.forEach(async (td) => {
-    // 创建忽略按钮
-    const div = document.createElement('div');
-    div.innerText = '忽略更新';
-    div.classList.add('v-stats-ignore-button');
-
-    // 获取帖子链接
-    const href = xpath.findString('./ancestor::div[contains(@class, "cell item")]//a[contains(@href, "/t/")]/@href', td);
-    if (!href) {
-      console.log('initPostIngoreButtons: 帖子链接不存在', td);
-      return;
-    }
-
-    const { postId } = getPostInfo(href, document);
-
-    // 绑定忽略点击事件
-    div.onclick = async () => {
-      console.log('忽略更新', username, postId);
-      await ignorePost(username, postId.toString());
-      removePostCell(postId);
-    }
-
-    td.classList.add('v-stats-ignore-button-container');
-    td.appendChild(div);
-  });
-}
-
-// 初始化帖子恢复按钮
-export const initPostRecoverButtons = async (username: string) => {
-  if (!await isUIShowIgnoreUpdateConfig()) {
-    console.log('initPostRecoverButtons: 帖子恢复按钮未启用，跳过');
-    return;
-  }
-
-  // 获取主页帖子列表中的回复数链接元素
-  const tdList = xpath.findNodes<Element>(`${V2EX_POST_IGNORED_CELL_XPATH}//td[4]`, document.body);
-  console.log('帖子标签', tdList);
-
-  if (tdList.length === 0) {
-    return;
-  }
-
-  // 遍历每个帖子链接，检查是否有新回复或者是否被忽略
-  tdList.forEach(async (td) => {
-    // 创建恢复按钮
-    const div = document.createElement('div');
-    div.innerText = '恢复关注';
-    div.classList.add('v-stats-recover-button');
-
-    // 获取帖子链接
-    const href = xpath.findString('./ancestor::div[contains(@class, "cell item")]//a[contains(@href, "/t/")]/@href', td);
-    if (!href) {
-      console.log('initPostIngoreButtons: 帖子链接不存在', td);
-      return;
-    }
-
-    const { postId } = getPostInfo(href, document);
-
-    // 绑定忽略点击事件
-    div.onclick = async () => {
-      console.log('恢复关注', username, postId);
-      await recoverPost(username, postId.toString());
-      appendPostCell(postId);
-    }
-
-    td.classList.add('v-stats-recover-button-container');
-    td.appendChild(div);
-  });
-}
 
 // 今日热议：为每条展示中的帖子添加 inline 忽略按钮
 export const initHotTopicIgnoreButtons = async (username: string) => {
@@ -630,6 +588,24 @@ export const initHotTopicRecoverButtons = async (username: string) => {
     };
 
     container.appendChild(btn);
+  }
+};
+
+// 更新今日热议帖子的新回复数标签
+export const updateHotTopicsLabel = async (username: string) => {
+  // 功能开关检测
+  if (!await isPostBrowsingApplyToHotTopics()) return;
+
+  // 初始化热议回复数 Map
+  await initHotReplyCountMap();
+
+  const box = document.getElementById(V2EX_HOT_TOPICS_BOX_ID);
+  if (!box) return;
+
+  // 遍历热议区域所有帖子标题链接，逐一处理状态标签
+  const anchors = box.querySelectorAll<HTMLAnchorElement>('.item_hot_topic_title a[href*="/t/"]');
+  for (const a of anchors) {
+    await processHotTopicAnchor(username, a);
   }
 };
 
