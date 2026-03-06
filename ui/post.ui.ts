@@ -309,8 +309,58 @@ const getOrCreateHotContainer = (titleSpan: Element): HTMLSpanElement => {
   return container;
 };
 
-// 今日热议：状态标签（新帖子）。热议列表无回复数 DOM，仅支持「新帖子」标签
-const processHotTopicAnchor = async (username: string, anchor: HTMLAnchorElement) => {
+// 缓存热议回复数的 Promise，避免同一页面多次 fetch
+let hotTopicsReplyCountCache: Promise<Map<string, number>> | null = null;
+
+const fetchHotTopicsReplyCount = (): Promise<Map<string, number>> => {
+  if (hotTopicsReplyCountCache) return hotTopicsReplyCountCache;
+
+  hotTopicsReplyCountCache = (async () => {
+    const url = new URL(window.location.href);
+    const isHotTab = url.searchParams.get('tab') === 'hot';
+
+    let docToSearch: Document;
+
+    if (isHotTab) {
+      docToSearch = document;
+    } else {
+      try {
+        const res = await fetch(`${url.origin}/?tab=hot`);
+        const html = await res.text();
+        docToSearch = new DOMParser().parseFromString(html, 'text/html');
+      } catch (e) {
+        console.error('fetchHotTopicsReplyCount: 获取热议页面失败', e);
+        return new Map();
+      }
+    }
+
+    const mainBox = docToSearch.querySelector('#Main .box');
+    if (!mainBox) return new Map();
+
+    const cells = Array.from(mainBox.querySelectorAll('.cell.item')).slice(0, 10);
+    const map = new Map<string, number>();
+
+    for (const cell of cells) {
+      const replyAnchor = cell.querySelector<HTMLAnchorElement>('td:last-child a');
+      if (!replyAnchor) continue;
+      const href = replyAnchor.getAttribute('href') || '';
+      const postIdMatch = /\/t\/(\d+)/.exec(href);
+      const replyCountMatch = /#reply(\d+)/.exec(href);
+      if (postIdMatch) {
+        const postId = postIdMatch[1];
+        const replyCount = replyCountMatch ? parseInt(replyCountMatch[1], 10) : 0;
+        map.set(postId, replyCount);
+      }
+    }
+
+    return map;
+  })();
+
+  return hotTopicsReplyCountCache;
+};
+
+// 今日热议：状态标签（新帖子 / 新回复数）
+const processHotTopicAnchor = async (username: string, anchor: HTMLAnchorElement, replyCountMap?: Map<string, number>) => {
   const postId = getHotTopicPostId(anchor);
   if (!postId) return;
   const titleSpan = anchor.closest('.item_hot_topic_title');
@@ -321,6 +371,16 @@ const processHotTopicAnchor = async (username: string, anchor: HTMLAnchorElement
     if (await isPostBrowsingMarkNewPosts()) applyHotLabel(container, 'new', '#fa8c16');
     return;
   }
+
+  if (replyCountMap) {
+    const currentReplyCount = replyCountMap.get(postId);
+    if (currentReplyCount !== undefined && currentReplyCount > postStatus.replyCount) {
+      const newCount = currentReplyCount - postStatus.replyCount;
+      applyHotLabel(container, `+${newCount}`);
+      return;
+    }
+  }
+
   clearHotLabel(container);
 };
 
@@ -328,8 +388,9 @@ export const updateHotTopicsLabel = async (username: string) => {
   if (!await isPostBrowsingApplyToHotTopics()) return;
   const box = document.getElementById(V2EX_HOT_TOPICS_BOX_ID);
   if (!box) return;
+  const replyCountMap = await isPostBrowsingShowNewComments() ? await fetchHotTopicsReplyCount() : undefined;
   const anchors = box.querySelectorAll<HTMLAnchorElement>('.item_hot_topic_title a[href*="/t/"]');
-  for (const a of anchors) await processHotTopicAnchor(username, a);
+  for (const a of anchors) await processHotTopicAnchor(username, a, replyCountMap);
 };
 
 // 初始化帖子忽略按钮
