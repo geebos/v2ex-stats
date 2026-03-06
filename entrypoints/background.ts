@@ -9,10 +9,19 @@ const setupBalanceQueryHandler = () => {
   }
 };
 
+const setupFirstInstallRedirect = () => {
+  browser.runtime.onInstalled.addListener((details) => {
+    if (details.reason === 'install') {
+      browser.tabs.create({ url: '/options.html' });
+    }
+  });
+};
+
 export default defineBackground({
   main: async () => {
     console.log('Hello background!', { id: browser.runtime.id });
 
     setupBalanceQueryHandler();
+    setupFirstInstallRedirect();
   }
 });
