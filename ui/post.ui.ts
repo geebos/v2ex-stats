@@ -313,14 +313,15 @@ const getOrCreateHotContainer = (titleSpan: Element): HTMLSpanElement => {
 let hotTopicsReplyCountCache: Promise<Map<string, number>> | null = null;
 
 const fetchHotTopicsReplyCount = (): Promise<Map<string, number>> => {
+  // 命中缓存直接返回，避免同一页面重复发起请求
   if (hotTopicsReplyCountCache) return hotTopicsReplyCountCache;
 
   hotTopicsReplyCountCache = (async () => {
     const url = new URL(window.location.href);
     const isHotTab = url.searchParams.get('tab') === 'hot';
 
+    // 当前已在热议 tab 则直接使用现有文档，否则需额外请求热议页面
     let docToSearch: Document;
-
     if (isHotTab) {
       docToSearch = document;
     } else {
@@ -334,23 +335,32 @@ const fetchHotTopicsReplyCount = (): Promise<Map<string, number>> => {
       }
     }
 
+    // 定位热议区域主容器
     const mainBox = docToSearch.querySelector('#Main .box');
     if (!mainBox) return new Map();
 
+    // 仅取前 10 条热议帖子
     const cells = Array.from(mainBox.querySelectorAll('.cell.item')).slice(0, 10);
     const map = new Map<string, number>();
 
+    // 解析每条帖子的 postId 与当前回复数并写入 map
     for (const cell of cells) {
       const replyAnchor = cell.querySelector<HTMLAnchorElement>('td:last-child a');
       if (!replyAnchor) continue;
+
       const href = replyAnchor.getAttribute('href') || '';
       const postIdMatch = /\/t\/(\d+)/.exec(href);
       const replyCountMatch = /#reply(\d+)/.exec(href);
-      if (postIdMatch) {
-        const postId = postIdMatch[1];
-        const replyCount = replyCountMatch ? parseInt(replyCountMatch[1], 10) : 0;
-        map.set(postId, replyCount);
+
+      if (!postIdMatch) continue;
+
+      const postId = postIdMatch[1];
+      let replyCount = 0;
+      if (replyCountMatch) {
+        replyCount = parseInt(replyCountMatch[1], 10);
       }
+
+      map.set(postId, replyCount);
     }
 
     return map;
@@ -359,19 +369,30 @@ const fetchHotTopicsReplyCount = (): Promise<Map<string, number>> => {
   return hotTopicsReplyCountCache;
 };
 
-// 今日热议：状态标签（新帖子 / 新回复数）
+// 今日热议：处理单条帖子的状态标签（新帖子 / 新回复数）
 const processHotTopicAnchor = async (username: string, anchor: HTMLAnchorElement, replyCountMap?: Map<string, number>) => {
+  // 解析 postId 与标题所在容器
   const postId = getHotTopicPostId(anchor);
   if (!postId) return;
+
   const titleSpan = anchor.closest('.item_hot_topic_title');
   if (!titleSpan) return;
+
+  // 获取或创建标签与按钮的共用 inline 容器
   const container = getOrCreateHotContainer(titleSpan);
+
+  // 查询该帖子的历史访问状态
   const postStatus = await getPostStatus(username, postId);
+
+  // 从未访问过：标记为新帖
   if (!postStatus) {
-    if (await isPostBrowsingMarkNewPosts()) applyHotLabel(container, 'new', '#fa8c16');
+    if (await isPostBrowsingMarkNewPosts()) {
+      applyHotLabel(container, 'new', '#fa8c16');
+    }
     return;
   }
 
+  // 有访问记录且提供了最新回复数 Map，则计算新回复增量
   if (replyCountMap) {
     const currentReplyCount = replyCountMap.get(postId);
     if (currentReplyCount !== undefined && currentReplyCount > postStatus.replyCount) {
@@ -381,16 +402,28 @@ const processHotTopicAnchor = async (username: string, anchor: HTMLAnchorElement
     }
   }
 
+  // 无新回复，清除已有标签
   clearHotLabel(container);
 };
 
 export const updateHotTopicsLabel = async (username: string) => {
+  // 功能开关检测
   if (!await isPostBrowsingApplyToHotTopics()) return;
+
   const box = document.getElementById(V2EX_HOT_TOPICS_BOX_ID);
   if (!box) return;
-  const replyCountMap = await isPostBrowsingShowNewComments() ? await fetchHotTopicsReplyCount() : undefined;
+
+  // 按需拉取最新回复数（功能未开启时跳过网络请求）
+  let replyCountMap: Map<string, number> | undefined;
+  if (await isPostBrowsingShowNewComments()) {
+    replyCountMap = await fetchHotTopicsReplyCount();
+  }
+
+  // 遍历热议区域所有帖子标题链接，逐一处理状态标签
   const anchors = box.querySelectorAll<HTMLAnchorElement>('.item_hot_topic_title a[href*="/t/"]');
-  for (const a of anchors) await processHotTopicAnchor(username, a, replyCountMap);
+  for (const a of anchors) {
+    await processHotTopicAnchor(username, a, replyCountMap);
+  }
 };
 
 // 初始化帖子忽略按钮
@@ -479,19 +512,32 @@ export const initPostRecoverButtons = async (username: string) => {
   });
 }
 
-// 今日热议：为每条帖子添加 inline 忽略按钮
+// 今日热议：为每条展示中的帖子添加 inline 忽略按钮
 export const initHotTopicIgnoreButtons = async (username: string) => {
+  // 功能开关检测
   if (!await isPostBrowsingApplyToHotTopics() || !await isUIShowIgnoreUpdateConfig()) return;
+
   const box = document.getElementById(V2EX_HOT_TOPICS_BOX_ID);
   if (!box) return;
+
+  // 获取当前可见的热议帖子列表
   const cells = xpath.findNodes<HTMLDivElement>(V2EX_HOT_TOPICS_SHOWN_CELL_XPATH, document.body);
+
   for (const cell of cells) {
     const postId = getHotTopicPostId(cell);
     if (!postId) continue;
+
+    // 定位标题容器
     const titleSpan = cell.querySelector('.item_hot_topic_title');
     if (!titleSpan) continue;
+
+    // 获取或创建标签与按钮的共用 inline 容器
     const container = getOrCreateHotContainer(titleSpan);
+
+    // 避免重复添加
     if (container.querySelector('.v-stats-hot-ignore-btn')) continue;
+
+    // 创建忽略按钮并绑定点击事件
     const btn = document.createElement('span');
     btn.innerText = '忽略';
     btn.classList.add('v-stats-hot-btn', 'v-stats-hot-ignore-btn');
@@ -500,25 +546,41 @@ export const initHotTopicIgnoreButtons = async (username: string) => {
       await ignorePost(username, postId);
       removeHotTopicCell(postId);
     };
+
     container.appendChild(btn);
   }
 };
 
 // 今日热议：为已忽略列表中的帖子添加 inline 恢复按钮
 export const initHotTopicRecoverButtons = async (username: string) => {
+  // 功能开关检测
   if (!await isPostBrowsingApplyToHotTopics() || !await isUIShowIgnoreUpdateConfig()) return;
+
   const box = document.getElementById(V2EX_HOT_TOPICS_BOX_ID);
   if (!box) return;
+
+  // 获取隐藏容器（存放已被忽略的帖子）
   const hidden = box.querySelector('.v-stats-removed-posts');
   if (!hidden) return;
+
+  // 获取隐藏容器内所有已忽略帖子
   const cells = xpath.findNodes<HTMLDivElement>(`.//div[contains(@class, "cell") and contains(@class, "hot_t_")]`, hidden);
+
   for (const cell of cells) {
     const postId = getHotTopicPostId(cell);
     if (!postId) continue;
+
+    // 定位标题容器
     const titleSpan = cell.querySelector('.item_hot_topic_title');
     if (!titleSpan) continue;
+
+    // 获取或创建标签与按钮的共用 inline 容器
     const container = getOrCreateHotContainer(titleSpan);
+
+    // 避免重复添加
     if (container.querySelector('.v-stats-hot-recover-btn')) continue;
+
+    // 创建恢复按钮并绑定点击事件
     const btn = document.createElement('span');
     btn.innerText = '恢复';
     btn.classList.add('v-stats-hot-btn', 'v-stats-hot-recover-btn');
@@ -527,6 +589,7 @@ export const initHotTopicRecoverButtons = async (username: string) => {
       await recoverPost(username, postId);
       appendHotTopicCell(postId);
     };
+
     container.appendChild(btn);
   }
 };
