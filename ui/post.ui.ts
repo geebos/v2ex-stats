@@ -273,20 +273,38 @@ const createToggleButton = async (count: number, container: HTMLElement) => {
 // ======================== 今日热议：忽略与折叠 ========================
 
 export const removeIgnoredPostsHot = async (username: string) => {
-  if (!await isPostBrowsingApplyToHotTopics() || !await isUIShowIgnoreUpdateConfig()) return;
+  // 功能开关检测
+  const isApplyToHot = await isPostBrowsingApplyToHotTopics();
+  const isShowIgnore = await isUIShowIgnoreUpdateConfig();
+  if (!isApplyToHot || !isShowIgnore) return;
+
+  // 定位今日热议容器
   const box = document.getElementById(V2EX_HOT_TOPICS_BOX_ID);
   if (!box) return;
+
+  // 遍历当前可见帖子，筛选出已被用户忽略的帖子
   const shownCells = xpath.findNodes<HTMLDivElement>(V2EX_HOT_TOPICS_SHOWN_CELL_XPATH, document.body);
   const ignoredCells: HTMLDivElement[] = [];
+
   for (const cell of shownCells) {
     const postId = getHotTopicPostId(cell);
-    if (postId && (await isPostIgnored(username, postId))) ignoredCells.push(cell);
+    if (!postId) continue;
+
+    const isIgnored = await isPostIgnored(username, postId);
+    if (isIgnored) {
+      ignoredCells.push(cell);
+    }
   }
+
   if (ignoredCells.length === 0) return;
+
+  // 创建隐藏容器，将已忽略的帖子移入其中
   const hiddenContainer = document.createElement('div');
   hiddenContainer.classList.add('v-stats-removed-posts');
   hiddenContainer.style.display = 'none';
   ignoredCells.forEach(c => hiddenContainer.appendChild(c));
+
+  // 创建切换按钮并插入到热议容器末尾
   const toggleButton = await createToggleButton(ignoredCells.length, hiddenContainer);
   box.appendChild(toggleButton);
   box.appendChild(hiddenContainer);
@@ -294,18 +312,27 @@ export const removeIgnoredPostsHot = async (username: string) => {
 
 // 获取或创建今日热议标题 <a> 后的 inline 容器（标签与按钮共用）
 const getOrCreateHotContainer = (titleSpan: Element): HTMLSpanElement => {
+  // 若容器已存在则直接返回，避免重复创建
   const existing = titleSpan.querySelector<HTMLSpanElement>('.v-stats-hot-container');
   if (existing) return existing;
+
+  // 创建新的 inline 容器
   const container = document.createElement('span');
   container.classList.add('v-stats-hot-container');
+
+  // 将容器插入到帖子链接之后，若无链接则插入到标题最前方
   const anchor = titleSpan.querySelector('a[href*="/t/"]');
   if (anchor && anchor.nextSibling) {
+    // 链接后有兄弟节点，插入到链接与下一节点之间
     titleSpan.insertBefore(container, anchor.nextSibling);
   } else if (anchor) {
+    // 链接是最后一个子节点，直接追加
     titleSpan.appendChild(container);
   } else {
+    // 无帖子链接，插入到标题最前方
     titleSpan.prepend(container);
   }
+
   return container;
 };
 
