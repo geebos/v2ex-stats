@@ -16,7 +16,7 @@ export default defineConfig({
     sourcesTemplate: '{{name}}-sources-v{{version}}.zip'
   },
   webExt: {
-    disabled: true,
+    disabled: false,
   },
   vite: () => ({
     plugins: [

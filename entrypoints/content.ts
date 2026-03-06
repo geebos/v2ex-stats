@@ -21,10 +21,15 @@ export const detectAndGetInfo = (): PageInfo => {
   const memberLink = Array.from(document.querySelectorAll('#Top a'))
     .find(a => /^\/member\/[\w-]+$/.test(a.getAttribute('href') || '')) as HTMLAnchorElement | undefined;
 
-  const isLoggedIn = !!memberLink;
-  const username = isLoggedIn && memberLink
+  let isLoggedIn = !!memberLink;
+  let username = isLoggedIn && memberLink
     ? memberLink.href.split('/').pop()?.trim() ?? ''
     : '';
+
+  if (import.meta.env.DEV) {
+    isLoggedIn = true;
+    username = username || 'username';
+  }
 
   const pathname = window.location.pathname;
 

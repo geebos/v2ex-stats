@@ -261,6 +261,15 @@ const OptionsPage: React.FC = () => {
                   />
                   <span className="text-gray-700">标记新帖子</span>
                 </label>
+                <label className="flex items-center space-x-3 p-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={config.postBrowsing.applyToHotTopics}
+                    onChange={(e) => updateConfig('postBrowsing', 'applyToHotTopics', e.target.checked)}
+                    className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+                  />
+                  <span className="text-gray-700">应用到今日热议主题</span>
+                </label>
               </div>
             </div>
 

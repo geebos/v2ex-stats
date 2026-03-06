@@ -2,7 +2,7 @@ import { updatePostStatus } from "@/service/history/post";
 import { getIsDarkMode } from "@/service/utils";
 import { debounce, once } from "lodash";
 import { processCommentsUI } from "@/ui/comments.ui";
-import { initPostIngoreButtons, initPostRecoverButtons, processPostUI } from "@/ui/post.ui";
+import { initHotTopicIgnoreButtons, initHotTopicRecoverButtons, initPostIngoreButtons, initPostRecoverButtons, processPostUI } from "@/ui/post.ui";
 
 // ======================== 页面检测相关 ========================
 
@@ -50,9 +50,11 @@ const registerMutationObserver = async (username: string) => {
       await processUI(username);
     });
 
-    // 初始化帖子忽略按钮
+    // 初始化帖子忽略/恢复按钮（主页列表 + 今日热议）
     await initPostIngoreButtons(username);
     await initPostRecoverButtons(username);
+    await initHotTopicIgnoreButtons(username);
+    await initHotTopicRecoverButtons(username);
   }), 2000, { leading: false, trailing: true }));
   loadedObserver.observe(container, { childList: true, subtree: true });
 
@@ -124,6 +126,49 @@ export const injectStyle = () => {
       display: none;
     }
 
+    /* 今日热议：标签 + 按钮的 inline 容器 */
+    .v-stats-hot-container {
+      display: inline-block;
+      vertical-align: middle;
+      text-shadow: none;
+    }
+
+    /* 今日热议：inline 忽略/恢复按钮 & 标签（共用外观） */
+    .v-stats-hot-btn,
+    .v-stats-hot-label {
+      font-size: 11px;
+      margin-left: 4px;
+      padding: 2px 6px;
+      border-radius: 999px;
+      vertical-align: middle;
+      color: white;
+      border: none;
+      line-height: 1.6;
+    }
+
+    .v-stats-hot-btn {
+      display: none;
+      cursor: pointer;
+    }
+
+    .v-stats-hot-label {
+      display: inline;
+      cursor: default;
+      background-color: var(--v-stats-label-bg, ${color});
+    }
+
+    .cell:hover .v-stats-hot-btn {
+      display: inline;
+    }
+
+    .v-stats-hot-ignore-btn {
+      background-color: #fa8c16;
+    }
+
+    .v-stats-hot-recover-btn {
+      background-color: #1890ff;
+    }
+
     .v-stats-toggle-bar {
       cursor: pointer;
       user-select: none;
@@ -162,6 +207,23 @@ export const applyLabel = (element: HTMLElement, content: string, bg?: string) =
 export const clearLabel = (element: HTMLElement) => {
   element.classList.remove('v-stats-label');
   element.removeAttribute('data-content');
+}
+
+// 今日热议：在容器中插入实体 badge 元素（复用 .v-stats-hot-label 样式）
+export const applyHotLabel = (container: HTMLElement, content: string, bg?: string) => {
+  let badge = container.querySelector<HTMLSpanElement>('.v-stats-hot-label');
+  if (!badge) {
+    badge = document.createElement('span');
+    badge.classList.add('v-stats-hot-label');
+    container.prepend(badge);
+  }
+  badge.textContent = content;
+  if (bg) badge.style.setProperty('--v-stats-label-bg', bg);
+}
+
+// 今日热议：移除容器中的 badge 元素
+export const clearHotLabel = (container: HTMLElement) => {
+  container.querySelector('.v-stats-hot-label')?.remove();
 }
 
 // ======================== 主入口函数 ========================

@@ -92,6 +92,7 @@ export interface ConfigOptions {
     autoScrollToFirstNewComment: boolean;
     smoothScrolling: boolean;
     markNewPosts: boolean;
+    applyToHotTopics: boolean;
   };
 
   // 界面设置
@@ -116,6 +117,7 @@ export const defaultConfig: ConfigOptions = {
     autoScrollToFirstNewComment: false,
     smoothScrolling: false,
     markNewPosts: false,
+    applyToHotTopics: false,
   },
   ui: {
     showIgnoreUpdateConfig: false,
