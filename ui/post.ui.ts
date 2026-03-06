@@ -30,10 +30,9 @@ const detectPlugins = () => {
 // 根据帖子状态修改跳转链接，直接跳到最新评论页
 const tryModifyHrefPage = (anchor: HTMLAnchorElement, postStatus: PostStatus) => {
   const { viewedCount } = postStatus;
-  const { isVP } = detectPlugins();
 
-  // 如果没有查看记录或使用 V2EX Polish 插件则跳过
-  if (!viewedCount || isVP) return;
+  // 如果没有查看记录则跳过
+  if (!viewedCount) return;
 
   // 如果评论数不超过一页则无需修改
   if (viewedCount <= V2EX_COMMENT_PAGE_SIZE) return;
@@ -336,6 +335,19 @@ const getOrCreateHotContainer = (titleSpan: Element): HTMLSpanElement => {
   return container;
 };
 
+// 全局热议回复数 Map
+let hotReplyCountMap: Map<string, number> | undefined;
+
+// 获取指定 postId 的热议回复数，未初始化或不存在时返回 undefined
+const getHotReplyCount = (postId: string): number | undefined => hotReplyCountMap?.get(postId);
+
+// 初始化热议回复数 Map，需检查 applyToHotTopics 与 showNewComments 配置
+export const initHotReplyCountMap = async (): Promise<void> => {
+  if (!await isPostBrowsingApplyToHotTopics()) return;
+  if (!await isPostBrowsingShowNewComments()) return;
+  hotReplyCountMap = await fetchHotTopicsReplyCount();
+};
+
 // 缓存热议回复数的 Promise，避免同一页面多次 fetch
 let hotTopicsReplyCountCache: Promise<Map<string, number>> | null = null;
 
@@ -397,7 +409,7 @@ const fetchHotTopicsReplyCount = (): Promise<Map<string, number>> => {
 };
 
 // 今日热议：处理单条帖子的状态标签（新帖子 / 新回复数）
-const processHotTopicAnchor = async (username: string, anchor: HTMLAnchorElement, replyCountMap?: Map<string, number>) => {
+const processHotTopicAnchor = async (username: string, anchor: HTMLAnchorElement) => {
   // 解析 postId 与标题所在容器
   const postId = getHotTopicPostId(anchor);
   if (!postId) return;
@@ -419,37 +431,37 @@ const processHotTopicAnchor = async (username: string, anchor: HTMLAnchorElement
     return;
   }
 
-  // 有访问记录且提供了最新回复数 Map，则计算新回复增量
-  if (replyCountMap) {
-    const currentReplyCount = replyCountMap.get(postId);
+  // 检查 showNewComments 配置，计算新回复增量并更新标签
+  if (await isPostBrowsingShowNewComments()) {
+    const currentReplyCount = getHotReplyCount(postId);
     if (currentReplyCount !== undefined && currentReplyCount > postStatus.replyCount) {
       const newCount = currentReplyCount - postStatus.replyCount;
       applyHotLabel(container, `+${newCount}`);
-      return;
+    } else {
+      clearHotLabel(container);
     }
+  } else {
+    clearHotLabel(container);
   }
 
-  // 无新回复，清除已有标签
-  clearHotLabel(container);
+  // 更新热议列表跳转链接的 page 参数
+  tryModifyHrefPage(anchor, postStatus);
 };
 
 export const updateHotTopicsLabel = async (username: string) => {
   // 功能开关检测
   if (!await isPostBrowsingApplyToHotTopics()) return;
 
+  // 初始化热议回复数 Map
+  await initHotReplyCountMap();
+
   const box = document.getElementById(V2EX_HOT_TOPICS_BOX_ID);
   if (!box) return;
-
-  // 按需拉取最新回复数（功能未开启时跳过网络请求）
-  let replyCountMap: Map<string, number> | undefined;
-  if (await isPostBrowsingShowNewComments()) {
-    replyCountMap = await fetchHotTopicsReplyCount();
-  }
 
   // 遍历热议区域所有帖子标题链接，逐一处理状态标签
   const anchors = box.querySelectorAll<HTMLAnchorElement>('.item_hot_topic_title a[href*="/t/"]');
   for (const a of anchors) {
-    await processHotTopicAnchor(username, a, replyCountMap);
+    await processHotTopicAnchor(username, a);
   }
 };
 
