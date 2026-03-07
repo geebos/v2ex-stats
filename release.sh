@@ -122,13 +122,6 @@ main() {
     
     echo "新版本号: $new_tag"
     
-    if [[ $? -eq 0 ]]; then
-        echo "✅ 已更新 package.json 版本号为: ${new_version}"
-    else
-        echo "❌ 更新 package.json 失败" >&2
-        exit 1
-    fi
-    
     # 检查 tag 是否已存在
     if git rev-parse "$new_tag" >/dev/null 2>&1; then
         echo "错误: Tag '$new_tag' 已存在" >&2
@@ -138,8 +131,15 @@ main() {
     # 更新 package.json 中的版本号
     npm version "${new_version}" --no-git-tag-version --allow-same-version > /dev/null 2>&1
 
+    if [[ $? -eq 0 ]]; then
+        echo "✅ 已更新 package.json 版本号为: ${new_version}"
+    else
+        echo "❌ 更新 package.json 失败" >&2
+        exit 1
+    fi
+
     git add package.json
-    git commit -m "chore(release): ${new_version}"
+    git commit -m "${message:-"chore(release): ${new_tag}"}"
     
     
     # 设置默认 message
