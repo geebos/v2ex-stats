@@ -15,7 +15,8 @@ export const getPostInfo = (pathname: string, document: Document): { postId: str
   let replyCount = parseInt(/#reply(\d+)/.exec(pathname)?.[1] || '0', 10);
 
   // 从DOM中获取更准确的回复数信息
-  const replyCountText = xpath.findNodes<HTMLSpanElement>('(//div[@id="Main"]//div[@class="box"][2]//div[@class="cell"][1]//span[@class="gray"]//text())[1]', document);
+  const replyCountText = xpath.findNodes<HTMLSpanElement>('//div[@id="Main"]//div[@class="box"]//span[@class="gray"]//text()', document);
+  console.log('replyCountText', replyCountText);
   
   // 优先使用页面显示的回复数
   if (replyCountText.length > 0) {

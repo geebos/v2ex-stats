@@ -341,7 +341,7 @@ const appendHotTopicCell = (postId: string) => {
 }
 
 // 获取或创建今日热议标题 <a> 后的 inline 容器（标签与按钮共用）
-const getOrCreateHotContainer = (titleSpan: Element): HTMLSpanElement => {
+const getOrCreateHotContainer = (titleSpan: HTMLSpanElement): HTMLSpanElement => {
   // 若容器已存在则直接返回，避免重复创建
   const existing = titleSpan.querySelector<HTMLSpanElement>('.v-stats-hot-container');
   if (existing) return existing;
@@ -362,6 +362,7 @@ const getOrCreateHotContainer = (titleSpan: Element): HTMLSpanElement => {
     // 无帖子链接，插入到标题最前方
     titleSpan.prepend(container);
   }
+  titleSpan.style.display = 'inline-block';
 
   return container;
 };
@@ -436,7 +437,7 @@ const processHotTopicAnchor = async (username: string, anchor: HTMLAnchorElement
   const postId = getHotTopicPostId(anchor);
   if (!postId) return;
 
-  const titleSpan = anchor.closest('.item_hot_topic_title');
+  const titleSpan = anchor.closest('.item_hot_topic_title') as HTMLSpanElement;
   if (!titleSpan) return;
 
   // 获取或创建标签与按钮的共用 inline 容器
@@ -525,7 +526,7 @@ export const initHotTopicIgnoreButtons = async (username: string) => {
     if (!postId) continue;
 
     // 定位标题容器
-    const titleSpan = cell.querySelector('.item_hot_topic_title');
+    const titleSpan = cell.querySelector('.item_hot_topic_title') as HTMLSpanElement;
     if (!titleSpan) continue;
 
     // 获取或创建标签与按钮的共用 inline 容器
@@ -568,7 +569,7 @@ export const initHotTopicRecoverButtons = async (username: string) => {
     if (!postId) continue;
 
     // 定位标题容器
-    const titleSpan = cell.querySelector('.item_hot_topic_title');
+    const titleSpan = cell.querySelector('.item_hot_topic_title') as HTMLSpanElement;
     if (!titleSpan) continue;
 
     // 获取或创建标签与按钮的共用 inline 容器
