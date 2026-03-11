@@ -26,7 +26,7 @@ async function initCurrentPostStatus(username: string) {
 
 // 获取所有评论编号元素
 const findAllCommentsElement = () => {
-  return xpath.findNodes<HTMLSpanElement>(`//div[@id="Main"]//div[@class="box"][2]//div[starts-with(@id, "r_")]//span[@class="no" or @class="no v-stats-label"]`, document);
+  return xpath.findNodes<HTMLSpanElement>(`//div[@id="Main"]//div[starts-with(@id, "r_")]//span[@class="no" or @class="no v-stats-label"]`, document);
 };
 
 // ======================== 评论标签更新 ========================

@@ -15,9 +15,6 @@ export default defineConfig({
     artifactTemplate: '{{name}}-{{browser}}-v{{version}}.zip',
     sourcesTemplate: '{{name}}-sources-v{{version}}.zip'
   },
-  webExt: {
-    disabled: false,
-  },
   vite: () => ({
     plugins: [
     ],
