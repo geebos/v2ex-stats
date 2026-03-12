@@ -15,5 +15,7 @@
    - body：可选，说明修改动机、变化的细节。每行不超过 72 字符。
    - footer：可选，用于 BREAKING CHANGE 或关联 issue（如 `Closes #123`）。
 
+5. 包含多种类型的 type 时按照 4 中给的 type 顺序多次提交
+
 tips:
 - 默认当前目录为工作目录
