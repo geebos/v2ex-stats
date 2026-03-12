@@ -189,6 +189,12 @@ export const injectStyle = () => {
       background-color: #e5e7eb;
       box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     }
+    
+    /* 避免 v2ex polish 预览按钮遮挡 */
+    .v2p-topic-preview-btn {
+      position: inherit!important;
+      display: inline-block!important;
+    }
     `;
   document.head.appendChild(style);
 }
