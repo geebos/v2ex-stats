@@ -21,8 +21,8 @@ const ModalOverlay = styled.div<{ $isOpen: boolean }>`
 
 const ModalContent = styled.div`
   position: relative;
-  width: 420px;
-  height: 667px;
+  width: min(720px, 92vw, calc(86vh / 0.75));
+  aspect-ratio: 4 / 3;
   background: white;
   border-radius: 20px;
   overflow: hidden;

@@ -1,6 +1,6 @@
 import { createElement, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import styled from 'styled-components';
+import styled, { css, keyframes } from 'styled-components';
 import {
   FaChevronLeft,
   FaChevronRight,
@@ -46,6 +46,32 @@ function getTier(priority: number): number {
   return Math.min(Math.max(priority, 1), 4);
 }
 
+// ==================== 动画 keyframes ====================
+
+// 上浮淡入：用于标题、统计块、热力图等数据出现
+const fadeInUp = keyframes`
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+`;
+
+// 缩放弹入：用于成就徽章、奖牌卡
+const popIn = keyframes`
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+`;
+
 // ==================== 页面背景与装饰 ====================
 
 const SlidesContainer = styled.div<{ $isDarkMode: boolean }>`
@@ -73,7 +99,7 @@ const SlideWrapper = styled.div<{ $currentIndex: number; $totalSlides: number }>
   width: ${props => `${100 * props.$totalSlides}%`};
   height: 100%;
   transform: translateX(-${props => (props.$currentIndex * 100) / props.$totalSlides}%);
-  transition: transform 0.3s ease;
+  transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
 `;
 
 const Slide = styled.div<{ $totalSlides: number }>`
@@ -92,13 +118,14 @@ const SlideContent = styled.div`
   text-align: center;
 `;
 
-const SlideTitle = styled.div`
+const SlideTitle = styled.div<{ $active: boolean }>`
   flex-shrink: 0;
   margin-top: 36px;
   margin-bottom: 20px;
   display: flex;
   align-items: center;
   gap: 12px;
+  ${props => props.$active && css`animation: ${fadeInUp} 0.5s ease both;`}
 `;
 
 const SectionIcon = styled.div`
@@ -132,11 +159,14 @@ const SlideBody = styled.div`
 
 // ==================== 数据统计 ====================
 
-const StatGroup = styled.div`
+const StatGroup = styled.div<{ $active: boolean; $delay: number }>`
   display: flex;
   flex-direction: column;
   align-items: center;
   margin: 10px 0;
+  ${props => props.$active && css`
+    animation: ${fadeInUp} 0.55s ease ${props.$delay}ms both;
+  `}
 `;
 
 const StatNumber = styled.div`
@@ -151,14 +181,17 @@ const StatNumber = styled.div`
   color: transparent;
 `;
 
-const StatLabel = styled.div<{ $isDarkMode: boolean }>`
+const StatLabel = styled.div<{ $isDarkMode: boolean; $active?: boolean; $delay?: number }>`
   font-size: 14px;
   color: ${props => props.$isDarkMode ? '#b3a48f' : '#8f8170'};
+  ${props => props.$active && css`
+    animation: ${fadeInUp} 0.5s ease ${props.$delay ?? 0}ms both;
+  `}
 `;
 
 // ==================== 封面 ====================
 
-const CoverYear = styled.div`
+const CoverYear = styled.div<{ $active: boolean }>`
   font-size: 72px;
   font-weight: 900;
   line-height: 1;
@@ -168,25 +201,29 @@ const CoverYear = styled.div`
   background-clip: text;
   -webkit-text-fill-color: transparent;
   color: transparent;
+  ${props => props.$active && css`animation: ${fadeInUp} 0.6s ease 0.05s both;`}
 `;
 
-const CoverTitle = styled.h1<{ $isDarkMode: boolean }>`
+const CoverTitle = styled.h1<{ $isDarkMode: boolean; $active: boolean }>`
   font-size: 26px;
   font-weight: 700;
   margin: 0 0 20px 0;
   color: ${props => props.$isDarkMode ? '#fff' : '#3d3228'};
+  ${props => props.$active && css`animation: ${fadeInUp} 0.6s ease 0.2s both;`}
 `;
 
-const CoverUser = styled.div<{ $isDarkMode: boolean }>`
+const CoverUser = styled.div<{ $isDarkMode: boolean; $active: boolean }>`
   font-size: 16px;
   font-weight: 600;
   color: ${props => props.$isDarkMode ? '#cfc0a8' : '#666'};
   margin-bottom: 8px;
+  ${props => props.$active && css`animation: ${fadeInUp} 0.6s ease 0.35s both;`}
 `;
 
-const Tagline = styled.div<{ $isDarkMode: boolean }>`
+const Tagline = styled.div<{ $isDarkMode: boolean; $active: boolean }>`
   font-size: 13px;
   color: ${props => props.$isDarkMode ? '#9f907a' : '#a0937f'};
+  ${props => props.$active && css`animation: ${fadeInUp} 0.6s ease 0.5s both;`}
 `;
 
 const FloatingEmoji = styled.span<{ $isDarkMode: boolean }>`
@@ -213,7 +250,7 @@ const SlideTitlesContainer = styled.div`
   max-width: 340px;
 `;
 
-const AchievementChip = styled.span<{ $tier: number }>`
+const AchievementChip = styled.span<{ $tier: number; $active: boolean; $delay: number }>`
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -225,6 +262,9 @@ const AchievementChip = styled.span<{ $tier: number }>`
   background: ${props => TIER_CONFIG[props.$tier - 1].gradient};
   box-shadow: 0 2px 8px ${props => TIER_CONFIG[props.$tier - 1].glow};
   white-space: nowrap;
+  ${props => props.$active && css`
+    animation: ${popIn} 0.45s ease ${props.$delay}ms both;
+  `}
 `;
 
 // ==================== 年度成就页（奖牌墙） ====================
@@ -246,19 +286,22 @@ const AchievementsGrid = styled.div`
   width: 100%;
 `;
 
-const MedalCard = styled.div<{ $tier: number; $isDarkMode: boolean }>`
+const MedalCard = styled.div<{ $tier: number; $isDarkMode: boolean; $active: boolean; $delay: number }>`
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  width: calc(50% - 6px);
-  min-width: 140px;
+  width: calc(33.333% - 8px);
+  min-width: 150px;
   padding: 14px 10px;
   border-radius: 16px;
   box-sizing: border-box;
   background: ${props => props.$isDarkMode ? 'rgba(255, 255, 255, 0.06)' : 'rgba(255, 255, 255, 0.92)'};
   border: 1px solid ${props => props.$isDarkMode ? 'rgba(255, 255, 255, 0.12)' : `rgba(${THEME_DARK_RGB}, 0.16)`};
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+  ${props => props.$active && css`
+    animation: ${popIn} 0.45s ease ${props.$delay}ms both;
+  `}
 `;
 
 const MedalIcon = styled.div<{ $tier: number }>`
@@ -300,12 +343,13 @@ const MedalTag = styled.span<{ $tier: number }>`
 
 // ==================== 热力图 ====================
 
-const HeatmapContainer = styled.div`
+const HeatmapContainer = styled.div<{ $active: boolean }>`
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 4px;
   margin: 16px 0;
+  ${props => props.$active && css`animation: ${fadeInUp} 0.6s ease 0.15s both;`}
 `;
 
 const HeatmapRow = styled.div`
@@ -454,32 +498,29 @@ function hasActivityData(data: AnnualSummaryData['stats']['activityHeatmap']): b
   return data.maxValue > 0;
 }
 
-function AnimatedNumber({ value, duration = 1000 }: { value: number; duration?: number }) {
+function AnimatedNumber({ value, active, duration = 900 }: { value: number; active: boolean; duration?: number }) {
   const [displayValue, setDisplayValue] = useState(0);
-  const [isAnimating, setIsAnimating] = useState(false);
 
   useEffect(() => {
-    if (displayValue === value) return;
-    setIsAnimating(true);
-    const startValue = displayValue;
-    const endValue = value;
+    if (!active) return;
     const startTime = Date.now();
+    let rafId = 0;
 
     const animate = () => {
       const now = Date.now();
       const progress = Math.min((now - startTime) / duration, 1);
-      const currentValue = Math.floor(startValue + (endValue - startValue) * progress);
-      setDisplayValue(currentValue);
+      // easeOutCubic：先快后慢
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setDisplayValue(Math.round(value * eased));
 
       if (progress < 1) {
-        requestAnimationFrame(animate);
-      } else {
-        setIsAnimating(false);
+        rafId = requestAnimationFrame(animate);
       }
     };
 
-    requestAnimationFrame(animate);
-  }, [value]);
+    rafId = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(rafId);
+  }, [active, value, duration]);
 
   return <StatNumber>{displayValue.toLocaleString()}</StatNumber>;
 }
@@ -545,13 +586,15 @@ export function AnnualSummarySlides({ data, controlsHost }: AnnualSummarySlidesP
     }
   };
 
-  const renderStat = (value: number, label: string, key: string) =>
-    createElement(
+  const renderStat = (value: number, label: string, key: string, blockIndex: number, slideIndex: number) => {
+    const active = currentIndex === slideIndex;
+    return createElement(
       StatGroup,
-      { key },
-      createElement(AnimatedNumber, { value }),
+      { key, $active: active, $delay: 120 + blockIndex * 130 },
+      createElement(AnimatedNumber, { value, active }),
       createElement(StatLabel, { $isDarkMode: isDarkMode }, label)
     );
+  };
 
   const renderStatSlide = (
     index: number,
@@ -560,33 +603,34 @@ export function AnnualSummarySlides({ data, controlsHost }: AnnualSummarySlidesP
     icon: IconType,
     statBlocks: ReturnType<typeof renderStat>[]
   ) => {
+    const active = currentIndex === index;
     return (
       <Slide key={index} $totalSlides={totalSlides} ref={(el) => { slideRefs.current[index] = el; }}>
         <SlideContent>
-          <SlideTitle>
+          <SlideTitle $active={active}>
             <SectionIcon>{createElement(icon)}</SectionIcon>
             <Subtitle $isDarkMode={isDarkMode}>{sectionText}</Subtitle>
           </SlideTitle>
           <SlideBody>
             {statBlocks}
-            {renderAchievementChips(slideType)}
+            {renderAchievementChips(slideType, active)}
           </SlideBody>
         </SlideContent>
       </Slide>
     );
   };
 
-  const renderAchievementChips = (slideType: string) => {
+  const renderAchievementChips = (slideType: string, active: boolean) => {
     const related = getSlideRelatedTitles(titles, slideType);
     if (related.length === 0) return null;
 
     return createElement(
       SlideTitlesContainer,
       null,
-      related.map(title =>
+      related.map((title, i) =>
         createElement(
           AchievementChip,
-          { key: title.id, $tier: getTier(title.priority) },
+          { key: title.id, $tier: getTier(title.priority), $active: active, $delay: 450 + i * 90 },
           createElement(CATEGORY_META[title.category].icon, { size: 10 }),
           title.name
         )
@@ -594,11 +638,11 @@ export function AnnualSummarySlides({ data, controlsHost }: AnnualSummarySlidesP
     );
   };
 
-  const renderHeatmap = () => {
+  const renderHeatmap = (active: boolean) => {
     const { data: heatmapData, maxValue } = stats.activityHeatmap;
     
     return (
-      <HeatmapContainer>
+      <HeatmapContainer $active={active}>
         <HeatmapHourLabels>
           {Array.from({ length: 24 }, (_, i) => (
             <HeatmapHourLabel key={i} $isDarkMode={isDarkMode}>
@@ -645,10 +689,10 @@ export function AnnualSummarySlides({ data, controlsHost }: AnnualSummarySlidesP
                 <FloatingEmoji $isDarkMode={isDarkMode} style={{ top: '110px', right: '52px', animationDelay: '1s' }}>🎉</FloatingEmoji>
                 <FloatingEmoji $isDarkMode={isDarkMode} style={{ bottom: '150px', left: '64px', animationDelay: '2s' }}>💬</FloatingEmoji>
                 <FloatingEmoji $isDarkMode={isDarkMode} style={{ bottom: '120px', right: '60px', animationDelay: '3s' }}>🌟</FloatingEmoji>
-                <CoverYear>{data.year}</CoverYear>
-                <CoverTitle $isDarkMode={isDarkMode}>年度总结</CoverTitle>
-                <CoverUser $isDarkMode={isDarkMode}>@{data.username}</CoverUser>
-                <Tagline $isDarkMode={isDarkMode}>感谢你陪伴 V2EX 又一年</Tagline>
+                <CoverYear $active={currentIndex === 0}>{data.year}</CoverYear>
+                <CoverTitle $active={currentIndex === 0} $isDarkMode={isDarkMode}>年度总结</CoverTitle>
+                <CoverUser $active={currentIndex === 0} $isDarkMode={isDarkMode}>@{data.username}</CoverUser>
+                <Tagline $active={currentIndex === 0} $isDarkMode={isDarkMode}>感谢你陪伴 V2EX 又一年</Tagline>
               </SlideBody>
             </SlideContent>
           </Slide>
@@ -656,56 +700,57 @@ export function AnnualSummarySlides({ data, controlsHost }: AnnualSummarySlidesP
 
       case 1:
         return renderStatSlide(1, 'login', '登录统计', FaSignInAlt, [
-          renderStat(stats.login.totalCount, '总登录次数', 'login-count'),
-          renderStat(stats.login.totalCoins, '获得铜币', 'login-coins'),
-          renderStat(stats.login.consecutiveDays, `连续登录 ${stats.login.consecutiveDays} 天`, 'login-days'),
+          renderStat(stats.login.totalCount, '总登录次数', 'login-count', 0, 1),
+          renderStat(stats.login.totalCoins, '获得铜币', 'login-coins', 1, 1),
+          renderStat(stats.login.consecutiveDays, `连续登录 ${stats.login.consecutiveDays} 天`, 'login-days', 2, 1),
         ]);
 
       case 2:
         return renderStatSlide(2, 'reply', '回复统计', FaCommentDots, [
-          renderStat(stats.reply.totalCount, '总回复次数', 'reply-count'),
-          renderStat(stats.reply.totalCoinsSpent, '消耗铜币', 'reply-coins'),
+          renderStat(stats.reply.totalCount, '总回复次数', 'reply-count', 0, 2),
+          renderStat(stats.reply.totalCoinsSpent, '消耗铜币', 'reply-coins', 1, 2),
         ]);
 
       case 3:
         return renderStatSlide(3, 'post', '发帖统计', FaPenNib, [
-          renderStat(stats.post.totalCount, '总发帖次数', 'post-count'),
-          renderStat(stats.post.totalCoinsSpent, '消耗铜币', 'post-coins'),
+          renderStat(stats.post.totalCount, '总发帖次数', 'post-count', 0, 3),
+          renderStat(stats.post.totalCoinsSpent, '消耗铜币', 'post-coins', 1, 3),
         ]);
 
       case 4:
         return renderStatSlide(4, 'thank', '感谢统计', FaHeart, [
-          renderStat(stats.thank.totalCount, '感谢他人次数', 'thank-count'),
-          renderStat(stats.thank.totalCoinsSpent, '消耗铜币', 'thank-coins'),
+          renderStat(stats.thank.totalCount, '感谢他人次数', 'thank-count', 0, 4),
+          renderStat(stats.thank.totalCoinsSpent, '消耗铜币', 'thank-coins', 1, 4),
         ]);
 
       case 5:
         return renderStatSlide(5, 'receivedThank', '收到感谢', FaStar, [
-          renderStat(stats.receivedThank.totalCount, '收到感谢次数', 'received-thank-count'),
-          renderStat(stats.receivedThank.totalCoinsReceived, '获得铜币', 'received-thank-coins'),
+          renderStat(stats.receivedThank.totalCount, '收到感谢次数', 'received-thank-count', 0, 5),
+          renderStat(stats.receivedThank.totalCoinsReceived, '获得铜币', 'received-thank-coins', 1, 5),
         ]);
 
       case 6:
         return renderStatSlide(6, 'balance', '铜币收支', FaCoins, [
-          renderStat(stats.balance.totalIncome, '总收入', 'balance-income'),
-          renderStat(stats.balance.totalExpense, '总支出', 'balance-expense'),
-          renderStat(stats.balance.netChange, '净变化', 'balance-net'),
+          renderStat(stats.balance.totalIncome, '总收入', 'balance-income', 0, 6),
+          renderStat(stats.balance.totalExpense, '总支出', 'balance-expense', 1, 6),
+          renderStat(stats.balance.netChange, '净变化', 'balance-net', 2, 6),
         ]);
 
       default:
         // 热力图页面（仅当 showHeatmap 为 true 时）
         if (index === heatmapIndex && showHeatmap) {
+          const active = currentIndex === index;
           return (
             <Slide key={7} $totalSlides={totalSlides} ref={(el) => { slideRefs.current[7] = el; }}>
               <SlideContent>
-                <SlideTitle>
+                <SlideTitle $active={active}>
                   <SectionIcon>{createElement(FaFire)}</SectionIcon>
                   <Subtitle $isDarkMode={isDarkMode}>活动热力图</Subtitle>
                 </SlideTitle>
                 <SlideBody>
-                  <StatLabel $isDarkMode={isDarkMode}>你的活跃时间分布</StatLabel>
-                  {renderHeatmap()}
-                  {renderAchievementChips('heatmap')}
+                  <StatLabel $isDarkMode={isDarkMode} $active={active} $delay={150}>你的活跃时间分布</StatLabel>
+                  {renderHeatmap(active)}
+                  {renderAchievementChips('heatmap', active)}
                 </SlideBody>
               </SlideContent>
             </Slide>
@@ -714,21 +759,22 @@ export function AnnualSummarySlides({ data, controlsHost }: AnnualSummarySlidesP
 
         // 年度成就页
         if (index === titlesIndex) {
+          const active = currentIndex === index;
           const sortedTitles = [...titles].sort((a, b) => b.priority - a.priority);
           return (
             <Slide key={index} $totalSlides={totalSlides} ref={(el) => { slideRefs.current[index] = el; }}>
               <AchievementsLayout>
-                <SlideTitle>
+                <SlideTitle $active={active}>
                   <SectionIcon>{createElement(FaTrophy)}</SectionIcon>
                   <Subtitle $isDarkMode={isDarkMode}>年度成就</Subtitle>
                 </SlideTitle>
                 <AchievementsGrid>
-                  {sortedTitles.map(title => {
+                  {sortedTitles.map((title, i) => {
                     const tier = getTier(title.priority);
                     const meta = CATEGORY_META[title.category];
                     return createElement(
                       MedalCard,
-                      { key: title.id, $tier: tier, $isDarkMode: isDarkMode },
+                      { key: title.id, $tier: tier, $isDarkMode: isDarkMode, $active: active, $delay: 150 + i * 70 },
                       createElement(MedalIcon, { $tier: tier }, createElement(meta.icon)),
                       createElement(MedalName, { $isDarkMode: isDarkMode }, title.name),
                       createElement(
