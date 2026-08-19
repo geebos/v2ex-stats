@@ -20,6 +20,7 @@ import type { IconType } from 'react-icons';
 import { toPng } from 'html-to-image';
 import type { AnnualSummaryData, Title } from '@/types/summary';
 import { getIsDarkMode } from '@/service/utils';
+import { THEME_GRADIENT, THEME_LIGHT_RGB, THEME_DARK_RGB } from './theme';
 
 // ==================== 成就（称号）展示配置 ====================
 
@@ -28,7 +29,7 @@ const TIER_CONFIG = [
   { label: '青铜', gradient: 'linear-gradient(135deg, #a47148 0%, #d9a05b 100%)', glow: 'rgba(169, 113, 72, 0.35)' },
   { label: '白银', gradient: 'linear-gradient(135deg, #8e9eab 0%, #c7d3da 100%)', glow: 'rgba(142, 158, 171, 0.35)' },
   { label: '黄金', gradient: 'linear-gradient(135deg, #e6a700 0%, #ffd966 100%)', glow: 'rgba(230, 167, 0, 0.4)' },
-  { label: '钻石', gradient: 'linear-gradient(135deg, #00b4d8 0%, #a78bfa 100%)', glow: 'rgba(0, 180, 216, 0.4)' },
+  { label: '钻石', gradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', glow: 'rgba(16, 185, 129, 0.4)' },
 ];
 
 const CATEGORY_META: Record<Title['category'], { icon: IconType; label: string }> = {
@@ -51,8 +52,8 @@ const SlidesContainer = styled.div<{ $isDarkMode: boolean }>`
   width: 100%;
   height: 100%;
   background: ${props => props.$isDarkMode
-    ? 'linear-gradient(160deg, #1a1a2e 0%, #16213e 55%, #1f1040 100%)'
-    : 'linear-gradient(160deg, #f2f5ff 0%, #ffffff 55%, #fdf1ff 100%)'};
+    ? 'linear-gradient(160deg, #2b1e12 0%, #241a10 55%, #3a2a16 100%)'
+    : 'linear-gradient(160deg, #fdf6ec 0%, #ffffff 55%, #fdf3e0 100%)'};
   overflow: hidden;
   position: relative;
 `;
@@ -109,15 +110,15 @@ const SectionIcon = styled.div`
   justify-content: center;
   color: #fff;
   font-size: 15px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  box-shadow: 0 4px 10px rgba(102, 126, 234, 0.35);
+  background: ${THEME_GRADIENT};
+  box-shadow: 0 4px 10px rgba(${THEME_LIGHT_RGB}, 0.35);
 `;
 
 const Subtitle = styled.h2<{ $isDarkMode: boolean }>`
   font-size: 20px;
   font-weight: 700;
   margin: 0;
-  color: ${props => props.$isDarkMode ? '#fff' : '#2d2d3f'};
+  color: ${props => props.$isDarkMode ? '#fff' : '#3d3228'};
 `;
 
 const SlideBody = styled.div`
@@ -143,7 +144,7 @@ const StatNumber = styled.div`
   font-weight: 800;
   line-height: 1.1;
   margin-bottom: 6px;
-  background: linear-gradient(135deg, #667eea 0%, #a855f7 100%);
+  background: ${THEME_GRADIENT};
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -152,7 +153,7 @@ const StatNumber = styled.div`
 
 const StatLabel = styled.div<{ $isDarkMode: boolean }>`
   font-size: 14px;
-  color: ${props => props.$isDarkMode ? '#a9a9c8' : '#8a8aa3'};
+  color: ${props => props.$isDarkMode ? '#b3a48f' : '#8f8170'};
 `;
 
 // ==================== 封面 ====================
@@ -162,7 +163,7 @@ const CoverYear = styled.div`
   font-weight: 900;
   line-height: 1;
   margin-bottom: 6px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: ${THEME_GRADIENT};
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -173,19 +174,19 @@ const CoverTitle = styled.h1<{ $isDarkMode: boolean }>`
   font-size: 26px;
   font-weight: 700;
   margin: 0 0 20px 0;
-  color: ${props => props.$isDarkMode ? '#fff' : '#2d2d3f'};
+  color: ${props => props.$isDarkMode ? '#fff' : '#3d3228'};
 `;
 
 const CoverUser = styled.div<{ $isDarkMode: boolean }>`
   font-size: 16px;
   font-weight: 600;
-  color: ${props => props.$isDarkMode ? '#c6c6de' : '#666'};
+  color: ${props => props.$isDarkMode ? '#cfc0a8' : '#666'};
   margin-bottom: 8px;
 `;
 
 const Tagline = styled.div<{ $isDarkMode: boolean }>`
   font-size: 13px;
-  color: ${props => props.$isDarkMode ? '#8d8dab' : '#9a9ab0'};
+  color: ${props => props.$isDarkMode ? '#9f907a' : '#a0937f'};
 `;
 
 const FloatingEmoji = styled.span<{ $isDarkMode: boolean }>`
@@ -256,7 +257,7 @@ const MedalCard = styled.div<{ $tier: number; $isDarkMode: boolean }>`
   border-radius: 16px;
   box-sizing: border-box;
   background: ${props => props.$isDarkMode ? 'rgba(255, 255, 255, 0.06)' : 'rgba(255, 255, 255, 0.92)'};
-  border: 1px solid ${props => props.$isDarkMode ? 'rgba(255, 255, 255, 0.12)' : 'rgba(102, 126, 234, 0.16)'};
+  border: 1px solid ${props => props.$isDarkMode ? 'rgba(255, 255, 255, 0.12)' : `rgba(${THEME_DARK_RGB}, 0.16)`};
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
 `;
 
@@ -282,7 +283,7 @@ const MedalName = styled.div<{ $isDarkMode: boolean }>`
 
 const MedalDesc = styled.div<{ $isDarkMode: boolean }>`
   font-size: 11px;
-  color: ${props => props.$isDarkMode ? '#9a9ac0' : '#8a8aa3'};
+  color: ${props => props.$isDarkMode ? '#a59780' : '#8f8170'};
   text-align: center;
   line-height: 1.4;
 `;
@@ -413,7 +414,7 @@ const ActionButton = styled.button`
   width: 36px;
   height: 36px;
   border: none;
-  background: rgba(102, 126, 234, 0.9);
+  background: rgba(${THEME_DARK_RGB}, 0.9);
   color: white;
   border-radius: 50%;
   cursor: pointer;
@@ -423,7 +424,7 @@ const ActionButton = styled.button`
   transition: background 0.2s;
 
   &:hover {
-    background: rgba(102, 126, 234, 1);
+    background: rgba(${THEME_DARK_RGB}, 1);
   }
 `;
 
@@ -523,7 +524,7 @@ export function AnnualSummarySlides({ data, controlsHost }: AnnualSummarySlidesP
     try {
       const dataUrl = await toPng(currentSlide, {
         pixelRatio: 2,
-        backgroundColor: isDarkMode ? '#1a1a2e' : '#f2f5ff',
+        backgroundColor: isDarkMode ? '#2b1e12' : '#fdf6ec',
         skipFonts: true,
         cacheBust: true,
         filter: (node: HTMLElement) => {
@@ -750,9 +751,9 @@ export function AnnualSummarySlides({ data, controlsHost }: AnnualSummarySlidesP
 
   return (
     <SlidesContainer $isDarkMode={isDarkMode}>
-      <Orb $size={240} $color="rgba(102, 126, 234, 0.28)" $isDarkMode={isDarkMode} style={{ top: '-80px', left: '-70px' }} />
-      <Orb $size={280} $color="rgba(168, 85, 247, 0.22)" $isDarkMode={isDarkMode} style={{ top: '35%', right: '-100px' }} />
-      <Orb $size={200} $color="rgba(236, 72, 153, 0.18)" $isDarkMode={isDarkMode} style={{ bottom: '-60px', left: '25%' }} />
+      <Orb $size={240} $color={`rgba(${THEME_LIGHT_RGB}, 0.28)`} $isDarkMode={isDarkMode} style={{ top: '-80px', left: '-70px' }} />
+      <Orb $size={280} $color={`rgba(${THEME_DARK_RGB}, 0.22)`} $isDarkMode={isDarkMode} style={{ top: '35%', right: '-100px' }} />
+      <Orb $size={200} $color={`rgba(${THEME_LIGHT_RGB}, 0.18)`} $isDarkMode={isDarkMode} style={{ bottom: '-60px', left: '25%' }} />
       <SlideWrapper $currentIndex={currentIndex} $totalSlides={totalSlides}>
         {Array.from({ length: totalSlides }, (_, i) => renderSlide(i))}
       </SlideWrapper>

@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import styled from 'styled-components';
 import { storage } from '@wxt-dev/storage';
 import { getNearestYear } from '@/service/summary';
+import { THEME_GRADIENT } from './theme';
 
 function isInDisplayPeriod(): boolean {
   const now = new Date();
@@ -32,7 +33,7 @@ const ButtonContainer = styled.div`
 const SummaryButton = styled.button`
   width: 100%;
   padding: 12px 24px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: ${THEME_GRADIENT};
   color: white;
   border: none;
   border-radius: 8px;

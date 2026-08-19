@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import { FaTimes } from 'react-icons/fa';
 import { initBalanceData } from '@/service/balance/crawler';
 import { setAnnualReportInited } from '@/service/storage';
+import { THEME_GRADIENT, THEME_LIGHT_RGB } from './theme';
 
 const ModalOverlay = styled.div<{ $isOpen: boolean }>`
   position: fixed;
@@ -81,12 +82,12 @@ const Button = styled.button<{ $primary?: boolean }>`
   transition: all 0.2s;
 
   ${props => props.$primary ? `
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: ${THEME_GRADIENT};
     color: white;
     
     &:hover {
       transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+      box-shadow: 0 4px 12px rgba(${THEME_LIGHT_RGB}, 0.4);
     }
   ` : `
     background: #f3f4f6;
@@ -124,7 +125,7 @@ const ProgressBar = styled.div`
     left: 0;
     width: 30%;
     height: 100%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: ${THEME_GRADIENT};
     animation: loading 1.5s ease-in-out infinite;
   }
 
@@ -190,19 +191,13 @@ function AnnualDataInitModal({ isOpen, username, year, onClose, onComplete }: An
     }
   };
 
-  const handleOverlayClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget && !isLoading) {
-      onClose();
-    }
-  };
-
   if (!isOpen) {
     return null;
   }
 
   return (
-    <ModalOverlay $isOpen={isOpen} onClick={handleOverlayClick}>
-      <ModalContent onClick={(e) => e.stopPropagation()}>
+    <ModalOverlay $isOpen={isOpen}>
+      <ModalContent>
         {!isLoading && (
           <CloseButton onClick={onClose}>
             <FaTimes size={14} />

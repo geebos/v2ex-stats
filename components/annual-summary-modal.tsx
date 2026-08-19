@@ -69,22 +69,16 @@ interface AnnualSummaryModalProps {
 function AnnualSummaryModal({ data, isOpen, onClose }: AnnualSummaryModalProps) {
   const [controlsHost, setControlsHost] = useState<HTMLDivElement | null>(null);
 
-  const handleOverlayClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
-  };
-
   if (!isOpen || !data) {
     return null;
   }
 
   return (
-    <ModalOverlay $isOpen={isOpen} onClick={handleOverlayClick}>
+    <ModalOverlay $isOpen={isOpen}>
       <CloseButton onClick={onClose}>
         <FaTimes size={16} />
       </CloseButton>
-      <ModalContent onClick={(e) => e.stopPropagation()}>
+      <ModalContent>
         <AnnualSummarySlides data={data} controlsHost={controlsHost} />
       </ModalContent>
       <ControlsHost ref={setControlsHost} />

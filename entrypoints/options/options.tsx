@@ -17,7 +17,7 @@ const Toast: React.FC<ToastProps> = ({ message, visible, type = 'success' }) => 
     const typeStyles = {
       success: "bg-green-600 text-white",
       error: "bg-red-600 text-white",
-      info: "bg-blue-600 text-white"
+      info: "bg-amber-600 text-white"
     };
     return visible 
       ? `${baseStyles} -translate-x-1/2 translate-y-0 opacity-100 ${typeStyles[type]}`
@@ -146,13 +146,13 @@ const OptionsPage: React.FC = () => {
       <div className="w-full max-w-4xl">
         <div className="bg-white rounded-lg shadow-lg">
           {/* 页面标题 */}
-          <div className="px-6 py-3 border-b border-gray-200 bg-blue-600 flex items-center justify-between">
+          <div className="px-6 py-3 border-b border-gray-200 bg-amber-600 flex items-center justify-between">
             <div>
               <h1 className="text-lg font-bold text-white">V2EX Stats 设置</h1>
-              <p className="text-blue-100 text-sm">配置您的 V2EX 统计扩展功能</p>
+              <p className="text-amber-100 text-sm">配置您的 V2EX 统计扩展功能</p>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-blue-200 text-sm">v{version}</span>
+              <span className="text-amber-200 text-sm">v{version}</span>
             <a
               href={REPO_URL}
               target="_blank"
@@ -185,7 +185,7 @@ const OptionsPage: React.FC = () => {
                     type="checkbox"
                     checked={config.coinStats.enabled}
                     onChange={(e) => updateConfig('coinStats', 'enabled', e.target.checked)}
-                    className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+                    className="w-5 h-5 text-amber-600 rounded focus:ring-amber-500"
                   />
                   <span className="text-gray-700">显示金币统计</span>
                 </label>
@@ -204,7 +204,7 @@ const OptionsPage: React.FC = () => {
                     type="checkbox"
                     checked={config.activityTime.enableStats}
                     onChange={(e) => updateConfig('activityTime', 'enableStats', e.target.checked)}
-                    className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+                    className="w-5 h-5 text-amber-600 rounded focus:ring-amber-500"
                   />
                   <span className="text-gray-700">统计活动时间</span>
                 </label>
@@ -213,7 +213,7 @@ const OptionsPage: React.FC = () => {
                     type="checkbox"
                     checked={config.activityTime.showInStatusBar}
                     onChange={(e) => updateConfig('activityTime', 'showInStatusBar', e.target.checked)}
-                    className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+                    className="w-5 h-5 text-amber-600 rounded focus:ring-amber-500"
                     disabled={!config.activityTime.enableStats}
                   />
                   <span className={`text-gray-700 ${!config.activityTime.enableStats ? 'opacity-50' : ''}`}>
@@ -225,7 +225,7 @@ const OptionsPage: React.FC = () => {
                     type="checkbox"
                     checked={config.activityTime.showDetailInProfile}
                     onChange={(e) => updateConfig('activityTime', 'showDetailInProfile', e.target.checked)}
-                    className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+                    className="w-5 h-5 text-amber-600 rounded focus:ring-amber-500"
                     disabled={!config.activityTime.enableStats}
                   />
                   <span className={`text-gray-700 ${!config.activityTime.enableStats ? 'opacity-50' : ''}`}>
@@ -238,7 +238,7 @@ const OptionsPage: React.FC = () => {
             {/* 帖子浏览设置 */}
             <div className="space-y-3">
               <h2 className="text-lg font-semibold text-gray-800 flex items-center">
-                <span className="w-2 h-2 bg-purple-500 rounded-full mr-3"></span>
+                <span className="w-2 h-2 bg-amber-500 rounded-full mr-3"></span>
                 帖子浏览
               </h2>
               <div className="ml-5 space-y-2">
@@ -247,7 +247,7 @@ const OptionsPage: React.FC = () => {
                     type="checkbox"
                     checked={config.postBrowsing.showNewComments}
                     onChange={(e) => updateConfig('postBrowsing', 'showNewComments', e.target.checked)}
-                    className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+                    className="w-5 h-5 text-amber-600 rounded focus:ring-amber-500"
                   />
                   <span className="text-gray-700">显示新增评论</span>
                 </label>
@@ -256,7 +256,7 @@ const OptionsPage: React.FC = () => {
                     type="checkbox"
                     checked={config.postBrowsing.highlightNewComments}
                     onChange={(e) => updateConfig('postBrowsing', 'highlightNewComments', e.target.checked)}
-                    className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+                    className="w-5 h-5 text-amber-600 rounded focus:ring-amber-500"
                     disabled={!config.postBrowsing.showNewComments}
                   />
                   <span className={`text-gray-700 ${!config.postBrowsing.showNewComments ? 'opacity-50' : ''}`}>
@@ -268,7 +268,7 @@ const OptionsPage: React.FC = () => {
                     type="checkbox"
                     checked={config.postBrowsing.autoScrollToFirstNewComment}
                     onChange={(e) => updateConfig('postBrowsing', 'autoScrollToFirstNewComment', e.target.checked)}
-                    className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+                    className="w-5 h-5 text-amber-600 rounded focus:ring-amber-500"
                     disabled={!config.postBrowsing.showNewComments}
                   />
                   <span className={`text-gray-700 ${!config.postBrowsing.showNewComments ? 'opacity-50' : ''}`}>
@@ -280,7 +280,7 @@ const OptionsPage: React.FC = () => {
                     type="checkbox"
                     checked={config.postBrowsing.smoothScrolling}
                     onChange={(e) => updateConfig('postBrowsing', 'smoothScrolling', e.target.checked)}
-                    className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+                    className="w-5 h-5 text-amber-600 rounded focus:ring-amber-500"
                     disabled={!config.postBrowsing.showNewComments || !config.postBrowsing.autoScrollToFirstNewComment}
                   />
                   <span className={`text-gray-700 ${!config.postBrowsing.showNewComments || !config.postBrowsing.autoScrollToFirstNewComment ? 'opacity-50' : ''}`}>
@@ -292,7 +292,7 @@ const OptionsPage: React.FC = () => {
                     type="checkbox"
                     checked={config.postBrowsing.markNewPosts}
                     onChange={(e) => updateConfig('postBrowsing', 'markNewPosts', e.target.checked)}
-                    className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+                    className="w-5 h-5 text-amber-600 rounded focus:ring-amber-500"
                   />
                   <span className="text-gray-700">标记新帖子</span>
                 </label>
@@ -301,7 +301,7 @@ const OptionsPage: React.FC = () => {
                     type="checkbox"
                     checked={config.postBrowsing.applyToHotTopics}
                     onChange={(e) => updateConfig('postBrowsing', 'applyToHotTopics', e.target.checked)}
-                    className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+                    className="w-5 h-5 text-amber-600 rounded focus:ring-amber-500"
                   />
                   <span className="text-gray-700">应用到今日热议主题</span>
                 </label>
@@ -320,7 +320,7 @@ const OptionsPage: React.FC = () => {
                     type="checkbox"
                     checked={config.ui.showIgnoreUpdateConfig}
                     onChange={(e) => updateConfig('ui', 'showIgnoreUpdateConfig', e.target.checked)}
-                    className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+                    className="w-5 h-5 text-amber-600 rounded focus:ring-amber-500"
                   />
                   <span className="text-gray-700">显示忽略更新配置</span>
                 </label>
@@ -338,7 +338,7 @@ const OptionsPage: React.FC = () => {
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="px-8 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-blue-400 disabled:cursor-not-allowed flex items-center space-x-2"
+                className="px-8 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 disabled:bg-amber-400 disabled:cursor-not-allowed flex items-center space-x-2"
               >
                 {saving && (
                   <svg className="animate-spin w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
