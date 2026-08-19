@@ -18,6 +18,7 @@ export const getConfig = async (): Promise<ConfigOptions> => {
     activityTime: { ...defaultConfig.activityTime, ...config.activityTime },
     postBrowsing: { ...defaultConfig.postBrowsing, ...(config.postBrowsing || {}) },
     ui: { ...defaultConfig.ui, ...(config.ui || {}) },
+    danmaku: { ...defaultConfig.danmaku, ...(config.danmaku || {}) },
   };
 };
 
@@ -38,6 +39,7 @@ export const updateConfig = async (partialConfig: Partial<ConfigOptions>): Promi
     activityTime: { ...currentConfig.activityTime, ...partialConfig.activityTime },
     postBrowsing: { ...currentConfig.postBrowsing, ...partialConfig.postBrowsing },
     ui: { ...currentConfig.ui, ...(partialConfig.ui || {}) },
+    danmaku: { ...currentConfig.danmaku, ...(partialConfig.danmaku || {}) },
   };
   await setConfig(newConfig);
 };
@@ -100,4 +102,14 @@ export const isPostBrowsingApplyToHotTopics = async (): Promise<boolean> => {
 export const isUIShowIgnoreUpdateConfig = async (): Promise<boolean> => {
   const config = await getConfig();
   return config.ui.showIgnoreUpdateConfig;
+};
+
+export const isDanmakuEnabled = async (): Promise<boolean> => {
+  const config = await getConfig();
+  return config.danmaku.enabled;
+};
+
+export const getDanmakuConfig = async (): Promise<ConfigOptions['danmaku']> => {
+  const config = await getConfig();
+  return config.danmaku;
 };

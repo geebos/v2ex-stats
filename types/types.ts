@@ -99,6 +99,16 @@ export interface ConfigOptions {
   ui: {
     showIgnoreUpdateConfig: boolean;
   };
+
+  // 评论区弹幕
+  danmaku: {
+    enabled: boolean;
+    speed: number;            // 弹幕速度（像素/秒）
+    fontSize: number;         // 弹幕字体大小（像素）
+    maxTextLength: number;    // 最大文本长度（字符数），超过则不渲染为弹幕
+    autoLoadCommentCount: number; // 自动加载评论数量（不足时自动加载后续分页）
+    opacity: number;          // 弹幕透明度（0.1 - 1.0）
+  };
 }
 
 // 默认配置
@@ -121,5 +131,13 @@ export const defaultConfig: ConfigOptions = {
   },
   ui: {
     showIgnoreUpdateConfig: true,
+  },
+  danmaku: {
+    enabled: false, // 默认关闭，避免更新后自动启用影响用户
+    speed: 100,
+    fontSize: 14,
+    maxTextLength: 40,
+    autoLoadCommentCount: 100,
+    opacity: 1,
   },
 };

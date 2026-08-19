@@ -3,6 +3,7 @@ import { getPostInfo } from "@/service/history/collect";
 import { getPostStatus, PostStatus, updatePostStatus } from "@/service/history/post";
 import xpath from "@/service/xpath";
 import { applyLabel, clearLabel } from "@/ui/index";
+import { initDanmaku } from "@/ui/danmaku.ui";
 import { once } from "lodash";
 
 // ======================== 全局状态管理 ========================
@@ -148,4 +149,5 @@ export const processCommentsUI = async (username: string) => {
   console.log('处理帖子评论UI');
   await updateCommentsLabel(username);
   await scrollToFirstNewComment();
+  await initDanmaku();
 }

@@ -86,7 +86,7 @@ const OptionsPage: React.FC = () => {
   };
 
   // 配置更新函数
-  const updateConfig = (section: keyof ConfigOptions, key: string, value: boolean) => {
+  const updateConfig = (section: keyof ConfigOptions, key: string, value: boolean | number) => {
     if (!config) return;
     setConfigState(prev => ({
       ...prev!,
@@ -304,6 +304,89 @@ const OptionsPage: React.FC = () => {
                     className="w-5 h-5 text-amber-600 rounded focus:ring-amber-500"
                   />
                   <span className="text-gray-700">应用到今日热议主题</span>
+                </label>
+              </div>
+            </div>
+
+            {/* 评论区弹幕设置 */}
+            <div className="space-y-3">
+              <h2 className="text-lg font-semibold text-gray-800 flex items-center">
+                <span className="w-2 h-2 bg-red-500 rounded-full mr-3"></span>
+                评论区弹幕
+              </h2>
+              <div className="ml-5 space-y-2">
+                <label className="flex items-center space-x-3 p-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={config.danmaku.enabled}
+                    onChange={(e) => updateConfig('danmaku', 'enabled', e.target.checked)}
+                    className="w-5 h-5 text-amber-600 rounded focus:ring-amber-500"
+                  />
+                  <span className="text-gray-700">开启评论区弹幕</span>
+                </label>
+                <label className={`flex items-center space-x-3 p-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors ${!config.danmaku.enabled ? 'opacity-50 pointer-events-none' : ''}`}>
+                  <span className="text-gray-700 w-36 shrink-0">弹幕速度</span>
+                  <input
+                    type="range"
+                    min={30}
+                    max={300}
+                    step={5}
+                    value={config.danmaku.speed}
+                    onChange={(e) => updateConfig('danmaku', 'speed', Number(e.target.value))}
+                    className="flex-1 accent-amber-600"
+                  />
+                  <span className="text-gray-500 text-sm w-24 text-right shrink-0">{config.danmaku.speed} px/s</span>
+                </label>
+                <label className={`flex items-center space-x-3 p-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors ${!config.danmaku.enabled ? 'opacity-50 pointer-events-none' : ''}`}>
+                  <span className="text-gray-700 w-36 shrink-0">字体大小</span>
+                  <input
+                    type="range"
+                    min={10}
+                    max={24}
+                    step={1}
+                    value={config.danmaku.fontSize}
+                    onChange={(e) => updateConfig('danmaku', 'fontSize', Number(e.target.value))}
+                    className="flex-1 accent-amber-600"
+                  />
+                  <span className="text-gray-500 text-sm w-24 text-right shrink-0">{config.danmaku.fontSize} px</span>
+                </label>
+                <label className={`flex items-center space-x-3 p-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors ${!config.danmaku.enabled ? 'opacity-50 pointer-events-none' : ''}`}>
+                  <span className="text-gray-700 w-36 shrink-0">最大文本长度</span>
+                  <input
+                    type="number"
+                    min={10}
+                    max={200}
+                    value={config.danmaku.maxTextLength}
+                    onChange={(e) => updateConfig('danmaku', 'maxTextLength', Number(e.target.value))}
+                    className="w-28 px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  />
+                  <span className="text-gray-500 text-sm">字符（超过则不渲染为弹幕）</span>
+                </label>
+                <label className={`flex items-center space-x-3 p-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors ${!config.danmaku.enabled ? 'opacity-50 pointer-events-none' : ''}`}>
+                  <span className="text-gray-700 w-36 shrink-0">自动加载评论数量</span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={2000}
+                    step={10}
+                    value={config.danmaku.autoLoadCommentCount}
+                    onChange={(e) => updateConfig('danmaku', 'autoLoadCommentCount', Number(e.target.value))}
+                    className="w-28 px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  />
+                  <span className="text-gray-500 text-sm">不足时自动加载后续分页评论</span>
+                </label>
+                <label className={`flex items-center space-x-3 p-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors ${!config.danmaku.enabled ? 'opacity-50 pointer-events-none' : ''}`}>
+                  <span className="text-gray-700 w-36 shrink-0">弹幕透明度</span>
+                  <input
+                    type="range"
+                    min={10}
+                    max={100}
+                    step={5}
+                    value={Math.round(config.danmaku.opacity * 100)}
+                    onChange={(e) => updateConfig('danmaku', 'opacity', Number(e.target.value) / 100)}
+                    className="flex-1 accent-amber-600"
+                  />
+                  <span className="text-gray-500 text-sm w-24 text-right shrink-0">{Math.round(config.danmaku.opacity * 100)}%</span>
                 </label>
               </div>
             </div>
