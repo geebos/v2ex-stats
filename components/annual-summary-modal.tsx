@@ -31,12 +31,12 @@ const ModalContent = styled.div`
 
 const CloseButton = styled.button`
   position: absolute;
-  top: 12px;
-  right: 12px;
-  width: 32px;
-  height: 32px;
+  top: 20px;
+  right: 20px;
+  width: 36px;
+  height: 36px;
   border: none;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(255, 255, 255, 0.18);
   color: white;
   border-radius: 50%;
   cursor: pointer;
@@ -47,8 +47,17 @@ const CloseButton = styled.button`
   transition: background 0.2s;
 
   &:hover {
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(255, 255, 255, 0.32);
   }
+`;
+
+// 遮罩层上的控制按钮容器（幻灯片通过 portal 渲染进来，不遮挡幻灯片内容）
+const ControlsHost = styled.div`
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
 `;
 
 interface AnnualSummaryModalProps {
@@ -58,6 +67,8 @@ interface AnnualSummaryModalProps {
 }
 
 function AnnualSummaryModal({ data, isOpen, onClose }: AnnualSummaryModalProps) {
+  const [controlsHost, setControlsHost] = useState<HTMLDivElement | null>(null);
+
   const handleOverlayClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
       onClose();
@@ -70,12 +81,13 @@ function AnnualSummaryModal({ data, isOpen, onClose }: AnnualSummaryModalProps) 
 
   return (
     <ModalOverlay $isOpen={isOpen} onClick={handleOverlayClick}>
+      <CloseButton onClick={onClose}>
+        <FaTimes size={16} />
+      </CloseButton>
       <ModalContent onClick={(e) => e.stopPropagation()}>
-        <CloseButton onClick={onClose}>
-          <FaTimes size={16} />
-        </CloseButton>
-        <AnnualSummarySlides data={data} />
+        <AnnualSummarySlides data={data} controlsHost={controlsHost} />
       </ModalContent>
+      <ControlsHost ref={setControlsHost} />
     </ModalOverlay>
   );
 }
@@ -114,4 +126,3 @@ export function showAnnualSummaryModal(data: AnnualSummaryData): void {
 
   modalRoot!.render(createElement(ModalWrapper, { data }));
 }
-

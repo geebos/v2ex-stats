@@ -10,6 +10,7 @@ export function generateTitles(stats: AnnualSummaryStats): Title[] {
   titles.push(...generateReceivedThankTitles(stats.receivedThank));
   titles.push(...generateBalanceTitles(stats.balance));
   titles.push(...generateActivityHeatmapTitles(stats.activityHeatmap));
+  titles.push(...generateActiveTimeTitle(stats));
 
   return titles.sort((a, b) => b.priority - a.priority);
 }
@@ -25,19 +26,6 @@ function generateLoginTitles(login: AnnualSummaryStats['login']): Title[] {
     titles.push({ id: 'login-count-3', name: '摸鱼专家', category: 'login', priority: 3, description: `登录 ${login.totalCount} 次`, thresholdDescription: '登录大于 100 次' });
   } else {
     titles.push({ id: 'login-count-4', name: 'V2EX 铁粉', category: 'login', priority: 4, description: `登录 ${login.totalCount} 次`, thresholdDescription: '登录大于 200 次' });
-  }
-
-  const peakHour = login.timeDistribution.peakHour;
-  if (peakHour >= 6 && peakHour < 9) {
-    titles.push({ id: 'login-time-morning', name: '早起晨读', category: 'login', priority: 2, description: `高峰时段 ${peakHour}:00`, thresholdDescription: '高峰时段在 6-9 点' });
-  } else if (peakHour >= 9 && peakHour < 14) {
-    titles.push({ id: 'login-time-noon', name: '下饭神器', category: 'login', priority: 2, description: `高峰时段 ${peakHour}:00`, thresholdDescription: '高峰时段在 9-14 点' });
-  } else if (peakHour >= 14 && peakHour < 19) {
-    titles.push({ id: 'login-time-afternoon', name: '午后时光', category: 'login', priority: 2, description: `高峰时段 ${peakHour}:00`, thresholdDescription: '高峰时段在 14-19 点' });
-  } else if (peakHour >= 19 && peakHour < 23) {
-    titles.push({ id: 'login-time-evening', name: '睡前读物', category: 'login', priority: 2, description: `高峰时段 ${peakHour}:00`, thresholdDescription: '高峰时段在 19-23 点' });
-  } else {
-    titles.push({ id: 'login-time-night', name: '夜猫子', category: 'login', priority: 2, description: `高峰时段 ${peakHour}:00`, thresholdDescription: '高峰时段在 23-6 点' });
   }
 
   if (login.consecutiveDays < 7) {
@@ -66,19 +54,6 @@ function generateReplyTitles(reply: AnnualSummaryStats['reply']): Title[] {
     titles.push({ id: 'reply-count-4', name: '话痨本痨', category: 'content', priority: 4, description: `回复 ${reply.totalCount} 次`, thresholdDescription: '回复大于 200 次' });
   }
 
-  const peakHour = reply.timeDistribution.peakHour;
-  if (peakHour >= 6 && peakHour < 9) {
-    titles.push({ id: 'reply-time-morning', name: '晨间思考家', category: 'content', priority: 1, description: `高峰时段 ${peakHour}:00`, thresholdDescription: '高峰时段在 6-9 点' });
-  } else if (peakHour >= 9 && peakHour < 14) {
-    titles.push({ id: 'reply-time-noon', name: '午休键盘侠', category: 'content', priority: 1, description: `高峰时段 ${peakHour}:00`, thresholdDescription: '高峰时段在 9-14 点' });
-  } else if (peakHour >= 14 && peakHour < 19) {
-    titles.push({ id: 'reply-time-afternoon', name: '午后评论员', category: 'content', priority: 1, description: `高峰时段 ${peakHour}:00`, thresholdDescription: '高峰时段在 14-19 点' });
-  } else if (peakHour >= 19 && peakHour < 23) {
-    titles.push({ id: 'reply-time-evening', name: '夜间评论员', category: 'content', priority: 1, description: `高峰时段 ${peakHour}:00`, thresholdDescription: '高峰时段在 19-23 点' });
-  } else {
-    titles.push({ id: 'reply-time-night', name: '夜猫子回复家', category: 'content', priority: 1, description: `高峰时段 ${peakHour}:00`, thresholdDescription: '高峰时段在 23-6 点' });
-  }
-
   return titles;
 }
 
@@ -93,19 +68,6 @@ function generatePostTitles(post: AnnualSummaryStats['post']): Title[] {
     titles.push({ id: 'post-count-3', name: '高产作者', category: 'content', priority: 3, description: `发帖 ${post.totalCount} 次`, thresholdDescription: '发帖大于 20 次' });
   } else {
     titles.push({ id: 'post-count-4', name: '话题制造机', category: 'content', priority: 4, description: `发帖 ${post.totalCount} 次`, thresholdDescription: '发帖大于 50 次' });
-  }
-
-  const peakHour = post.timeDistribution.peakHour;
-  if (peakHour >= 6 && peakHour < 9) {
-    titles.push({ id: 'post-time-morning', name: '晨间分享家', category: 'content', priority: 1, description: `高峰时段 ${peakHour}:00`, thresholdDescription: '高峰时段在 6-9 点' });
-  } else if (peakHour >= 9 && peakHour < 14) {
-    titles.push({ id: 'post-time-noon', name: '午间话题王', category: 'content', priority: 1, description: `高峰时段 ${peakHour}:00`, thresholdDescription: '高峰时段在 9-14 点' });
-  } else if (peakHour >= 14 && peakHour < 19) {
-    titles.push({ id: 'post-time-afternoon', name: '午后发帖人', category: 'content', priority: 1, description: `高峰时段 ${peakHour}:00`, thresholdDescription: '高峰时段在 14-19 点' });
-  } else if (peakHour >= 19 && peakHour < 23) {
-    titles.push({ id: 'post-time-evening', name: '夜间发帖人', category: 'content', priority: 1, description: `高峰时段 ${peakHour}:00`, thresholdDescription: '高峰时段在 19-23 点' });
-  } else {
-    titles.push({ id: 'post-time-night', name: '深夜灵感家', category: 'content', priority: 1, description: `高峰时段 ${peakHour}:00`, thresholdDescription: '高峰时段在 23-6 点' });
   }
 
   return titles;
@@ -145,7 +107,7 @@ function generateReceivedThankTitles(receivedThank: AnnualSummaryStats['received
   if (receivedThank.totalCount < 10) {
     titles.push({ id: 'received-thank-count-1', name: '低调受欢迎', category: 'interaction', priority: 1, description: `收到感谢 ${receivedThank.totalCount} 次`, thresholdDescription: '收到感谢少于 10 次' });
   } else if (receivedThank.totalCount < 50) {
-    titles.push({ id: 'received-thank-count-2', name: '小有名气', category: 'interaction', priority: 2, description: `收到感谢 ${receivedThank.totalCount} 次`, thresholdDescription: '收到感谢大于 10 次' });
+    titles.push({ id: 'received-thank-count-2', name: '社区新星', category: 'interaction', priority: 2, description: `收到感谢 ${receivedThank.totalCount} 次`, thresholdDescription: '收到感谢大于 10 次' });
   } else if (receivedThank.totalCount < 100) {
     titles.push({ id: 'received-thank-count-3', name: '社区红人', category: 'interaction', priority: 3, description: `收到感谢 ${receivedThank.totalCount} 次`, thresholdDescription: '收到感谢大于 50 次' });
   } else {
@@ -210,37 +172,6 @@ function generateActivityHeatmapTitles(activityHeatmap: AnnualSummaryStats['acti
     return titles;
   }
 
-  // 计算每个小时的总活动量
-  const hourlyActivity = new Array(24).fill(0);
-  for (let weekday = 0; weekday < 7; weekday++) {
-    for (let hour = 0; hour < 24; hour++) {
-      hourlyActivity[hour] += data[weekday]?.[hour] ?? 0;
-    }
-  }
-
-  // 找出最活跃的时段
-  let peakHour = 0;
-  let peakValue = 0;
-  for (let hour = 0; hour < 24; hour++) {
-    if (hourlyActivity[hour] > peakValue) {
-      peakValue = hourlyActivity[hour];
-      peakHour = hour;
-    }
-  }
-
-  // 根据最活跃时段生成称号
-  if (peakHour >= 6 && peakHour < 9) {
-    titles.push({ id: 'activity-time-morning', name: '早起鸟', category: 'activity', priority: 2, description: `最活跃时段 ${peakHour}:00`, thresholdDescription: '最活跃时段在 6-9 点' });
-  } else if (peakHour >= 9 && peakHour < 14) {
-    titles.push({ id: 'activity-time-noon', name: '午间战士', category: 'activity', priority: 2, description: `最活跃时段 ${peakHour}:00`, thresholdDescription: '最活跃时段在 9-14 点' });
-  } else if (peakHour >= 14 && peakHour < 19) {
-    titles.push({ id: 'activity-time-afternoon', name: '午后思考者', category: 'activity', priority: 2, description: `最活跃时段 ${peakHour}:00`, thresholdDescription: '最活跃时段在 14-19 点' });
-  } else if (peakHour >= 19 && peakHour < 23) {
-    titles.push({ id: 'activity-time-evening', name: '夜间精灵', category: 'activity', priority: 2, description: `最活跃时段 ${peakHour}:00`, thresholdDescription: '最活跃时段在 19-23 点' });
-  } else {
-    titles.push({ id: 'activity-time-night', name: '深夜猫头鹰', category: 'activity', priority: 2, description: `最活跃时段 ${peakHour}:00`, thresholdDescription: '最活跃时段在 23-6 点' });
-  }
-
   // 计算工作日和周末的活动量
   let weekdayActivity = 0;
   let weekendActivity = 0;
@@ -268,5 +199,83 @@ function generateActivityHeatmapTitles(activityHeatmap: AnnualSummaryStats['acti
   }
 
   return titles;
+}
+
+// ==================== 活跃时段称号（合并为一个） ====================
+
+const TIME_BANDS = [
+  { id: 'morning', name: '早起鸟', range: '6-9 点' },
+  { id: 'noon', name: '午间战神', range: '9-14 点' },
+  { id: 'afternoon', name: '午后沉思者', range: '14-19 点' },
+  { id: 'evening', name: '夜间精灵', range: '19-23 点' },
+  { id: 'night', name: '深夜党', range: '23-6 点' },
+];
+
+function getTimeBand(hour: number) {
+  if (hour >= 6 && hour < 9) return TIME_BANDS[0];
+  if (hour >= 9 && hour < 14) return TIME_BANDS[1];
+  if (hour >= 14 && hour < 19) return TIME_BANDS[2];
+  if (hour >= 19 && hour < 23) return TIME_BANDS[3];
+  return TIME_BANDS[4];
+}
+
+// 汇总全部活动的最高峰小时：优先活动热力图，其次各统计的时间分布
+function getOverallPeakHour(stats: AnnualSummaryStats): number {
+  const { data, maxValue } = stats.activityHeatmap;
+  if (data && data.length === 7 && maxValue > 0) {
+    const hourly = new Array(24).fill(0);
+    for (let weekday = 0; weekday < 7; weekday++) {
+      for (let hour = 0; hour < 24; hour++) {
+        hourly[hour] += data[weekday]?.[hour] ?? 0;
+      }
+    }
+    let peakHour = 0;
+    let peakValue = -1;
+    for (let hour = 0; hour < 24; hour++) {
+      if (hourly[hour] > peakValue) {
+        peakValue = hourly[hour];
+        peakHour = hour;
+      }
+    }
+    if (peakValue > 0) return peakHour;
+  }
+
+  const dists = [
+    stats.login.timeDistribution,
+    stats.reply.timeDistribution,
+    stats.post.timeDistribution,
+    stats.thank.timeDistribution,
+  ];
+  const hourly = new Array(24).fill(0);
+  for (const dist of dists) {
+    for (const [hour, count] of Object.entries(dist.byHour)) {
+      hourly[Number(hour)] += count;
+    }
+  }
+  let peakHour = 0;
+  let peakValue = -1;
+  for (let hour = 0; hour < 24; hour++) {
+    if (hourly[hour] > peakValue) {
+      peakValue = hourly[hour];
+      peakHour = hour;
+    }
+  }
+  return peakValue > 0 ? peakHour : -1;
+}
+
+// 活跃时段合并为一个称号
+function generateActiveTimeTitle(stats: AnnualSummaryStats): Title[] {
+  const peakHour = getOverallPeakHour(stats);
+  if (peakHour < 0) return [];
+
+  const band = getTimeBand(peakHour);
+  return [{
+    id: `activity-time-${band.id}`,
+    name: band.name,
+    category: 'activity',
+    priority: 2,
+    description: `最活跃时段 ${peakHour}:00`,
+    thresholdDescription: `最活跃时段在 ${band.range}`,
+  }];
 }
 

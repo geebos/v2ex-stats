@@ -79,9 +79,13 @@ interface AnnualSummaryButtonProps {
 
 function AnnualSummaryButton({ username, onOpen }: AnnualSummaryButtonProps) {
   const [isHidden, setIsHidden] = useState(false);
+  // dev 模式总是显示总结报告按钮：不读取隐藏状态，也不提供隐藏入口
+  const isDev = import.meta.env.DEV;
 
   useEffect(() => {
-    checkHiddenStatus();
+    if (!isDev) {
+      checkHiddenStatus();
+    }
   }, []);
 
   async function checkHiddenStatus() {
@@ -94,7 +98,7 @@ function AnnualSummaryButton({ username, onOpen }: AnnualSummaryButtonProps) {
     setIsHidden(true);
   }
 
-  if (isHidden) {
+  if (isHidden && !isDev) {
     return null;
   }
 
@@ -107,7 +111,7 @@ function AnnualSummaryButton({ username, onOpen }: AnnualSummaryButtonProps) {
       </SummaryButton>
       <FooterText>
         <span>from V2EX Stats</span>
-        <HideLink onClick={handleHide}>不再显示</HideLink>
+        {!isDev && <HideLink onClick={handleHide}>不再显示</HideLink>}
       </FooterText>
     </ButtonContainer>
   );
@@ -117,19 +121,24 @@ export async function tryInitAnnualSummaryButton(
   username: string,
   onOpen: () => void
 ): Promise<void> {
-  // 优先级最高：用户已点击不再显示
-  const hidden = await storage.getItem<boolean>(getHiddenStorageKey(username, getNearestYear()), { fallback: false });
-  if (hidden) {
+  // dev 模式总是显示总结报告按钮：跳过隐藏状态、首页限制与展示时段限制
+  const isDev = import.meta.env.DEV;
+
+  // 优先级最高：用户已点击不再显示（dev 模式除外）
+  if (!isDev) {
+    const hidden = await storage.getItem<boolean>(getHiddenStorageKey(username, getNearestYear()), { fallback: false });
+    if (hidden) {
+      return;
+    }
+  }
+
+  // 只在首页显示（dev 模式除外）
+  if (!isDev && window.location.pathname !== '/') {
     return;
   }
 
-  // 只在首页显示
-  if (window.location.pathname !== '/') {
-    return;
-  }
-
-  // 只在 12.25-1.20 期间显示
-  if (!isInDisplayPeriod()) {
+  // 只在 12.25-1.20 期间显示（dev 模式除外）
+  if (!isDev && !isInDisplayPeriod()) {
     return;
   }
 
