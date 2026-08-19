@@ -33,3 +33,4 @@ coverage/
 .secrets
 .env
 .github/local/
+.dsh-vision-toolkit/
