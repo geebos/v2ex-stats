@@ -63,12 +63,50 @@ const getUniqueKey = (record: BalanceRecord): string =>
   `${record.timestamp}|${record.balance}|${record.username}`;
 
 // ==================== 类型映射管理 ====================
+// 判断某个动态类型是否占用了默认保留 ID（旧版本曾把首个动态类型分配为 id=0）
+const isReservedIdConflict = (type: BalanceRecordType): boolean => {
+  if (!defaultBalanceTypeId2ValueMap.has(type.id)) return false;
+  return defaultBalanceTypeId2ValueMap.get(type.id) !== type.value;
+};
+
+// 为占用默认 ID 的历史动态类型重新分配非冲突 ID，并清理脏映射。
+// 返回更新后的类型表，以及“旧 id -> 新 id”的重映射表。
+const remapConflictingDefaultIds = async (
+  recordTypes: BalanceRecordType[]
+): Promise<{ sanitized: BalanceRecordType[]; remap: Map<number, number> }> => {
+  const remap = new Map<number, number>();
+  // 仅保留结构合法的条目（id 为整数），避免脏数据使后续 ID 分配产生 NaN
+  const validTypes = recordTypes.filter(type => Number.isInteger(type.id));
+  const conflicts = validTypes.filter(isReservedIdConflict);
+  if (conflicts.length === 0) return { sanitized: validTypes, remap };
+
+  const sanitized = validTypes.filter(type => !isReservedIdConflict(type));
+  const usedIds = new Set<number>([
+    ...defaultBalanceRecordTypes.map(type => type.id),
+    ...sanitized.map(type => type.id),
+  ]);
+  let maxId = Math.max(...Array.from(usedIds));
+
+  for (const conflict of conflicts) {
+    maxId += 1;
+    remap.set(conflict.id, maxId);
+    sanitized.push({ id: maxId, value: conflict.value });
+    balanceTypeId2ValueMap.set(maxId, conflict.value);
+    balanceTypeValue2IdMap.set(conflict.value, maxId);
+  }
+
+  await storage.setItem(`local:balanceRecordTypes`, sanitized);
+  return { sanitized, remap };
+};
+
 // 根据类型ID获取类型值
 const getBalanceRecordTypeValue = async (id: number): Promise<string> => {
   if (balanceTypeId2ValueMap.has(id)) return balanceTypeId2ValueMap.get(id)!;
+
   const recordTypes = await storage.getItem<BalanceRecordType[]>(`local:balanceRecordTypes`);
   const recordType = recordTypes?.find(type => type.id === id);
   if (!recordType) return 'UNKNOWN';
+
   balanceTypeId2ValueMap.set(recordType.id, recordType.value);
   balanceTypeValue2IdMap.set(recordType.value, recordType.id);
   return recordType.value;
@@ -79,12 +117,8 @@ const getBalanceRecordTypeID = async (value: string): Promise<number> => {
   if (balanceTypeValue2IdMap.has(value)) return balanceTypeValue2IdMap.get(value)!;
   const recordTypes = (await storage.getItem<BalanceRecordType[]>(`local:balanceRecordTypes`)) ?? [];
 
-  const isReservedIdConflict = (type: BalanceRecordType) => {
-    if (!defaultBalanceTypeId2ValueMap.has(type.id)) return false;
-    return defaultBalanceTypeId2ValueMap.get(type.id) !== type.value;
-  };
-
-  const sanitizedRecordTypes = recordTypes.filter(type => !isReservedIdConflict(type));
+  // 先清理历史脏映射（占用默认保留 ID 的动态类型），并保留重映射结果
+  const { sanitized: sanitizedRecordTypes } = await remapConflictingDefaultIds(recordTypes);
 
   const recordType = sanitizedRecordTypes.find(type => type.value === value);
   if (recordType) {
@@ -110,18 +144,34 @@ const getBalanceRecordTypeID = async (value: string): Promise<number> => {
 // ==================== 数据序列化/反序列化 ====================
 // 从存储中读取压缩数据并转换为BalanceRecord对象
 const getBalanceRecords = async (username: string, keys: StorageItemKey[]): Promise<BalanceRecord[]> => {
+  // 无分片时直接返回，避免无意义的存储读取
+  if (keys.length === 0) return [];
+
+  // 读取前先修复历史脏映射（占用默认保留 ID 的动态类型），得到“旧 id -> 新 id”重映射表。
+  // 旧版本曾把首个动态类型分配为默认保留 ID（如 id=0），导致该记录被误读为默认类型
+  // （如“上传图片”）。这里按其真实值重新分配非冲突 ID，并据此修正 compact 记录。
+  const storedRecordTypes = (await storage.getItem<BalanceRecordType[]>(`local:balanceRecordTypes`)) ?? [];
+  const { remap: legacyIdRemap } = await remapConflictingDefaultIds(storedRecordTypes);
+
   const result: BalanceRecord[] = [];
   for (const key of keys) {
     const records = await storage.getItem<CompactBalanceRecord[]>(key);
     if (!records) continue;
+
+    let needsRewrite = legacyIdRemap.size > 0 && records.some(r => legacyIdRemap.has(r[1]));
+    const rewritten: CompactBalanceRecord[] = [];
     for (const record of records) {
-      result.push({
-        timestamp: record[0],
-        type: await getBalanceRecordTypeValue(record[1]),
-        delta: record[2],
-        balance: record[3],
-        username,
-      });
+      const correctId = legacyIdRemap.get(record[1]) ?? record[1];
+      if (correctId !== record[1]) needsRewrite = true;
+      const type = await getBalanceRecordTypeValue(correctId);
+      rewritten.push([record[0], correctId, record[2], record[3]]);
+      result.push({ timestamp: record[0], type, delta: record[2], balance: record[3], username });
+    }
+
+    // 自愈：历史脏数据里占用了默认保留 ID 的记录，修正为重新分配后的 ID
+    if (needsRewrite) {
+      rewritten.sort((a, b) => descSort(a[0], b[0]));
+      await storage.setItem(key, rewritten);
     }
   }
   console.log('getBalanceRecords', username, keys, result);

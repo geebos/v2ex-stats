@@ -565,11 +565,12 @@ describe('getBalanceRecords', () => {
       createCompactRecord(1609459260000, 11, 20, 170),
     ];
     
-    // Mock storage.getItem 返回压缩记录
-    vi.mocked(storage.getItem).mockResolvedValueOnce(compactRecords);
-    
-    // Mock 类型映射 - 使用预定义的类型
-    // 由于 getBalanceRecordTypeValue 是内部函数且使用了预定义类型，10 对应 "每日活跃度奖励"，11 对应 "每日登录奖励"
+    // Mock storage.getItem：先读取类型表（无历史动态类型），再读取压缩记录
+    vi.mocked(storage.getItem)
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce(compactRecords);
+
+    // 使用预定义的类型：10 对应 "每日活跃度奖励"，11 对应 "每日登录奖励"
     
     const result = await getBalanceRecords(username, keys);
     
@@ -597,12 +598,13 @@ describe('getBalanceRecords', () => {
     ];
     
     vi.mocked(storage.getItem)
+      .mockResolvedValueOnce([]) // 类型表读取：无历史动态类型
       .mockResolvedValueOnce(compactRecords1)
       .mockResolvedValueOnce(compactRecords2);
     
     const result = await getBalanceRecords(username, keys);
     
-    expect(storage.getItem).toHaveBeenCalledTimes(2);
+    expect(storage.getItem).toHaveBeenCalledTimes(3);
     expect(result).toHaveLength(2);
     
     // 验证结果按时间戳降序排列
@@ -629,6 +631,7 @@ describe('getBalanceRecords', () => {
     ] as any[];
     
     vi.mocked(storage.getItem)
+      .mockResolvedValueOnce([]) // 类型表读取：无历史动态类型
       .mockResolvedValueOnce([createCompactRecord(1609459200000, 10, 50, 150)])
       .mockResolvedValueOnce(null); // 第二个键不存在
     
@@ -646,6 +649,45 @@ describe('getBalanceRecords', () => {
     
     expect(storage.getItem).not.toHaveBeenCalled();
     expect(result).toEqual([]);
+  });
+
+  // 回归测试：旧版本曾把首个动态类型分配为默认保留 ID（如 id=0），
+  // 导致 compact 记录里存的是默认 id，而 balanceRecordTypes 里存了
+  // 冲突的真实类型（如 id=0 → "创建邀请码"）。读取时不应被默认映射
+  // "上传图片" 覆盖，而应恢复为真实类型并自愈存储。
+  // 对应 GitHub issue #11：创建邀请码花费 10000 被识别成上传图片
+  it('应恢复被旧版本误占用默认 ID 的记录为真实类型', async () => {
+    const username = 'testuser';
+    const keys = ['local:balanceRecords:testuser|2026|05'] as any[];
+
+    // 旧版本写入的脏数据：compact 记录 type id=0（默认保留给"上传图片"）
+    const compactRecords: CompactBalanceRecord[] = [
+      createCompactRecord(1748300000000, 0, -10000, 9000),
+    ];
+
+    vi.mocked(storage.getItem)
+      // 第一次：读取类型表，发现冲突映射 { id:0, value:"创建邀请码" }（旧版本脏数据）
+      .mockResolvedValueOnce([{ id: 0, value: '创建邀请码' }])
+      // 第二次：读取 compact 记录
+      .mockResolvedValueOnce(compactRecords);
+
+    const result = await getBalanceRecords(username, keys);
+
+    expect(result).toHaveLength(1);
+    // 不应被默认映射覆盖为 "上传图片"
+    expect(result[0].type).toBe('创建邀请码');
+    expect(result[0].delta).toBe(-10000);
+
+    // 自愈：冲突的动态类型映射应被剔除，真实类型重新分配为非默认 ID
+    expect(storage.setItem).toHaveBeenCalledWith(
+      'local:balanceRecordTypes',
+      [{ id: 20, value: '创建邀请码' }]
+    );
+    // 自愈：compact 记录的 type id 应被修正为重新分配后的 ID（20）
+    expect(storage.setItem).toHaveBeenCalledWith(
+      'local:balanceRecords:testuser|2026|05',
+      [[1748300000000, 20, -10000, 9000]]
+    );
   });
 });
 
