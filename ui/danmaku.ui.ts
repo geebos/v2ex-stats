@@ -201,15 +201,17 @@ const injectDanmakuStyle = (fontSize: number, isDark: boolean, opacity: number) 
 
 // 创建弹幕容器（固定定位悬浮层，多轨道，指针事件穿透）
 const createContainer = (config: ConfigOptions['danmaku']): HTMLDivElement => {
-  const topOffset = ((document.querySelector('#Top') as HTMLElement | null)?.offsetHeight || 44) + 4;
+  // 底部偏移：避开 V2EX 底部停靠的回复框（#reply-box），弹幕悬浮在回复框上方
+  const replyBox = document.querySelector('#reply-box');
+  const bottomOffset = ((replyBox as HTMLElement | null)?.offsetHeight || 0) + 8;
   const laneHeight = getLaneHeight(config.fontSize);
-  const laneCount = Math.max(2, Math.min(6, Math.floor((window.innerHeight - topOffset - 60) / laneHeight)));
+  const laneCount = Math.max(2, Math.min(6, Math.floor((window.innerHeight - bottomOffset - 60) / laneHeight)));
 
   const container = document.createElement('div');
   container.id = CONTAINER_ID;
   container.style.cssText = `
     position: fixed;
-    top: ${topOffset}px;
+    bottom: ${bottomOffset}px;
     left: 0;
     right: 0;
     height: ${laneCount * laneHeight}px;
