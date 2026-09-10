@@ -14,6 +14,7 @@ import type { ConfigOptions } from "@/types/types";
 // ======================== 常量与状态 ========================
 
 const CONTAINER_ID = 'v-stats-danmaku-container';
+const CLOSE_BUTTON_ID = 'v-stats-danmaku-close';
 const STYLE_ID = 'v-stats-danmaku-style';
 
 // 同一轨道相邻弹幕之间的随机水平间隔范围（像素）
@@ -185,6 +186,32 @@ const injectDanmakuStyle = (fontSize: number, isDark: boolean, opacity: number) 
       z-index: 10;
       opacity: 1;
     }
+    /* 弹幕关闭按钮：位于弹幕层上沿右侧，点击后关闭当前页面弹幕 */
+    #${CLOSE_BUTTON_ID} {
+      position: fixed;
+      right: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
+      padding: 0;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      box-sizing: border-box;
+      background-color: ${bg};
+      color: ${color};
+      font-size: 14px;
+      line-height: 1;
+      box-shadow: ${shadow};
+      opacity: 0.6;
+      transition: opacity 0.2s;
+      z-index: 100000;
+    }
+    #${CLOSE_BUTTON_ID}:hover {
+      opacity: 1;
+    }
     @keyframes v-stats-danmaku-move {
       from { transform: translateX(0); }
       to { transform: translateX(calc(var(--v-stats-danmaku-distance, -100vw) - 100%)); }
@@ -223,6 +250,20 @@ const createContainer = (config: ConfigOptions['danmaku']): HTMLDivElement => {
   return container;
 };
 
+// ======================== 弹幕关闭按钮 ========================
+
+// 创建弹幕关闭按钮（悬浮在弹幕层上沿右侧，避免遮挡弹幕轨道）
+const createCloseButton = (container: HTMLElement): HTMLButtonElement => {
+  const button = document.createElement('button');
+  button.id = CLOSE_BUTTON_ID;
+  button.type = 'button';
+  button.title = '关闭弹幕';
+  button.textContent = '✕';
+  button.style.bottom = `${window.innerHeight - container.getBoundingClientRect().top + 8}px`;
+  document.body.appendChild(button);
+  return button;
+};
+
 // ======================== 弹幕发射循环 ========================
 
 // 启动弹幕发射循环
@@ -231,20 +272,34 @@ const startSpawning = (container: HTMLElement, pool: CommentInfo[], config: Conf
   const laneCount = Math.max(1, Math.floor(container.clientHeight / laneHeight));
 
   // 弹幕出现顺序：热门评论（感谢次数 > 0）优先，按感谢次数降序；普通评论随后随机
-  const buildOrder = (): CommentInfo[] => {
-    const hot = pool.filter(c => c.thanksCount > 0).sort((a, b) => b.thanksCount - a.thanksCount);
-    const normal = pool.filter(c => c.thanksCount <= 0);
-    return [...hot, ...shuffle(normal)];
-  };
-  let order = buildOrder();
+  // 每条弹幕只滚动一次：顺序表构建一次，发射完即结束，不循环补发
+  const hot = pool.filter(c => c.thanksCount > 0).sort((a, b) => b.thanksCount - a.thanksCount);
+  const order = [...hot, ...shuffle(pool.filter(c => c.thanksCount <= 0))];
   let orderIndex = 0;
 
-  const nextComment = (): CommentInfo => {
-    if (orderIndex >= order.length) {
-      order = buildOrder();
-      orderIndex = 0;
-    }
-    return order[orderIndex++];
+  // 已经停止发射（点击关闭按钮或全部弹幕滚动完毕）
+  let stopped = false;
+  // 已发射但仍在滚动的弹幕数量
+  let movingCount = 0;
+
+  const closeButton = createCloseButton(container);
+
+  // 停止弹幕：移除弹幕层与关闭按钮，未发射的不再发射，未滚完的立即消失
+  const stopDanmaku = () => {
+    if (stopped) return;
+    stopped = true;
+    container.remove();
+    closeButton.remove();
+  };
+  closeButton.addEventListener('click', stopDanmaku);
+
+  const nextComment = (): CommentInfo | null => {
+    return orderIndex < order.length ? order[orderIndex++] : null;
+  };
+
+  // 全部弹幕已发射且都已滚完：停止弹幕
+  const stopIfFinished = () => {
+    if (orderIndex >= order.length && movingCount === 0) stopDanmaku();
   };
 
   // 同轨道相邻弹幕之间的水平间隔为随机值（覆盖原发射间隔配置）：
@@ -260,6 +315,8 @@ const startSpawning = (container: HTMLElement, pool: CommentInfo[], config: Conf
   const exitX = 0;
 
   const trySpawnInLane = (lane: number, startX: number) => {
+    if (stopped) return;
+
     const last = lastItem[lane];
     if (last && last.isConnected) {
       // 上一条弹幕尾部与进入位置之间已让出的距离
@@ -272,8 +329,21 @@ const startSpawning = (container: HTMLElement, pool: CommentInfo[], config: Conf
       }
     }
 
+    const comment = nextComment();
+    if (!comment) {
+      // 评论池已全部滚动过一遍：不再补发，等待剩余弹幕滚完后停止
+      stopIfFinished();
+      return;
+    }
+
     // 发射，并为下一条弹幕选取新的随机水平间隔
-    lastItem[lane] = spawnItem(container, lane * laneHeight, nextComment(), config, startX, exitX);
+    const item = spawnItem(container, lane * laneHeight, comment, config, startX, exitX);
+    lastItem[lane] = item;
+    movingCount++;
+    item.addEventListener('animationend', () => {
+      movingCount--;
+      stopIfFinished();
+    }, { once: true });
     randomGap[lane] = randomInt(HORIZONTAL_GAP_MIN, HORIZONTAL_GAP_MAX);
     setTimeout(() => trySpawnInLane(lane, enterX), 0);
   };
